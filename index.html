@@ -109,8 +109,8 @@
       group linked to where it is internal. Nothing is ever fetched, posted or changed.
     </p>
     <ul class="pills">
-      <li class="pill"><b>1.20.1</b></li>
-      <li class="pill">13 UNIT3D trackers · <b>your own too</b></li>
+      <li class="pill"><b>1.21.0</b></li>
+      <li class="pill">41 UNIT3D trackers · <b>your own too</b></li>
       <li class="pill">No requests, no posting</li>
       <li class="pill">Nothing judged without that tracker’s rules</li>
       <li class="pill">Everything stays in your browser</li>
@@ -329,10 +329,14 @@ BeyondHD|BHDStudio FraMeSToR FLUX|https://beyond-hd.me</code></pre>
       <li>Reload the tracker. The bar appears above the listing.</li>
     </ol>
     <h3 style="margin-top:22px">Which trackers it runs on</h3>
-    <p>DarkPeers and Zenith, plus the UNIT3D trackers whose addresses it already holds:
-      <b>Aither, Blutopia, FearNoPeer, LST, Upload.cx, OnlyEncodes+, OldToonsWorld, ReelFliX, HUNO, Cinematik
-      and Shareisland</b>. Every one of those is a <code>// @match</code> line at the top of the file — delete a line
-      to stop it running there, or copy one and change the domain to add a tracker of your own.</p>
+    <p>DarkPeers and Zenith, plus <b>41 UNIT3D trackers</b>. Which sites run UNIT3D comes from
+      <a href="https://hdvinnie.github.io/Private-Trackers-Spreadsheet/" rel="noreferrer noopener">HDVinnie's Private Trackers
+      Spreadsheet</a>; the addresses come from each tracker's own Jackett or Prowlarr indexer definition, because that
+      spreadsheet carries none. Nine UNIT3D sites have no definition to read and are left out rather than guessed at —
+      they are named in the README, and adding one takes a line.</p>
+    <p>Every tracker is a <code>// @match</code> line at the top of the file: delete a line to stop it running there,
+      copy one and change the domain to add your own. The list is generated from the tracker catalogue when the script is
+      built, so the two cannot drift apart.</p>
     <p class="note">
       On a tracker whose <em>rules</em> it does not have, <b>nothing is badged</b> until you choose a rule set from the
       <b>Rules</b> picker in the bar, or add that tracker under <b>Tracker rules…</b>. A red ✕ on LST citing
@@ -356,6 +360,12 @@ BeyondHD|BHDStudio FraMeSToR FLUX|https://beyond-hd.me</code></pre>
   <div class="wrap">
     <h2>Questions people actually ask</h2>
     <dl class="qa">
+      <dt>Fifty-odd trackers — how do I find the ones I'm on?</dt>
+      <dd>The chooser puts the trackers you have ticked first, in their own group, open. Everything else is folded away by
+        what it carries, with a count on each group, and the search box filters by name, language or software — type
+        <em>italian</em> and you get Shareisland and ItaTorrents. Each tracker's search address sits behind its own
+        <b>Address</b> button rather than in a box on every row.</dd>
+
       <dt>Where do I add an internal group?</dt>
       <dd>Click the group tag on any release and use the <b>Add</b> field in the menu — that is the quick way. The full list lives behind <b>Internal groups…</b> in the listing bar, next to <em>Tracker rules…</em>. Those are different panels: <em>Tracker rules</em> is naming rules and banned groups, <em>Internal groups</em> is which tracker a group belongs to.</dd>
 
@@ -425,7 +435,7 @@ BeyondHD|BHDStudio FraMeSToR FLUX|https://beyond-hd.me</code></pre>
 
 <footer>
   <div class="wrap">
-    <p><b>Torrent Inspector 1.20.1</b> — a personal fork, offered as-is.</p>
+    <p><b>Torrent Inspector 1.21.0</b> — a personal fork, offered as-is.</p>
     <p>Found something wrong? A screenshot with the badge's tooltip visible is the fastest fix — several bugs in this line were found exactly that way, and each one now has a test built from the row that showed it up.</p>
   </div>
 </footer>
