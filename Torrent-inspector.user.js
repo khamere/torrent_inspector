@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DarkPeers - Torrent Inspector
 // @namespace    dkokto.darkpeers.inspector
-// @version      1.21.1
+// @version      1.21.2
 // @description  Torrent Inspector and automatic listing naming badges, checked against DarkPeers or Zenith rules. Reads the page only; makes no requests.
 // @author       🤖T.R.A.V.I.S (original Chungus Edition); DKOKTO personal customization
 // @match        https://darkpeers.org/*
@@ -2172,14 +2172,29 @@ const DKOKTO_PROFILES_UI = ((profiles,rules) => {
             const result=profiles.save(draft());
             if(report(result)&&result.profile)added(result,'added');
         },'dk-primary'));
+        // A preview, not a submit. Pressing it on a half-filled form used to answer with the
+        // save-time error — “key” must be 2–24 characters — which reads as a refusal when
+        // all you asked for was a look at what you have. It shows the draft and says what is
+        // still needed instead.
         actions.append(button('Show the JSON',()=>{
             const result=profiles.validate(draft());
-            if(!report(result))return;
-            preview.value=JSON.stringify(profiles.toJSON(result.profile),null,2);preview.hidden=false;
-            say('This is what would be added. Copy it, or add it above.');
+            // validate() withholds the profile once there is an error, and save() depends on
+            // that. The draft itself is already in the export shape, so a preview of an
+            // unfinished form shows that rather than nothing.
+            preview.value=JSON.stringify(result.profile?profiles.toJSON(result.profile):draft(),null,2);
+            preview.hidden=false;
+            say(result.errors.length
+                ?'This is the draft so far. Before it can be added: '+result.errors.join(' · ')
+                :result.warnings.length?result.warnings.join(' · ')
+                :'This is what would be added. Copy it, or add it above.',
+                result.errors.length?'warn':result.warnings.length?'warn':'');
         }));
+        // Saving stays strict: a file is something you send someone, and one that will not
+        // import is worse than none. The message says which it is complaining about.
         actions.append(button('Save as file',()=>{
             const result=profiles.validate(draft());
+            if(result.errors.length){say('Not saved — a file has to be one that will import. '+
+                result.errors.join(' · '),'bad');return;}
             if(!report(result))return;
             download((result.profile.key||'tracker')+'-rules.json',JSON.stringify(profiles.toJSON(result.profile),null,2));
         }));
@@ -3289,13 +3304,16 @@ const DKOKTO_LINKS_CORE = (() => {
     }
     const q=v=>encodeURIComponent(v);
     // ids: only what the page already links to.
-    function links(name,{ids={},category=''}={}) {
+    function links(name,{ids={},category='',site=''}={}) {
         const p=parse(name),out=[],term=p.query||clean(name),tv=/tv|show|series|anime/i.test(category)||!!p.season;
         const anime=/anime/i.test(category),music=/music|audio\s*book|podcast/i.test(category),book=/book/i.test(category),game=/game|software|app/i.test(category);
         const add=(key,label,url,note='')=>{if(url)out.push({key,label,url,note});};
         if(!term)return out;
         const withYear=p.year?term+' '+p.year:term;
-        add('dp','Search DarkPeers','/torrents?name='+q(term),'This tracker, same title');
+        // The search is a relative address, so it is right on whichever tracker this is;
+        // the label was not. Named after the site you are on, or left neutral if it cannot
+        // be named — "Search DarkPeers" on Zenith is simply wrong.
+        add('dp','Search '+(String(site||'').trim()||'this tracker'),'/torrents?name='+q(term),'This tracker, same title');
         if(ids.imdb)add('imdb','IMDb','https://www.imdb.com/title/'+q(ids.imdb)+'/','From the ID on this page');
         else if(!music&&!book&&!game)add('imdb','IMDb','https://www.imdb.com/find/?q='+q(withYear)+'&s=tt');
         if(ids.tmdb&&(tv||!music))add('tmdb','TMDB','https://www.themoviedb.org/'+(tv?'tv':'movie')+'/'+q(ids.tmdb),'From the ID on this page');
@@ -3598,7 +3616,9 @@ const DKOKTO_DETAIL = (() => {
     function linksRow(node,title) {
         // The request cross-check borrows the same row styling; those rows are not ours.
         const existing=document.querySelector('.dk-detail-links:not(.dk-detail-versions):not(.dk-request-links):not(.dk-detail-page)');
-        const list=DKOKTO_LINKS_CORE.links(title,{ids:DKOKTO_LINKS_CORE.ids(document),category:category()});
+        const site=(()=>{try{return DKOKTO_TRACKERS.here(location.hostname)?.label||location.hostname.replace(/^www\./,'');}
+            catch{return '';}})();
+        const list=DKOKTO_LINKS_CORE.links(title,{ids:DKOKTO_LINKS_CORE.ids(document),category:category(),site});
         const signature=title+'\n'+list.map(l=>l.url).join('|');
         if(existing){if(existing.dataset.signature===signature)return;existing.remove();}
         if(!list.length)return;
@@ -3786,6 +3806,11 @@ const DKOKTO_TRACKERS = (() => {
     // would have had to be guessed, and a wrong address is worse than a missing one. They
     // are named in the README so you can add one yourself in a line.
     const CATALOGUE=[
+        // The two this script calls home are in the list like anything else: from LST you
+        // want to search DarkPeers, and the cross-check leaves out whichever one you are
+        // standing on rather than leaving it out of the list altogether.
+        unit('dp','DarkPeers','darkpeers.org'),
+        unit('zenith','Zenith','znth.cx'),
         unit('aither','Aither','aither.cc'),
         unit('blu','Blutopia','blutopia.cc'),
         unit('fnp','FearNoPeer','fearnopeer.com'),
@@ -3893,6 +3918,12 @@ const DKOKTO_TRACKERS = (() => {
             .map(entry=>({...entry,search:state.search[entry.key]||entry.search,edited:!!state.search[entry.key],on:on.has(entry.key)}));
     }
     const chosen=()=>list().filter(entry=>entry.on);
+    // Which catalogue entry is the site you are looking at, matched on its address.
+    const hostOf=entry=>{try{return new URL(String(entry.search).replace(/\{q\}|\{imdb\}/g,'x')).hostname.toLowerCase().replace(/^www\./,'');}catch{return '';}};
+    const here=(hostname='')=>{
+        const name=String(hostname||'').toLowerCase().replace(/^www\./,'');
+        return name?list().find(entry=>hostOf(entry)===name)||null:null;
+    };
     const count=()=>read().enabled.length;
     function setEnabled(keys=[]) {
         const state=read(),known=new Set([...CATALOGUE.map(t=>t.key),...state.custom.map(t=>t.key)]);
@@ -3936,7 +3967,7 @@ const DKOKTO_TRACKERS = (() => {
         state.popups=value;write(state);return value;
     }
     function clear(){const store=storage();try{store?.removeItem(KEY);}catch{}return 0;}
-    return {list,chosen,count,setEnabled,setSearch,add,remove,clear,valid,popupsBlocked,notePopups,OUTDATED,catalogue:()=>CATALOGUE.map(entry=>({...entry})),KINDS,KEY,use(store){backing=store;}};
+    return {list,chosen,count,here,hostOf,setEnabled,setSearch,add,remove,clear,valid,popupsBlocked,notePopups,OUTDATED,catalogue:()=>CATALOGUE.map(entry=>({...entry})),KINDS,KEY,use(store){backing=store;}};
 })();
 
 // Turns a DarkPeers request into one search link per tracker you are a member of.
@@ -4010,13 +4041,20 @@ const DKOKTO_REQUESTS_CORE = ((links,trackers) => {
     // One link per enabled tracker, plus the ones that were left out and why.
     // exact: search the release name as it stands, for finding the very same release
     // somewhere else, rather than the title/year/season a request reduces to.
-    function search(request={},{list=null,ids={},exact=false}={}) {
+    function search(request={},{list=null,ids={},exact=false,host=''}={}) {
         const parsed=parse(request.name||request.title||'',request.category||'');
         const raw=String(request.name||request.title||'').trim();
         const query=exact?raw:term(parsed),chosen=list||trackers.chosen();
         const out={parsed,term:query,links:[],skipped:[]};
         if(!query)return out;
+        const on=String(host||'').toLowerCase().replace(/^www\./,'');
+        const hostOf=value=>{try{return new URL(String(value).replace(/\{q\}|\{imdb\}/g,'x')).hostname.toLowerCase().replace(/^www\./,'');}catch{return '';}};
         for(const tracker of chosen) {
+            // The tracker you are looking at is not a cross-check of itself.
+            if(on&&hostOf(tracker.search)===on) {
+                out.skipped.push({key:tracker.key,label:tracker.label,reason:'is the tracker you are on'});
+                continue;
+            }
             if(!(CARRIES[tracker.kind]||CARRIES.general).includes(parsed.kind)) {
                 out.skipped.push({key:tracker.key,label:tracker.label,reason:'does not carry '+parsed.kind+' releases'});
                 continue;
@@ -4882,7 +4920,7 @@ const DKOKTO_REQUESTS = (() => {
     function show(request,{editable=false}={}) {
         const box=ensureDialog('dk-request-heading');
         const body=head(box,editable?'Search your trackers':'Is this already on your trackers?','dk-request-heading');
-        const result=DKOKTO_REQUESTS_CORE.search(request,{ids:DKOKTO_LINKS_CORE.ids(document)});
+        const result=DKOKTO_REQUESTS_CORE.search(request,{ids:DKOKTO_LINKS_CORE.ids(document),host:location.hostname});
         if(request.url)DKOKTO_REQUESTS_SEEN.mark(request.url);
         if(editable) {
             const label=el('label','Title to search');label.className='dk-request-term';
@@ -4988,7 +5026,7 @@ const DKOKTO_REQUESTS = (() => {
         const found=source==='torrent'?DKOKTO_RELEASE_TITLE.find(document):pageTitle();
         if(!found||!found.title||source==='torrent'&&!found.score){existing?.remove();return;}
         const request={name:found.title,category:pageCategory(),url:location.origin+location.pathname,source};
-        const result=DKOKTO_REQUESTS_CORE.search(request,{ids:DKOKTO_LINKS_CORE.ids(document)});
+        const result=DKOKTO_REQUESTS_CORE.search(request,{ids:DKOKTO_LINKS_CORE.ids(document),host:location.hostname});
         // Rebuilt only when something actually changed, so the page is not churned.
         const signature=found.title+'\n'+result.links.map(link=>link.url).join('|');
         if(existing){if(existing.dataset.signature===signature)return;existing.remove();}
