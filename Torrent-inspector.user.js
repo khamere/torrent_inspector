@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DarkPeers - Torrent Inspector
 // @namespace    dkokto.darkpeers.inspector
-// @version      1.20.1
+// @version      1.20.2
 // @description  Torrent Inspector and automatic listing naming badges, checked against DarkPeers or Zenith rules. Reads the page only; makes no requests.
 // @author       🤖T.R.A.V.I.S (original Chungus Edition); DKOKTO personal customization
 // @match        https://darkpeers.org/*
@@ -765,23 +765,42 @@ const DKOKTO_RELEASE_TITLE = (() => {
         +'#dkokto-hub,#dkokto-tools,#dkokto-game-dialog,#dkokto-nav-dialog,#dkokto-banner,#dkokto-request-dialog,'
         +'#dp-inspector-hub,#dp-inspector-tools,.torrent-mediainfo-dump,textarea,input,pre,code,nav,footer';
     // The element's own text, without this script's badge or lookup row.
+    // Cloning is only worth it when there is something of ours inside: on a page with three
+    // thousand candidates, cloning every one costs six times what checking first does.
+    const MINE='.dk-listing-badge,.dk-detail-badge,.dk-detail-links';
     function textOf(node) {
+        if(!node.firstElementChild||!node.querySelector?.(MINE))return clean(node.textContent||'');
         const copy=node.cloneNode(true);
-        copy.querySelectorAll?.('.dk-listing-badge,.dk-detail-badge,.dk-detail-links').forEach(n=>n.remove());
+        copy.querySelectorAll?.(MINE).forEach(n=>n.remove());
         return clean(copy.textContent||'');
     }
     // A release name is short, so an element holding a whole section of the page is not
     // one. Checking the length first avoids cloning large subtrees on a busy page.
     const TOO_LONG=500;
+    // A release name is also not one word, and it is not a whole paragraph. Rejecting on
+    // that before doing anything expensive is what makes it affordable to look at every
+    // candidate on the page rather than the first few hundred.
+    const TOO_SHORT=8;
+    // The work is bounded by how many elements are read and how many are scored, not by
+    // where they sit in the document. Cutting the list off at a fixed length was the bug:
+    // a page with a long cast, crew, company and keyword list — every entry an element with
+    // "name" or "title" in its class — pushed the release name past the cut, and the badge,
+    // the lookup row, the "vs" button and the cross-check all vanished at once.
+    const READ=6000, SCORED=400;
     function find(doc=document) {
         let best=null;
-        const nodes=[...(doc.querySelectorAll?.(SELECTOR)||[])].slice(0,400);
+        const nodes=doc.querySelectorAll?.(SELECTOR)||[];
         // Each candidate is read and scored exactly once.
         const hits=[];
+        let read=0;
         for(const node of nodes) {
-            if((node.textContent||'').length>TOO_LONG||node.closest?.(SKIP))continue;
+            if(++read>READ)break;
+            const raw=node.textContent||'';
+            if(raw.length>TOO_LONG||raw.length<TOO_SHORT)continue;
+            if(node.closest?.(SKIP))continue;
             const text=textOf(node),value=score(text);
             if(value)hits.push({node,title:text,score:value});
+            if(hits.length>=SCORED)break;
         }
         for(const hit of hits) {
             // Prefer the innermost element holding the name, then the strongest match.
