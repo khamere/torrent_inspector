@@ -7,7 +7,14 @@ makes no requests of any kind — every link opens only when you click it.
 Newest first.
 
 ---
+## 1.17.1 — the internal tracker is a link
 
+- "Listed as internal at …" links to the tracker where its address is already known — from the
+  cross-check tracker list, matched on the name or its key, so BTN finds BroadcasTheNet.
+- Addresses are never invented: a tracker this script has no address for stays plain text.
+  Give it one by adding the tracker to the cross-check list, or by putting the address on its
+  line in **Internal groups…**: `BeyondHD|BHDStudio FLUX|https://beyond-hd.me`.
+  
 ## 1.17.0 — the release group tag, and where it is internal
 
 - The group at the end of a release name is marked, on listings and on a torrent's page.
