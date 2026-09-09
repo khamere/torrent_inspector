@@ -7,6 +7,29 @@ makes no requests of any kind — every link opens only when you click it.
 Newest first.
 
 ---
+## 1.20.1 — two torrents named the same release
+
+- Same name, different file: the panel now concludes rather than compares. "Named the same
+  release, and not the same file", with what they differ in named in one sentence.
+- Names are matched on their words, so punctuation and case do not make two names different;
+  a repack, another resolution or another group are different releases and get the ordinary
+  comparison.
+- It still refuses to say which of the two is the original, and says why: neither page
+  carries that, and a report pasted incompletely can differ in wording on its own.
+
+## 1.20.0 — thirteen trackers, shared slots, and the tags each file carries
+
+- Runs on DarkPeers, Zenith and the eleven UNIT3D trackers already in the cross-check catalogue.
+  A check asserts every matched host is one of those, so no domain is invented.
+- On a tracker whose rules are not in hand nothing is badged until a rule set is chosen for it,
+  and the bar says so. The choice is per tracker; an older single choice is moved to the tracker
+  it was made on rather than spread to every new one.
+- The two vs slots moved to Tampermonkey's per-script store, so a release captured on one tracker
+  is there on the next. Three storage grants; no GM_xmlhttpRequest, no @connect.
+- The vs comparison gained the tags and encode settings: muxer, muxing library, encoder, format
+  settings, encoded and tagged dates, title tag, attachments, track titles, and the encode
+  settings read option by option. It never calls a file altered.
+  
 ## 1.19.1 — the comparison panel was being read as the page
 
 - With the panel open, the lookup row, the other-versions row and the panel flashed in and
