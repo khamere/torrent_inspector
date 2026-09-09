@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DarkPeers - Torrent Inspector
 // @namespace    dkokto.darkpeers.inspector
-// @version      1.19.0
+// @version      1.19.1
 // @description  Torrent Inspector and automatic listing naming badges, checked against DarkPeers or Zenith rules. Reads the page only; makes no requests.
 // @author       🤖T.R.A.V.I.S (original Chungus Edition); DKOKTO personal customization
 // @match        https://darkpeers.org/*
@@ -605,7 +605,14 @@ const DKOKTO_RELEASE_TITLE = (() => {
         return total;
     }
     const SELECTOR='h1,h2,h3,h4,h5,strong,b,[class*="name"],[class*="title"],[class*="release"]';
-    const SKIP='.dk-detail-links,.dk-request-links,.dk-request-bar,.dk-listing-dialog,.dk-hub,#dkokto-hub,#dkokto-tools,#dkokto-game-dialog,#dkokto-nav-dialog,#dkokto-banner,#dp-inspector-hub,#dp-inspector-tools,.torrent-mediainfo-dump,textarea,input,pre,code,nav,footer';
+    // Everything this script draws is listed here, and the list is the whole point: a
+    // panel of ours that shows release names — the comparison, the group menu, the
+    // findings row — would otherwise be searched for the page's release name and win,
+    // and then the badge and the lookup row would be built inside our own output.
+    const SKIP='.dk-detail-links,.dk-detail-compare,.dk-detail-page,.dk-group-menu,.dk-listing-decision,'
+        +'.dk-request-links,.dk-request-bar,.dk-request-page,.dk-listing-dialog,.dk-listing-bar,.dk-hub,'
+        +'#dkokto-hub,#dkokto-tools,#dkokto-game-dialog,#dkokto-nav-dialog,#dkokto-banner,#dkokto-request-dialog,'
+        +'#dp-inspector-hub,#dp-inspector-tools,.torrent-mediainfo-dump,textarea,input,pre,code,nav,footer';
     // The element's own text, without this script's badge or lookup row.
     function textOf(node) {
         const copy=node.cloneNode(true);
