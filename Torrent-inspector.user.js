@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DarkPeers - Torrent Inspector
 // @namespace    dkokto.darkpeers.inspector
-// @version      1.21.0
+// @version      1.21.1
 // @description  Torrent Inspector and automatic listing naming badges, checked against DarkPeers or Zenith rules. Reads the page only; makes no requests.
 // @author       🤖T.R.A.V.I.S (original Chungus Edition); DKOKTO personal customization
 // @match        https://darkpeers.org/*
@@ -175,11 +175,15 @@ const DKOKTO_INSPECTOR = (() => {
 // declare a winner, and does not know anything the reports do not say. Bitrates are
 // compared as numbers where both sides give one; everything else is compared as text.
 const DKOKTO_COMPARE = ((inspector) => {
-    const num=value=>{const match=String(value??'').replace(/\s+/g,' ').match(/([\d.]+)\s*(k|M|G)?/i);
+    // MediaInfo writes a long number with its thousands separated — "8 000 kb/s",
+    // "1 234 567 bytes" — so the separators come out before the number is read. Without
+    // this, "8 000 kb/s" read as 8 and was reported as 100% smaller than 12.5 Mb/s.
+    const joined=value=>String(value??'').replace(/\s+/g,' ').replace(/(\d)[ ,\u00a0\u202f\u2009](?=\d)/g,'$1');
+    const num=value=>{const match=joined(value).match(/([\d.]+)\s*(k|M|G)?/i);
         if(!match)return 0;
         const scale={k:1e3,m:1e6,g:1e9}[String(match[2]||'').toLowerCase()]||1;
         return Number(match[1])*scale||0;};
-    const bytes=value=>{const match=String(value??'').match(/([\d.]+)\s*(KiB|MiB|GiB|TiB|KB|MB|GB|TB|bytes?)/i);
+    const bytes=value=>{const match=joined(value).match(/([\d.]+)\s*(KiB|MiB|GiB|TiB|KB|MB|GB|TB|bytes?)/i);
         if(!match)return 0;
         const unit=String(match[2]).toLowerCase();
         const scale=unit.startsWith('ti')?1024**4:unit.startsWith('gi')?1024**3:unit.startsWith('mi')?1024**2:unit.startsWith('ki')?1024
@@ -422,7 +426,11 @@ const DKOKTO_CAPTURE = (() => {
     const pair=(a,b)=>payload(a)+'\n\n'+payload(b);
 
     // --- What the two pages differ on ---------------------------------------------------
-    const bytes=value=>{const match=String(value??'').match(/([\d.]+)\s*(KiB|MiB|GiB|TiB|KB|MB|GB|TB|bytes?)/i);
+    // A page can state a size with its thousands separated ("1 024 MiB"), so the separators
+    // come out first. Deliberately a second copy of compare-core's helper: this module has
+    // no dependencies at all, which is what lets the checks run it on its own.
+    const joined=value=>String(value??'').replace(/(\d)[ ,\u00a0\u202f\u2009](?=\d)/g,'$1');
+    const bytes=value=>{const match=joined(value).match(/([\d.]+)\s*(KiB|MiB|GiB|TiB|KB|MB|GB|TB|bytes?)/i);
         if(!match)return 0;
         const unit=String(match[2]).toLowerCase();
         const scale=unit.startsWith('ti')?1024**4:unit.startsWith('gi')?1024**3:unit.startsWith('mi')?1024**2
@@ -676,7 +684,7 @@ const DKOKTO_PAGE = (() => {
         if(!video)return issues;
         const isDisc=/full\s*disc|^disc$/i.test(type)||FULL_DISC.test(name);
         if(isDisc) {
-            if(!hasBdInfo)add(hasMediaInfo?'review':'review','page-bdinfo',
+            if(!hasBdInfo)add('review','page-bdinfo',
                 'This is filed as a full disc and no BDInfo is posted'+(hasMediaInfo?', only a MediaInfo':'')+'. A disc is normally described by its BDInfo.');
         } else if(hasBdInfo&&!hasMediaInfo)
             add('review','page-bdinfo-only','A BDInfo is posted but this is not filed as a full disc. Confirm which the upload actually is.');
@@ -1427,8 +1435,12 @@ const DKOKTO_GROUPS = ((profiles) => {
         const profile=profiles.get(site);
         if(!profile)return LISTS.dp;
         // Rebuilt when the stored profile changes, so an edit takes effect without a reload.
-        const stamp=profile.banned.length+':'+profile.conditional.length+':'+profile.sources.length+':'+profile.label;
-        if(made.get(site)?.stamp!==stamp)made.set(site,{stamp,list:fromProfile(profile)});
+        // Keyed on the profile object itself: saving replaces it, and profiles.all() hands
+        // back the same object until then. Keying on the LENGTHS of its lists meant that
+        // renaming a banned group — the same count, the same label — left the old list in
+        // force, so the group you had just removed was still refused and its replacement
+        // was not, until the page was reloaded.
+        if(made.get(site)?.from!==profile)made.set(site,{from:profile,list:fromProfile(profile)});
         return made.get(site).list;
     }
     const keysOf=new Map();
@@ -1513,7 +1525,10 @@ const DKOKTO_GROUPS = ((profiles) => {
     }
     return {find,tags,trailingTag,
         list:(site='dp')=>[...listFor(site).banned],
-        conditional:(site='dp')=>listFor(site).conditional.map(entry=>({name:entry.name,allowed:entry.allowed})),
+        // allowIf is the pattern itself, so a profile copied from this list carries the rule
+        // it says it carries: HDT is allowed for Remuxes, and the exported pattern says REMUX.
+        conditional:(site='dp')=>listFor(site).conditional.map(entry=>
+            ({name:entry.name,allowed:entry.allowed,allowIf:entry.allow.source,otherwise:entry.otherwise})),
         sources:(site='dp')=>listFor(site).sources.map(entry=>entry.name),
         reason:(name,site='dp')=>site==='zenith'?ZENITH_REASON.get(name)||'':listFor(site).reasons?.get(name)||'',
         count:BANNED.length+CONDITIONAL.length+SOURCES.length};
@@ -1829,7 +1844,7 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
     // unless you supply the original title yourself.
     const AKA_SPACED=/(?:^|\s)AKA(?=\s)/;                       // the correct form
     const AKA_LOOSE=/(?:^|[\s.(\[-])(a\.?k\.?a\.?)(?=$|[\s.:)\]-])/i; // any way of writing it
-    const TECHNICAL=/(?:^|[ .])(?:(?:18|19|20)\d{2}|S\d{2}(?:E\d{2})?|\\d{3,4}[pi]|REMUX|WEB-?DL|WEBRip|Blu-?Ray|HDTV|DVD(?:Rip|5|9)?)(?=$|[ .])/i;
+    const TECHNICAL=/(?:^|[ .])(?:(?:18|19|20)\d{2}|S\d{2}(?:E\d{2})?|\d{3,4}[pi]|REMUX|WEB-?DL|WEBRip|Blu-?Ray|HDTV|DVD(?:Rip|5|9)?)(?=$|[ .])/i;
     function akaCheck(title,add,options={},profile='movie') {
         if(!['movie','tv','disc'].includes(profile))return;   // music and book titles have no AKA
         const value=String(title||'');
@@ -2235,7 +2250,9 @@ const DKOKTO_PROFILES_UI = ((profiles,rules) => {
         const banned=(groups?.list(key)||[]).map(name=>{const reason=groups?.reason(name,key);return reason?[name,reason]:[name];});
         return {format:profiles.FORMAT,version:1,key:key==='dp'?'my-tracker':'my-other-tracker',
             label:'Copy of '+rules.labelOf(key),base:key,hosts:[],
-            groups:{banned,conditional:(groups?.conditional(key)||[]).map(entry=>({name:entry.name,allowIf:'WEB-?DL',allowed:entry.allowed})),
+            groups:{banned,conditional:(groups?.conditional(key)||[]).map(entry=>
+                ({name:entry.name,allowIf:entry.allowIf||'(?:^|[ ._])WEB-?DL(?=$|[ ._-])',allowed:entry.allowed,
+                  ...(entry.otherwise?{otherwise:entry.otherwise}:{})})),
                 sources:(groups?.sources(key)||[]).map(name=>({name}))},
             resolutions:[],rules:[],notes:[]};
     }
@@ -2672,9 +2689,15 @@ const DKOKTO_AUDIT_STORE = (() => {
                 pages:(Array.isArray(parsed.pages)?parsed.pages:[]).filter(v=>typeof v==='string').slice(-MAX_PAGES)};
         }catch{return {rows:[],pages:[]};}
     }
+    // What was last written, so an unchanged scan does not rewrite it. The badges are
+    // re-recorded on every pass; without this, a page that simply sits there re-serialises
+    // and re-stores the whole audit several times a second.
+    let stored=null;
     function write(state) {
         const store=storage();if(!store)return state;
-        try{store.setItem(KEY,JSON.stringify({rows:state.rows.slice(-MAX_ROWS),pages:state.pages.slice(-MAX_PAGES)}));}catch{}
+        const text=JSON.stringify({rows:state.rows.slice(-MAX_ROWS),pages:state.pages.slice(-MAX_PAGES)});
+        if(text===stored)return state;
+        try{store.setItem(KEY,text);stored=text;}catch{}
         return state;
     }
     // Rows come from the badges already drawn: title, address, category and result.
@@ -2702,8 +2725,8 @@ const DKOKTO_AUDIT_STORE = (() => {
         errors:(row.faults||[]).map(message=>({message})),uncertain:row.reason?[{message:row.reason}]:[],review:{issues:[],template:'',service:''}}}));
     const count=()=>read().rows.length;
     const pages=()=>read().pages;
-    function clear(){const store=storage();try{store?.removeItem(KEY);}catch{}return 0;}
-    return {record,rows,count,pages,clear,use(store){backing=store;},KEY};
+    function clear(){const store=storage();stored=null;try{store?.removeItem(KEY);}catch{}return 0;}
+    return {record,rows,count,pages,clear,use(store){backing=store;stored=null;},KEY};
 })();
 
 // What you decided about a pending torrent, so a sweep down the queue does not repeat
@@ -2832,9 +2855,13 @@ const DKOKTO_LISTING = (() => {
     const named=link=>valid(link)&&readable(link);
     const scores=link=>valid(link)&&DKOKTO_RELEASE_TITLE.score(plainText(link).trim())>0;
     const rowsPresent=()=>!!document.querySelector(selector)||queueTargets().length>0||[...document.querySelectorAll(loose)].some(scores);
-    const listingPage=()=>/^\/torrents\/?$/.test(location.pathname)||
+    // Answered once per pass. On a queue this walks every loose torrent link and scores it,
+    // and it was being asked two or three times in the same pass for the same answer.
+    let pageMemo=null;
+    const forget=()=>{pageMemo=null;};
+    const listingPage=()=>pageMemo??(pageMemo=/^\/torrents\/?$/.test(location.pathname)||
         (SUB.test(location.pathname)&&rowsPresent())||
-        (/^\/(?:users\/[^/]+|bookmarks|requests|playlists)(?:\/|$)/.test(location.pathname)&&!!document.querySelector(selector));
+        (/^\/(?:users\/[^/]+|bookmarks|requests|playlists)(?:\/|$)/.test(location.pathname)&&!!document.querySelector(selector)));
     // On a queue the name is often plain text rather than a link, because the torrent is
     // not published yet. So there the row itself is the unit: the cell under "Name" is
     // taken, and its link used only if it has one.
@@ -3183,7 +3210,7 @@ const DKOKTO_LISTING = (() => {
             const text=recorded?recorded+' decision'+(recorded===1?'':'s')+' recorded in this browser':'';
             if(logged.textContent!==text)logged.textContent=text;}
         counts.textContent=enabled?(loading?'Checking loaded titles… ':entries.size?`${total.error} errors · ${total.pass} passed · ${total.review} need review`:'No release titles found. Use List or Card view; grouped posters may only show a show/movie name.'):'Checks disabled';}
-    function scan(){clearTimeout(timer);timer=null;scannedAt=Date.now();const run=++serial;
+    function scan(){clearTimeout(timer);timer=null;scannedAt=Date.now();forget();const run=++serial;
         const list=links(),active=listingPage()||!!list.length;
         // A row is only something you decide on while you are on a queue. Leaving one takes
         // the controls with it, including on rows whose badge has not otherwise changed.
@@ -3210,8 +3237,9 @@ const DKOKTO_LISTING = (() => {
     // Pages that refresh themselves — the home page's comment panels, /torrents/similar —
     // replace their rows wholesale, taking every badge with them. Waiting the usual debounce
     // to put them back is what you see as a flicker. When the change is our own badges being
-    // torn out, the row is judged again on the next frame instead. Rate-limited, so a page
-    // rewriting itself continuously falls back to the ordinary debounce.
+    // torn out, the row is judged again on the next frame instead, so the gap is a frame
+    // rather than a fifth of a second. Rate-limited, so a page rewriting itself continuously
+    // cannot turn this into a loop: past that, the ordinary debounce takes over.
     let scannedAt=0;
     function schedule(restore=false) {
         if(restore&&Date.now()-scannedAt>200) {
@@ -3226,7 +3254,7 @@ const DKOKTO_LISTING = (() => {
     // the answer barely moves, so it is re-asked at most twice a second.
     let looseAt=0,looseFound=false;
     const anyTorrentLink=()=>{const now=Date.now();if(now-looseAt>500){looseFound=!!document.querySelector(loose);looseAt=now;}return looseFound;};
-    function mount(){if(mounted)return;mounted=true;scan();observer=new MutationObserver(records=>{if(!listingPage()&&!entries.size&&!bar?.isConnected&&!anyTorrentLink())return;const relevant=records.some(r=>{const node=r.target.nodeType===1?r.target:r.target.parentElement;if(!node||node.closest(own)||node.closest(noise))return false;
+    function mount(){if(mounted)return;mounted=true;scan();observer=new MutationObserver(records=>{forget();if(!listingPage()&&!entries.size&&!bar?.isConnected&&!anyTorrentLink())return;const relevant=records.some(r=>{const node=r.target.nodeType===1?r.target:r.target.parentElement;if(!node||node.closest(own)||node.closest(noise))return false;
             if(r.type==='attributes')return node.matches(selector)||node.closest('.torrent-search__results,.torrent-search__component');
             if(r.type==='characterData')return !!node.closest(selector+',.torrent-search--list__category,.torrent-card__category');
             return [...r.removedNodes].some(n=>n.nodeType===1)||[...r.addedNodes].some(n=>n.nodeType===1&&!n.matches(own))||node.matches(selector);
@@ -3666,16 +3694,35 @@ const DKOKTO_DETAIL = (() => {
         };
     }
     // The findings the page adds, under the badge, as their own row.
+    // What the page findings are built from, read cheaply. Parsing the MediaInfo dump is
+    // the expensive part of a redraw and it was being done on every pass, only for the
+    // result to be thrown away by a signature check afterwards. This is the same inputs,
+    // read with a handful of selectors, so an unchanged page costs almost nothing.
+    let pageStamp='',pageDrew=false;
+    function pageInputs(name,profile) {
+        return [name,profile,
+            document.querySelectorAll('.dialog__form[data-tab="list"] table tbody tr').length,
+            document.querySelectorAll('.torrent-mediainfo-dump code,.torrent-mediainfo-dump pre,code[x-ref="mediainfo"]').length,
+            fieldOf('h1.meta__title','.meta__title','.torrent__meta-title'),
+            fieldOf('li.torrent__type a','.torrent__type a','.torrent__type'),
+            fieldOf('li.torrent__resolution a','.torrent__resolution a','.torrent__resolution'),
+            fieldOf('li.torrent__category a','.torrent__category a','.torrent__category'),
+            fieldOf('.work__language-link','.meta__language')].join('\u0001');
+    }
     function pageRow(node,name,profile) {
         // These findings quote a tracker's rules where it has them, so they wait for one.
-        if(!DKOKTO_RULES.hasRules()){document.querySelector('.dk-detail-page')?.remove();return;}
+        if(!DKOKTO_RULES.hasRules()){document.querySelector('.dk-detail-page')?.remove();pageStamp='';return;}
+        const stamp=pageInputs(name,profile);
+        if(stamp===pageStamp&&!!document.querySelector('.dk-detail-page')===pageDrew)return;
+        pageStamp=stamp;
         const facts=pageFacts(name,profile);
         const issues=DKOKTO_PAGE.check(facts);
         const existing=document.querySelector('.dk-detail-page');
         const signature=issues.map(issue=>issue.code).join('|')+'#'+facts.files.length;
         if(existing&&existing.dataset.signature===signature)return;
         existing?.remove();
-        if(!issues.length)return;
+        if(!issues.length){pageDrew=false;return;}
+        pageDrew=true;
         const errors=issues.filter(issue=>issue.severity==='error');
         // Its own class only: sharing dk-detail-links made the lookup row mistake this for
         // itself, so a new lookup row was appended on every pass.
@@ -4255,7 +4302,7 @@ const DKOKTO_INTERNALS = (seed => {
         let heading='';
         for(let i=0;i<lines.length;i++) {
             const line=lines[i];
-            if(!line||/^[-|+=~_*\s]+$/.test(line)){heading=heading;continue;}
+            if(!line||/^[-|+=~_*\s]+$/.test(line))continue;
             if(/^\[/.test(line)||/^[A-Z0-9] Trackers$/i.test(line)||/^Tracker\s*→/.test(line))continue;
             // The pasted page: an icon line, then the tracker, then its groups.
             if(/^[\p{Extended_Pictographic}️\s]+$/u.test(line)) {
@@ -4364,7 +4411,7 @@ const DKOKTO_INTERNALS = (seed => {
             tracker+'|'+rows.groups.join(' ')+(rows.url?'|'+rows.url:'')).join('\n');
     }
     return {all,save,clear,add,find,homes,parse,format,defaults,usingDefaults,KEY,MAX,
-        use(fake){backing=fake;seeded=seeded;}};
+        use(fake){backing=fake;}};
 })(typeof module!=='undefined'&&module.exports&&typeof require==='function'
     ?require('./internals-data.js'):(typeof DKOKTO_INTERNALS_DATA!=='undefined'?DKOKTO_INTERNALS_DATA:''));
 
