@@ -109,9 +109,10 @@
       group linked to where it is internal. Nothing is ever fetched, posted or changed.
     </p>
     <ul class="pills">
-      <li class="pill"><b>1.17.2</b></li>
-      <li class="pill">DarkPeers · Zenith · <b>your own trackers</b></li>
+      <li class="pill"><b>1.20.1</b></li>
+      <li class="pill">13 UNIT3D trackers · <b>your own too</b></li>
       <li class="pill">No requests, no posting</li>
+      <li class="pill">Nothing judged without that tracker’s rules</li>
       <li class="pill">Everything stays in your browser</li>
     </ul>
     <div class="cta">
@@ -285,8 +286,9 @@ BeyondHD|BHDStudio FraMeSToR FLUX|https://beyond-hd.me</code></pre>
     </div>
     <div class="grid" style="margin-top:18px">
       <div class="card">
-        <h3>Compare two releases</h3>
-        <p>Paste a report on each side, or load the page's as A. It names what the two differ on and marks the larger number with the percentage. It does <b>not</b> pick a winner: source, encode quality and provenance are not in a report, and it says so.</p>
+        <h3>Compare two releases — the <b>vs</b> button</h3>
+        <p>On a torrent page, press <b>vs</b> and capture this release; open the other one and capture that. You get the file lists and sizes compared (with the gap named), the two MediaInfo reports compared, and both releases written out in the block layout <b>WinMerge or meld</b> reads. It does <b>not</b> pick a winner: source, encode quality and provenance are not in a report, and it says so.</p>
+        <p class="note">Both captures stay in your browser. No companion program, no new permission.</p>
       </div>
       <div class="card">
         <h3>Check a title before you upload</h3>
@@ -326,6 +328,18 @@ BeyondHD|BHDStudio FraMeSToR FLUX|https://beyond-hd.me</code></pre>
       <li>Read what it asks for — the matches and permissions are listed at the top — then press <b>Install</b>.</li>
       <li>Reload the tracker. The bar appears above the listing.</li>
     </ol>
+    <h3 style="margin-top:22px">Which trackers it runs on</h3>
+    <p>DarkPeers and Zenith, plus the UNIT3D trackers whose addresses it already holds:
+      <b>Aither, Blutopia, FearNoPeer, LST, Upload.cx, OnlyEncodes+, OldToonsWorld, ReelFliX, HUNO, Cinematik
+      and Shareisland</b>. Every one of those is a <code>// @match</code> line at the top of the file — delete a line
+      to stop it running there, or copy one and change the domain to add a tracker of your own.</p>
+    <p class="note">
+      On a tracker whose <em>rules</em> it does not have, <b>nothing is badged</b> until you choose a rule set from the
+      <b>Rules</b> picker in the bar, or add that tracker under <b>Tracker rules…</b>. A red ✕ on LST citing
+      DarkPeers’ banned list would be quoting a rulebook LST never wrote, so it waits to be told. Everything that
+      needs no rulebook — the Inspector, the <b>vs</b> comparison, the group tags, the cross-check — works there
+      straight away.
+    </p>
     <p style="margin-top:16px; color:var(--dim)">
       Updating later is the same click: Tampermonkey replaces the script rather than adding a second copy.
       Prefer to do it by hand? Open <a href="https://github.com/khamere/torrent_inspector/blob/main/Torrent-inspector.user.js" rel="noreferrer noopener">the file on GitHub</a>,
@@ -347,6 +361,24 @@ BeyondHD|BHDStudio FraMeSToR FLUX|https://beyond-hd.me</code></pre>
 
       <dt>Why is “Listed as internal at …” not a link for my tracker?</dt>
       <dd>Because the script does not have that tracker's address, and it will not guess one — private tracker domains move, and a wrong link is worse than none. Add the tracker to your cross-check list and the link appears everywhere automatically, or put the address on its line: <code>Tracker|group group group|https://address</code>.</dd>
+
+      <dt>Can I capture one release on DarkPeers and compare it with one on LST?</dt>
+      <dd>Yes, as long as it is the <em>same script</em> running on both. The two <b>vs</b> slots live in Tampermonkey’s
+        own per-script store, which is shared across every tracker the script runs on — ordinary browser storage is kept
+        strictly per domain and cannot do that. Two different scripts, one on each tracker, means two separate sets of slots.</dd>
+
+      <dt>Two torrents have the same release name — how do I tell which is the real one?</dt>
+      <dd>Capture both. Where the names match, the panel stops comparing and concludes: a release is one file, so if the
+        names match and the files do not, one of them is not that release, and it names what they differ in. What it will
+        not tell you is <em>which</em> — neither page carries that. It also flags the honest caveat: a report pasted
+        incompletely, or made by a different MediaInfo version, can differ in wording without the file differing.</dd>
+
+      <dt>What are the tags and encode settings for?</dt>
+      <dd>They are what the container says about how each file was made: the muxer that wrote it, the encoder and the
+        settings it ran with, the encode and tag dates, the title tags. Two releases made the same way match; one that
+        was remuxed or re-encoded afterwards usually names the tool that did it. None of it proves a file was altered
+        — remuxing is normal, tags can be stripped, and plenty of tools write nothing at all — so it is shown as
+        evidence to read, never as a verdict.</dd>
 
       <dt>Will it clash with my other userscripts?</dt>
       <dd>It tries hard not to. If another script has already turned a group tag into a link, this one leaves that tag alone entirely. If the full DKOKTO Scene Edition is present, this one stands down.</dd>
@@ -370,7 +402,10 @@ BeyondHD|BHDStudio FraMeSToR FLUX|https://beyond-hd.me</code></pre>
     <div class="grid">
       <div class="card">
         <h3>No requests</h3>
-        <p>Nothing is fetched, crawled, uploaded or downloaded. Every link opens only when you click it. No API access, and no cookie, passkey or credential is read.</p>
+        <p>Nothing is fetched, crawled, uploaded or downloaded. Every link opens only when you click it. No API access, and no cookie, passkey or credential is read.
+          It asks Tampermonkey for three permissions and they are all storage — <code>GM_setValue</code>, <code>GM_getValue</code>,
+          <code>GM_deleteValue</code> — which is how the <b>vs</b> slots are shared between trackers. There is no
+          <code>GM_xmlhttpRequest</code> and no <code>@connect</code> line, so it has no way to make a request at all.</p>
       </div>
       <div class="card">
         <h3>No writing to the tracker</h3>
@@ -390,7 +425,7 @@ BeyondHD|BHDStudio FraMeSToR FLUX|https://beyond-hd.me</code></pre>
 
 <footer>
   <div class="wrap">
-    <p><b>Torrent Inspector 1.17.2</b> — a personal fork, offered as-is.</p>
+    <p><b>Torrent Inspector 1.20.1</b> — a personal fork, offered as-is.</p>
     <p>Found something wrong? A screenshot with the badge's tooltip visible is the fastest fix — several bugs in this line were found exactly that way, and each one now has a test built from the row that showed it up.</p>
   </div>
 </footer>
