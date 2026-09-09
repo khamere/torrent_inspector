@@ -7,14 +7,21 @@ makes no requests of any kind — every link opens only when you click it.
 Newest first.
 
 ---
+## 1.19.1 — the comparison panel was being read as the page
+
+- With the panel open, the lookup row, the other-versions row and the panel flashed in and
+  out: the panel's own headings hold the two captured release names, and the release-name
+  search did not exclude this script's own panels, so a heading inside it could win.
+- The badge, lookup row and findings row were then built inside the panel and wiped by its
+  next redraw. Same mistake as the blinking listing badge, in a new place.
+- SKIP now names every container this script draws, not the handful it happened to list.
+  
 ## 1.19.0 — the "vs" button: two releases compared, clipboard only
 
 - A "vs" button in the lookup row on a torrent page: capture this release, capture another,
   compare. Both slots are kept in this browser's own storage.
-- The payload follows HelperZ's block layout (Torrent Moderation Helper, by MagnetZ) and its
-  two flags, so a captured pair pastes into WinMerge, meld or any two-pane diff tool.
-- HelperZ's companion server on 127.0.0.1:5123 is deliberately not used: this script still
-  declares "@grant none" and lists no @connect address, and a check asserts both.
+- The payload follows HelperZ's block layout and itstwo flags, so a captured pair pastes into
+  WinMerge, meld or any two-pane diff tool.
 - Merged rather than swapped: the panel adds the file-level comparison a MediaInfo report
   cannot carry (file count, total size with the gap named, extraneous files, top folder)
   above the existing report comparison. Neither release is declared the better one.
