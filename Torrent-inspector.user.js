@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DarkPeers - Torrent Inspector
 // @namespace    dkokto.darkpeers.inspector
-// @version      1.17.2
+// @version      1.17.3
 // @description  Torrent Inspector and automatic listing naming badges, checked against DarkPeers or Zenith rules. Reads the page only; makes no requests.
 // @author       🤖T.R.A.V.I.S (original Chungus Edition); DKOKTO personal customization
 // @match        https://darkpeers.org/*
@@ -1081,10 +1081,34 @@ const DKOKTO_GROUPS = ((profiles) => {
     // A site decoration inside the title element (a flame, a star, an icon-font glyph) is
     // not part of the tag, and a trailing one hid the group entirely.
     const DECORATION=/^[\s\p{Cf}\p{Co}\p{So}\p{Sk}]+|[\s\p{Cf}\p{Co}\p{So}\p{Sk}]+$/gu;
+    // A group name can contain spaces — "…x265-Goki TAoE" is one tag, not a tag and a stray
+    // word — so everything after the closing hyphen is taken, up to four words. What tells
+    // that from "…WEB-DL AAC 2.0 H.264", which has no tag at all, is that a technical token
+    // is never part of a group name.
+    const TECHNICAL=/^(?:\d{3,4}[pi]|(?:18|19|20)\d{2}|S\d{2}(?:E\d{2})?|E\d{2}|\d+\.\d+|BluRay|BDRip|BRRip|BDMV|ISO|WEB|WEBRip|WEBDL|DL|HDTV|UHDTV|SDTV|DVD|DVDRip|UHD|HD|SD|Rip|Disc|REMUX|Hybrid|x26[45]|H\.?26[45]|AVC|HEVC|AV1|XviD|DivX|VC-?1|MPEG-?\d?|DD|DDP|DD\+|AC3|EAC3|AAC|FLAC|DTS|DTS-HD|DTS-X|MA|TrueHD|Atmos|Opus|LPCM|PCM|MP3|Audio|HDR|HDR10|HDR10\+|DV|SDR|HLG|10bit|Hi10P|IMAX|REPACK|PROPER|EXTENDED|UNCUT|Remastered|Criterion|MULTi|SUBBED|DUBBED|Subs?|Dubs?|Complete|Season|Part|AKA|Edition|Cut|NTSC|PAL)$/i;
+    function trailingTag(title) {
+        const value=String(title||'').replace(DECORATION,'').trim();
+        // Each hyphen in turn, earliest first, because a group name can hold hyphens of its
+        // own (R-A-R-B-G) and the tag is whatever runs unbroken to the end from the first
+        // hyphen that opens one. A tail carrying a technical token is not a tag: that is
+        // what tells "…WEB-DL AAC 2.0 H.264" (no tag) from "…x265-Goki TAoE" (one tag).
+        for(let at=value.indexOf('-');at>0;at=value.indexOf('-',at+1)) {
+            // A real tag's hyphen has no space before it: " - The Beginning" is part of a
+            // name, "x265-GRP" is a tag.
+            if(/\s$/.test(value.slice(0,at)))continue;
+            const tail=value.slice(at+1).trim();
+            if(!tail||tail.length>40)continue;
+            const words=tail.split(/\s+/);
+            if(words.length>4||!/^[A-Za-z0-9]/.test(words[0]))continue;
+            if(words.some(word=>TECHNICAL.test(word.replace(/[.,;:]+$/,''))))continue;
+            return tail;
+        }
+        return '';
+    }
     function tags(title) {
         const value=String(title||'').replace(DECORATION,'').trim(),found=[];
-        const trailing=value.match(/-\s?([A-Za-z0-9][A-Za-z0-9._+-]{0,29})\s*$/);
-        if(trailing)found.push(trailing[1]);
+        const trailing=trailingTag(value);
+        if(trailing)found.push(trailing);
         for(const match of String(value).matchAll(/[[(]([^\][()]{1,40})[\])]/g))found.push(match[1]);
         // "-YTS.MX" and "[YTS.MX]" are the same group as "YTS".
         for(const tag of [...found])if(tag.includes('.'))found.push(tag.split('.')[0]);
@@ -1108,9 +1132,23 @@ const DKOKTO_GROUPS = ((profiles) => {
                 reason:conditional.allow.test(String(title||''))
                     ?chosen.allowed(conditional):chosen.refused(conditional)};
         }
+        // "Goki TAoE" is not the banned "Goki" — a different name is a different group, and
+        // saying otherwise on a moderation tool would be an accusation, not a finding. But
+        // the resemblance is worth a look, so it is raised as a question and named as one.
+        const tag=trailingTag(title);
+        if(tag&&/\s/.test(tag)) {
+            const first=key(tag.split(/\s+/)[0]);
+            const near=index.banned.get(first)||index.conditional.get(first)?.name;
+            if(near)return {tag,name:typeof near==='string'?near:near.name,kind:'group',banned:false,
+                near:true,site,
+                reason:'The release group tag is “'+tag+'”, which begins with “'+
+                    (typeof near==='string'?near:near.name)+'” — a name on this tracker’s banned list. '+
+                    'They may be the same group written differently, or two different groups. '+
+                    'Check before acting on it: this tool will not decide it for you.'};
+        }
         return null;
     }
-    return {find,tags,
+    return {find,tags,trailingTag,
         list:(site='dp')=>[...listFor(site).banned],
         conditional:(site='dp')=>listFor(site).conditional.map(entry=>({name:entry.name,allowed:entry.allowed})),
         sources:(site='dp')=>listFor(site).sources.map(entry=>entry.name),
@@ -1434,7 +1472,8 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
         if(!s){add('error','empty','Enter the torrent display title to check.');return result();}
         // The chosen tracker's banned and low-quality group list, matched on the group tag alone.
         const group=groups.find(s,{site});
-        if(group)add(group.banned?'error':'review',group.banned?'banned-group':'banned-group-allowed',group.reason);
+        if(group)add(group.banned?'error':'review',
+            group.banned?'banned-group':group.near?'banned-group-near':'banned-group-allowed',group.reason);
         if(profile==='unknown'){add('review','profile','Choose a category. The title alone does not identify a reliable naming template.');return result();}
         if((options.profile||'auto')==='auto')add('review','inferred','Category inferred as '+profile+'. Confirm it in the category selector, especially for TV missing episode numbers.');
         if(name!==String(name).trim())add('error','spaces','Remove leading or trailing spaces from the display title.');
@@ -1561,7 +1600,9 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
         // has none, which cannot be read from a title, so this is a question rather than an
         // error. The last hyphen inside a token such as WEB-DL or DTS-HD is not a tag: a tag
         // runs unbroken to the end.
-        if(!/-\s?[A-Za-z0-9][A-Za-z0-9._+-]{0,29}\s*$/.test(tail))
+        // A group name may contain spaces (…x265-Goki TAoE), so the same reader decides here
+        // as decides which group a title carries.
+        if(!groups.trailingTag(tail))
             add('review','tag','No release group tag closes the title. The guide allows it to be omitted only where the release has none, so confirm this is genuinely untagged rather than the tag having been dropped.');
         if(audioIndex>=0&&channels&&pos(channels)<audioIndex)add('error','channel-order','Channels follow the audio codec.');
         if(type&&resolution&&pos(type)+start<pos(resolution))add('error','type-order','Resolution belongs before the source/type.');
