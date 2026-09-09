@@ -7,6 +7,14 @@ makes no requests of any kind — every link opens only when you click it.
 Newest first.
 
 ---
+## 1.18.0 — the internal-groups directory, three sources merged
+
+- 968 groups across 153 trackers, up from 433 across 35, merged from the two directories the
+  user supplied and the one that shipped before. All three are cited and dated in the source.
+- Group names with a space are quoted in the list, so "-Goki TAoE" resolves to OnlyEncodes+.
+- Retired/disbanded entries are kept and marked; prose asides in the sources are not filed as
+  groups; the "No Home tracker" block is left out.
+  
 ## 1.17.3 — a group name can have a space in it
 
 - "…x265-Goki TAoE" is one group tag. It was read as no tag at all, so those rows were asked
