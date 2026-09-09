@@ -3445,7 +3445,7 @@ KrazyZone|KZANiME KZI KZMOViES LAZYFROG-KZ
 LDU|KeBaB
 LeechTurk|LTRG
 LegacyHD|LEGi0N
-LST|L0ST KIMJI coffee SQS Yuki
+LST|hallowed L0ST KIMJI coffee SQS Yuki
 M-Team|BMDru HDStar HDTime KiSHD MPAD M-Team MTeamTV OneHD Pack StBOX CNHK* R2HD* TnP* MTeam3D MTeamPAD
 MoreThanTV|E.N.D TEPES Dracula* GBL* MOLY* SOIL* VLAD* SMURF WDYM
 Movie-Torrentz|m2g ViP3R
