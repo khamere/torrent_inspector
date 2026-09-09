@@ -7,6 +7,16 @@ makes no requests of any kind — every link opens only when you click it.
 Newest first.
 
 ---
+## 1.21.0 — every UNIT3D tracker it can be pointed at, in a list you can walk
+
+- 41 UNIT3D trackers, up from 11. Codebase from HDVinnie's Private Trackers Spreadsheet;
+  addresses from each tracker's Jackett or Prowlarr indexer definition. Nine with no
+  definition are left out rather than guessed.
+- ReelFliX moved to reelflix.cc; the old address is marked outdated.
+- The @match list is derived from the catalogue at build time and checked against it.
+- The chooser: your trackers first and open, the rest folded into counted groups, a search
+  box over name/language/software, and each address behind its own button.
+  
 ## 1.20.2 — nothing appeared on a torrent page with a long cast list
 
 - The release-name search read only the first 400 candidate elements. Cast, crew, company and
