@@ -109,7 +109,7 @@
       group linked to where it is internal. Nothing is ever fetched, posted or changed.
     </p>
     <ul class="pills">
-      <li class="pill"><b>1.21.0</b></li>
+      <li class="pill"><b>1.22.0</b></li>
       <li class="pill">41 UNIT3D trackers · <b>your own too</b></li>
       <li class="pill">No requests, no posting</li>
       <li class="pill">Nothing judged without that tracker’s rules</li>
@@ -308,8 +308,9 @@ BeyondHD|BHDStudio FraMeSToR FLUX|https://beyond-hd.me</code></pre>
     <p class="sub">Links, built on the page and opened only when you click them.</p>
     <ul class="plain">
       <li><b>Already uploaded?</b> — the <em>exact</em> release name searched on every tracker you have chosen, so you find out before you spend the effort. Exact means exact: a different edition or group will not match, and it says so.</li>
-      <li><b>On a request</b> — every row on <code>/requests</code> gets a search button, and a request's own page shows the links under its title. 26 trackers are built in, each with an editable search address; anything missing can be added.</li>
+      <li><b>On a request</b> — every row on <code>/requests</code> gets a search button, and a request's own page shows the links under its title. 58 trackers are built in — 41 of them UNIT3D — each with an editable search address; anything missing can be added.</li>
       <li><b>Other versions</b> — what else exists here, beside IMDb, TMDB, Trakt, Letterboxd, JustWatch, Blu-ray.com, srrDB, and MyAnimeList / MusicBrainz / Open Library / IGDB as the category warrants.</li>
+      <li><b>Ticked once, ticked everywhere.</b> The trackers you are on follow you between every site the script runs on, rather than being an empty list again on each one. So do the trackers you have added, their rules, and your internal-groups list.</li>
       <li><b>Search all</b> opens them in tabs. Browsers allow one tab per click and silently block the rest, so if yours refuses a burst they are offered one at a time, with <em>Copy every link</em> as the fallback.</li>
     </ul>
     <p class="note" style="margin-top:16px">
@@ -372,6 +373,13 @@ BeyondHD|BHDStudio FraMeSToR FLUX|https://beyond-hd.me</code></pre>
       <dt>Why is “Listed as internal at …” not a link for my tracker?</dt>
       <dd>Because the script does not have that tracker's address, and it will not guess one — private tracker domains move, and a wrong link is worse than none. Add the tracker to your cross-check list and the link appears everywhere automatically, or put the address on its line: <code>Tracker|group group group|https://address</code>.</dd>
 
+      <dt>Do I have to set it up again on every tracker?</dt>
+      <dd>No. The trackers you are on, the trackers you have added and their rules, your internal-groups list, and which rules apply
+        where all live in Tampermonkey's per-script store, which every site the script runs on can see — ordinary browser storage is
+        kept per domain and cannot. Anything you had set up before this became shared is carried up the first time it is read, so
+        nothing is lost. The audit, the decision log and private notes stay per tracker on purpose: those are a record of work on
+        that tracker rather than a setting.</dd>
+
       <dt>Can I capture one release on DarkPeers and compare it with one on LST?</dt>
       <dd>Yes, as long as it is the <em>same script</em> running on both. The two <b>vs</b> slots live in Tampermonkey’s
         own per-script store, which is shared across every tracker the script runs on — ordinary browser storage is kept
@@ -423,7 +431,10 @@ BeyondHD|BHDStudio FraMeSToR FLUX|https://beyond-hd.me</code></pre>
       </div>
       <div class="card">
         <h3>Local, bounded, yours</h3>
-        <p>Every list it keeps lives in your browser with a fixed cap, and is never sent anywhere.</p>
+        <p>Every list it keeps lives on your machine with a fixed cap, and is never sent anywhere. Your <em>setup</em> — the trackers
+          you are on, the rules you have added, your internal-groups list — is kept in Tampermonkey's own per-script store, so it is
+          the same on every tracker. What you <em>did</em> on a particular tracker — the audit, the decision log, private notes —
+          stays on that tracker. Both are storage on this machine, not a request.</p>
       </div>
     </div>
     <p class="note" style="margin-top:18px">
@@ -435,7 +446,7 @@ BeyondHD|BHDStudio FraMeSToR FLUX|https://beyond-hd.me</code></pre>
 
 <footer>
   <div class="wrap">
-    <p><b>Torrent Inspector 1.21.0</b> — a personal fork, offered as-is.</p>
+    <p><b>Torrent Inspector 1.22.0</b> — a personal fork, offered as-is.</p>
     <p>Found something wrong? A screenshot with the badge's tooltip visible is the fastest fix — several bugs in this line were found exactly that way, and each one now has a test built from the row that showed it up.</p>
   </div>
 </footer>
