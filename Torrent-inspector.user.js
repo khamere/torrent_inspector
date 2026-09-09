@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DarkPeers - Torrent Inspector
 // @namespace    dkokto.darkpeers.inspector
-// @version      1.18.0
+// @version      1.19.0
 // @description  Torrent Inspector and automatic listing naming badges, checked against DarkPeers or Zenith rules. Reads the page only; makes no requests.
 // @author       🤖T.R.A.V.I.S (original Chungus Edition); DKOKTO personal customization
 // @match        https://darkpeers.org/*
@@ -17,7 +17,7 @@
 
 (function () {
     'use strict';
-    const DPTI_CSS = "/* Standalone Torrent Inspector styling. Scoped to this script's own dialog,\n   launcher and listing badges; site theming is left untouched. */\n#dp-inspector-tools { position:fixed; right:14px; bottom:14px; z-index:2147482000; display:flex; gap:8px; }\n#dp-inspector-tools button { font:600 14px/1.2 \"Segoe UI\",system-ui,sans-serif; color:#f4e8ff; background:#3d2551; border:1px solid #a97fc6; border-radius:5px; padding:10px 14px; cursor:pointer; box-shadow:0 2px 10px #0009; }\n#dp-inspector-tools button:hover { background:#643784; }\n#dp-inspector-tools button:focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n\n.dk-hub { box-sizing:border-box; width:min(940px,calc(100vw - 24px)); max-height:88dvh; padding:0; overflow:auto; background:#15101d; color:#f0e9f6; border:1px solid #af83c8; border-radius:6px; font:15px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-hub::backdrop { background:#07040bcc; }\n.dk-hub header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 20px; background:linear-gradient(#392447,#20152b); }\n.dk-hub h2 { margin:0; font:600 22px Consolas,monospace; }\n.dk-hub-content { padding:16px 20px; }\n.dk-hub :is(button,input,select,textarea) { box-sizing:border-box; font:inherit; color:#f4e8ff; background:#24182f; border:1px solid #9873b0; border-radius:3px; padding:8px 10px; min-width:0; }\n.dk-hub button { cursor:pointer; }\n.dk-hub button:hover,.dk-hub button[aria-pressed=true] { background:#643784; }\n.dk-hub button:disabled { opacity:.5; cursor:default; }\n.dk-hub input:not([type=checkbox]),.dk-hub textarea { width:100%; }\n.dk-hub input[type=checkbox] { width:20px; height:20px; accent-color:#ad71d1; }\n.dk-hub label { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin:12px 0; }\n.dk-hub a { color:#e0b6ff; overflow-wrap:anywhere; }\n.dk-hub :is(button,a,input,textarea,select,summary):focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n.dk-hub .dk-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:10px 0; }\n.dk-hub .dk-row a { flex:1; min-width:140px; }\n.dk-hub pre { background:#0c0811; padding:12px; max-height:45dvh; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; font:13px/1.5 Consolas,monospace; }\n.dk-hub table { width:100%; border-collapse:collapse; }\n.dk-hub th,.dk-hub td { text-align:left; padding:6px; border-bottom:1px solid #493357; }\n.dk-hub td label { font-size:0; margin:0; }\n.dk-hub td select { font-size:14px; width:100%; }\n.dk-hub-message { padding:0 20px 16px; color:#e2bcfc; white-space:pre-wrap; }\n.dk-hub details { padding:12px 0; border-top:1px solid #624771; }\n.dk-hub summary { cursor:pointer; }\n\n.dk-inspector-table { overflow-x:auto; max-width:100%; }\n.dk-hub .dk-inspector-table table { min-width:640px; font-size:13px; }\n.dk-hub .dk-inspector-table td { vertical-align:top; overflow-wrap:anywhere; max-width:240px; }\n.dk-inspector-checks { padding:10px 14px; background:#25182f; border-left:3px solid #bd91d9; }\n.dk-naming { border:1px solid #725587; padding:12px; margin:12px 0 20px; background:#1c1425; }\n.dk-naming .dk-naming-status { font-weight:700; color:#ead7ff; }\n.dk-naming .dk-naming-errors { border-left:3px solid #e9ad71; padding-left:24px; }\n.dk-naming li { margin:8px 0; }\n.dk-naming details { margin:12px 0; }\n.dk-naming summary { cursor:pointer; color:#dabcdf; }\n\n.dk-listing-bar { display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; padding:12px; margin:8px 0; background:#21162b; border:1px solid #725587; color:#f0e9f6; font:14px/1.5 'Segoe UI',sans-serif; }\n.dk-listing-bar label { display:flex; gap:8px; align-items:center; cursor:pointer; }\n.dk-listing-bar .dk-listing-rules,.dk-hub .dk-naming-site { display:flex; gap:8px; align-items:center; }\n.dk-listing-bar .dk-listing-rules select,.dk-hub .dk-naming-site select { padding:3px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-hub .dk-naming-site { margin:0 0 10px; font-weight:600; color:#d9c4e8; }\n.dk-listing-bar .dk-listing-rules-edit,.dk-hub .dk-naming-site button { padding:3px 9px; border:1px solid #6d5280; border-radius:3px; background:#2b1d36; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-listing-bar .dk-listing-rules-edit:hover,.dk-hub .dk-naming-site button:hover { background:#3a2748; }\n.dk-profile-dialog { max-width:760px; width:92vw; }\n.dk-profile-tabs { display:flex; gap:8px; margin:0 0 14px; flex-wrap:wrap; }\n.dk-profile-tabs button { padding:6px 12px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-profile-tabs button[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-profile-form { display:flex; flex-direction:column; gap:14px; }\n.dk-profile-field { display:flex; flex-direction:column; gap:5px; font-weight:600; color:#d9c4e8; }\n.dk-profile-field :is(input,textarea,select) { padding:7px 9px; border:1px solid #6d5280; border-radius:3px; background:#1b1222; color:#efe4f7; font:inherit; }\n.dk-profile-field textarea,.dk-profile-json { font:13px/1.5 Consolas,'Courier New',monospace; width:100%; box-sizing:border-box; }\n.dk-profile-json { padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#dcc9ec; }\n.dk-profile-field small,.dk-profile-recipes small,.dk-profile-count { font-weight:400; color:#b9a6c9; font-size:12px; }\n.dk-profile-count { color:#a9e3c0; }\n.dk-profile-recipes { border:1px solid #56406a; border-radius:4px; padding:12px; display:flex; flex-direction:column; gap:7px; }\n.dk-profile-recipes legend { padding:0 6px; color:#d9c4e8; font-weight:600; }\n.dk-profile-recipes label { display:flex; gap:9px; align-items:center; font-size:14px; }\n.dk-profile-installed { border:1px solid #56406a; border-radius:4px; padding:12px; display:flex; flex-direction:column; gap:7px; }\n.dk-profile-installed small { color:#b9a6c9; font-size:12px; }\n.dk-profile-file { display:inline-flex; align-items:center; gap:8px; font-size:13px; color:#d9c4e8; }\n.dk-profile-status:not(:empty) { padding:9px 11px; border-left:3px solid #7d5c96; background:#20152a; color:#e6d6f2; }\n.dk-profile-status[data-tone=bad] { border-color:#e07a7a; }\n.dk-profile-status[data-tone=good] { border-color:#7ad39a; }\n.dk-profile-status[data-tone=warn] { border-color:#e0c07a; }\n.dk-listing-decision { display:inline-flex; gap:6px; align-items:center; margin-left:8px; font-size:12px; }\n.dk-listing-decision select { padding:2px 5px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-listing-decision[data-state=approved] select { border-color:#5fa87a; }\n.dk-listing-decision[data-state=rejected] select { border-color:#c97a7a; }\n.dk-listing-decision[data-state=asked] select { border-color:#c9b07a; }\n.dk-decision-mark { color:#b9a6c9; white-space:nowrap; }\n.dk-listing-badge[data-lead=yes] { margin:0 6px 0 0; }\n.dk-detail-page { display:block; padding:12px 14px; margin:10px 0; border:1px solid #5b406d; border-radius:4px; background:#1c1426; }\n.dk-detail-page ul { margin:8px 0 0; padding-left:20px; }\n.dk-detail-page li { margin:4px 0; color:#e0d2ec; font-size:13px; line-height:1.55; }\n.dk-detail-page li[data-severity=error] { color:#f0b5b5; }\n.dk-detail-page li[data-severity=error]::marker { color:#e07a7a; }\n.dk-detail-page li[data-severity=review]::marker { color:#e0c07a; }\n.dk-detail-page small { display:block; margin-top:9px; color:#a493b4; font-size:11.5px; }\n.dk-reply { margin-top:14px; border:1px solid #56406a; border-radius:4px; padding:10px 12px; }\n.dk-reply summary { cursor:pointer; font-weight:600; color:#d9c4e8; }\n.dk-reply p { color:#b9a6c9; font-size:13px; }\n.dk-reply-choice { padding:5px 11px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-reply-choice[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-reply-text { width:100%; box-sizing:border-box; margin:10px 0; padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#efe4f7; font:13px/1.6 Consolas,'Courier New',monospace; }\n.dk-reply { margin-top:14px; border:1px solid #56406a; border-radius:4px; padding:10px 12px; }\n.dk-reply summary { cursor:pointer; font-weight:600; color:#d9c4e8; }\n.dk-reply p { color:#b9a6c9; font-size:13px; }\n.dk-reply-choice { padding:5px 11px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-reply-choice[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-reply-text { width:100%; box-sizing:border-box; margin:10px 0; padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#efe4f7; font:13px/1.6 Consolas,'Courier New',monospace; }\n.dk-listing-log { display:inline-flex; gap:8px; align-items:center; }\n.dk-compare-sides { display:grid; grid-template-columns:1fr 1fr; gap:12px; }\n.dk-compare-side { display:flex; flex-direction:column; gap:5px; font-weight:600; color:#d9c4e8; }\n.dk-compare-side textarea { font:13px/1.5 Consolas,'Courier New',monospace; padding:8px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#dcc9ec; width:100%; box-sizing:border-box; }\n.dk-compare-table { display:flex; flex-direction:column; border:1px solid #56406a; border-radius:4px; overflow:hidden; margin:10px 0; }\n.dk-compare-row { display:grid; grid-template-columns:minmax(120px,1fr) minmax(0,1.2fr) minmax(0,1.2fr); gap:10px; padding:7px 10px; border-bottom:1px solid #3d2c4c; font-size:13px; }\n.dk-compare-row:last-child { border-bottom:none; }\n.dk-compare-row:nth-child(odd) { background:#1d1426; }\n.dk-compare-row [data-larger=yes] { color:#a9e3c0; }\n@media (max-width:700px){ .dk-compare-sides,.dk-compare-row { grid-template-columns:1fr; } }\n.dk-listing-bar input[type=checkbox] { width:18px; height:18px; accent-color:#ad71d1; }\n.dk-listing-bar small { flex-basis:100%; color:#d2bedf; }\n.dk-listing-bar [role=status] { font-weight:600; }\nbutton.dk-listing-badge { display:inline-flex !important; align-items:center; justify-content:center; vertical-align:middle; flex-shrink:0; width:22px; height:22px; min-width:22px; padding:0 !important; margin:0 0 0 6px !important; border:1px solid currentColor !important; border-radius:4px !important; background:#160f1e !important; font:bold 15px/1 'Segoe UI',sans-serif !important; cursor:pointer; box-shadow:none !important; }\nbutton.dk-listing-badge[data-state=error] { color:#ff666d !important; }\nbutton.dk-listing-badge[data-state=pass] { color:#67df99 !important; }\nbutton.dk-listing-badge[data-state=review] { color:#f1c15b !important; }\nbutton.dk-listing-badge:focus-visible { outline:3px solid #eee !important; outline-offset:2px; }\n.dk-listing-dialog li { margin-block:8px; }\n.dk-listing-dialog h3 { overflow-wrap:anywhere; }\n\n@media(max-width:700px) {\n  #dp-inspector-tools { left:8px; right:8px; bottom:max(8px,env(safe-area-inset-bottom)); justify-content:center; }\n  #dp-inspector-tools button { min-height:44px; width:100%; }\n  .dk-hub { max-height:90dvh; }\n  .dk-hub header,.dk-hub-content { padding:12px; }\n  .dk-hub button { min-height:44px; }\n  .dk-hub input,.dk-hub select,.dk-hub textarea { font-size:16px; }\n  .dk-hub table tr { display:grid; grid-template-columns:1fr 1fr; padding:8px 0; }\n  .dk-hub table tr:first-child { display:none; }\n  .dk-hub table td { border:0; }\n  .dk-hub table td:first-child { grid-column:1/-1; }\n  .dk-hub .dk-inspector-table table tr { display:table-row; }\n  .dk-hub .dk-inspector-table table tr:first-child { display:table-row; }\n  .dk-hub .dk-inspector-table table td { border-bottom:1px solid #493357; }\n  button.dk-listing-badge { width:26px; height:26px; min-width:26px; font-size:17px !important; }\n}\n@media print { .dk-hub,#dp-inspector-tools { display:none !important; } }\n.dk-naming .dk-service-list { max-height:280px; overflow:auto; padding:6px 10px; background:#140e1c; border:1px solid #4b3559; border-radius:3px; }\n.dk-naming .dk-service-list p { margin:5px 0; overflow-wrap:anywhere; }\n.dk-naming .dk-service-list code { display:inline-block; min-width:96px; color:#e2bcfc; font:13px Consolas,monospace; }\n.dk-naming .dk-naming-service { margin:4px 0 8px; color:#cbb0e4; font:13px Consolas,monospace; }\nbutton.dk-listing-badge.dk-detail-badge { width:24px; height:24px; min-width:24px; font-size:16px !important; margin:0 0 0 8px !important; vertical-align:middle; }\n.dk-detail-links { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:10px 0 14px; font:14px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-detail-links .dk-detail-links-label { color:#c0adce; margin-right:2px; }\n.dk-detail-links a { padding:4px 9px; color:#e6cbff !important; background:#22162c; border:1px solid #6d5280; border-radius:3px; text-decoration:none; }\n.dk-detail-links a:hover { background:#3d2451; border-color:#c193e6; }\n.dk-detail-links a[data-exact=yes] { border-color:#9fdcb6; box-shadow:inset 0 0 0 1px #67df9933; }\n.dk-detail-links a:focus-visible,.dk-detail-links button:focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n.dk-detail-links .dk-detail-copy { padding:4px 9px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-detail-links .dk-detail-copy:hover { background:#563173; }\n@media print { .dk-detail-links,.dk-detail-badge { display:none !important; } }\n.dk-listing-bar .dk-listing-audit { padding:5px 11px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-listing-bar .dk-listing-audit:hover { background:#563173; border-color:#c193e6; }\n.dk-hub .dk-listing-copy { margin-top:12px; }\n.dk-listing-dialog pre { max-height:50dvh; }\n.dk-listing-dialog pre { max-height:50dvh; }\n.dk-request-open { margin-left:6px; padding:2px 8px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:12px/1.5 \"Segoe UI\",system-ui,sans-serif; vertical-align:middle; }\n.dk-request-open:hover { background:#563173; border-color:#c193e6; }\n.dk-request-open:focus-visible { outline:2px solid #e0bdff; outline-offset:2px; }\n.dk-hub .dk-tracker-group { margin:12px 0; padding:8px 12px 10px; border:1px solid #6d5280; border-radius:4px; }\n.dk-hub .dk-tracker-group legend { padding:0 6px; color:#d9c4e8; font-weight:600; }\n.dk-hub .dk-tracker-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:6px 0; }\n.dk-hub .dk-tracker-row label { display:flex; align-items:center; gap:6px; min-width:190px; margin:0; cursor:pointer; }\n.dk-hub .dk-tracker-row input[type=checkbox] { width:16px; height:16px; accent-color:#ad71d1; }\n.dk-hub .dk-tracker-url,.dk-hub .dk-tracker-row input[type=text] { flex:1; min-width:230px; padding:4px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:12px/1.5 ui-monospace,Consolas,monospace; }\n.dk-hub .dk-tracker-row select { padding:4px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n@media print { .dk-request-open,.dk-request-bar,.dk-request-links { display:none !important; } }\n.dk-request-seen { margin-left:6px; color:#9fdcb6; font:12px/1.5 \"Segoe UI\",system-ui,sans-serif; white-space:nowrap; }\n.dk-request-float { position:absolute; z-index:2147483000; box-shadow:0 3px 10px #0009; }\n.dk-hub .dk-request-term { display:flex; flex-direction:column; gap:4px; margin:8px 0 4px; color:#d9c4e8; }\n.dk-hub .dk-request-term input { padding:6px 8px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:14px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-listing-badge[data-state=error][data-banned=yes] { box-shadow:0 0 0 2px #ff6b6b88; }\n@media print { .dk-request-seen,.dk-request-float { display:none !important; } }\n.dk-hub .dk-request-step { min-width:220px; }\n.dk-hub .dk-request-step[disabled] { opacity:.6; cursor:default; }\n\n/* A badge rides beside the title without adding height to the row: in grouped and\n   compact listing views a taller badge overflowed onto the title below it. */\nbutton.dk-listing-badge { line-height:0 !important; max-height:22px; box-sizing:border-box; position:relative; top:-1px; }\nbutton.dk-listing-badge.dk-detail-badge { max-height:24px; top:0; }\n@media(max-width:700px) { button.dk-listing-badge { width:26px; height:26px; min-width:26px; font-size:17px !important; max-height:26px; } }\n.dk-listing-bar .dk-listing-rules,.dk-hub .dk-naming-site { display:flex; gap:8px; align-items:center; }\n.dk-listing-bar .dk-listing-rules select,.dk-hub .dk-naming-site select { padding:3px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-hub .dk-naming-site { margin:0 0 10px; font-weight:600; color:#d9c4e8; }\n\n.dk-group-tag { color:#ffb454 !important; cursor:pointer; border-bottom:1px dotted currentColor; }\n.dk-group-tag:hover, .dk-group-tag:focus-visible { color:#ffd08a !important; outline:none; border-bottom-style:solid; }\n.dk-group-menu { position:absolute; z-index:2147483000; max-width:min(360px,92vw); padding:12px 14px; border:1px solid #7b5792; border-radius:8px; background:#160f1e; color:#eee; box-shadow:0 10px 30px #000a; font:14px/1.5 'Segoe UI',sans-serif; }\n.dk-group-menu strong { display:block; margin-bottom:6px; color:#ffb454; }\n.dk-group-menu ul { margin:0 0 10px; padding-left:18px; }\n.dk-group-menu li { margin-block:6px; }\n.dk-group-menu a { color:#dbc0ef; }\n.dk-group-menu small { display:block; color:#c8b9d2; }\n.dk-group-menu button { padding:5px 10px; border:1px solid #7b5792; border-radius:6px; background:#22162c; color:#eee; cursor:pointer; }\n.dk-listing-bar .dk-listing-groups-edit { padding:3px 9px; border:1px solid #6d5280; border-radius:3px; background:#2b1d36; color:#e6d6f2; cursor:pointer; font:inherit; }\n\n.dk-group-add { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:10px 0 6px; }\n.dk-group-add label { flex-basis:100%; color:#c8b9d2; font-size:12.5px; }\n.dk-group-add input { flex:1 1 130px; min-width:0; padding:5px 8px; border:1px solid #6d5280; border-radius:5px; background:#0f0a15; color:#eee; font:inherit; font-size:13px; }\n.dk-group-add small { flex-basis:100%; color:#f1c15b; font-size:12.5px; }\n";
+    const DPTI_CSS = "/* Standalone Torrent Inspector styling. Scoped to this script's own dialog,\n   launcher and listing badges; site theming is left untouched. */\n#dp-inspector-tools { position:fixed; right:14px; bottom:14px; z-index:2147482000; display:flex; gap:8px; }\n#dp-inspector-tools button { font:600 14px/1.2 \"Segoe UI\",system-ui,sans-serif; color:#f4e8ff; background:#3d2551; border:1px solid #a97fc6; border-radius:5px; padding:10px 14px; cursor:pointer; box-shadow:0 2px 10px #0009; }\n#dp-inspector-tools button:hover { background:#643784; }\n#dp-inspector-tools button:focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n\n.dk-hub { box-sizing:border-box; width:min(940px,calc(100vw - 24px)); max-height:88dvh; padding:0; overflow:auto; background:#15101d; color:#f0e9f6; border:1px solid #af83c8; border-radius:6px; font:15px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-hub::backdrop { background:#07040bcc; }\n.dk-hub header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 20px; background:linear-gradient(#392447,#20152b); }\n.dk-hub h2 { margin:0; font:600 22px Consolas,monospace; }\n.dk-hub-content { padding:16px 20px; }\n.dk-hub :is(button,input,select,textarea) { box-sizing:border-box; font:inherit; color:#f4e8ff; background:#24182f; border:1px solid #9873b0; border-radius:3px; padding:8px 10px; min-width:0; }\n.dk-hub button { cursor:pointer; }\n.dk-hub button:hover,.dk-hub button[aria-pressed=true] { background:#643784; }\n.dk-hub button:disabled { opacity:.5; cursor:default; }\n.dk-hub input:not([type=checkbox]),.dk-hub textarea { width:100%; }\n.dk-hub input[type=checkbox] { width:20px; height:20px; accent-color:#ad71d1; }\n.dk-hub label { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin:12px 0; }\n.dk-hub a { color:#e0b6ff; overflow-wrap:anywhere; }\n.dk-hub :is(button,a,input,textarea,select,summary):focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n.dk-hub .dk-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:10px 0; }\n.dk-hub .dk-row a { flex:1; min-width:140px; }\n.dk-hub pre { background:#0c0811; padding:12px; max-height:45dvh; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; font:13px/1.5 Consolas,monospace; }\n.dk-hub table { width:100%; border-collapse:collapse; }\n.dk-hub th,.dk-hub td { text-align:left; padding:6px; border-bottom:1px solid #493357; }\n.dk-hub td label { font-size:0; margin:0; }\n.dk-hub td select { font-size:14px; width:100%; }\n.dk-hub-message { padding:0 20px 16px; color:#e2bcfc; white-space:pre-wrap; }\n.dk-hub details { padding:12px 0; border-top:1px solid #624771; }\n.dk-hub summary { cursor:pointer; }\n\n.dk-inspector-table { overflow-x:auto; max-width:100%; }\n.dk-hub .dk-inspector-table table { min-width:640px; font-size:13px; }\n.dk-hub .dk-inspector-table td { vertical-align:top; overflow-wrap:anywhere; max-width:240px; }\n.dk-inspector-checks { padding:10px 14px; background:#25182f; border-left:3px solid #bd91d9; }\n.dk-naming { border:1px solid #725587; padding:12px; margin:12px 0 20px; background:#1c1425; }\n.dk-naming .dk-naming-status { font-weight:700; color:#ead7ff; }\n.dk-naming .dk-naming-errors { border-left:3px solid #e9ad71; padding-left:24px; }\n.dk-naming li { margin:8px 0; }\n.dk-naming details { margin:12px 0; }\n.dk-naming summary { cursor:pointer; color:#dabcdf; }\n\n.dk-listing-bar { display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; padding:12px; margin:8px 0; background:#21162b; border:1px solid #725587; color:#f0e9f6; font:14px/1.5 'Segoe UI',sans-serif; }\n.dk-listing-bar label { display:flex; gap:8px; align-items:center; cursor:pointer; }\n.dk-listing-bar .dk-listing-rules,.dk-hub .dk-naming-site { display:flex; gap:8px; align-items:center; }\n.dk-listing-bar .dk-listing-rules select,.dk-hub .dk-naming-site select { padding:3px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-hub .dk-naming-site { margin:0 0 10px; font-weight:600; color:#d9c4e8; }\n.dk-listing-bar .dk-listing-rules-edit,.dk-hub .dk-naming-site button { padding:3px 9px; border:1px solid #6d5280; border-radius:3px; background:#2b1d36; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-listing-bar .dk-listing-rules-edit:hover,.dk-hub .dk-naming-site button:hover { background:#3a2748; }\n.dk-profile-dialog { max-width:760px; width:92vw; }\n.dk-profile-tabs { display:flex; gap:8px; margin:0 0 14px; flex-wrap:wrap; }\n.dk-profile-tabs button { padding:6px 12px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-profile-tabs button[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-profile-form { display:flex; flex-direction:column; gap:14px; }\n.dk-profile-field { display:flex; flex-direction:column; gap:5px; font-weight:600; color:#d9c4e8; }\n.dk-profile-field :is(input,textarea,select) { padding:7px 9px; border:1px solid #6d5280; border-radius:3px; background:#1b1222; color:#efe4f7; font:inherit; }\n.dk-profile-field textarea,.dk-profile-json { font:13px/1.5 Consolas,'Courier New',monospace; width:100%; box-sizing:border-box; }\n.dk-profile-json { padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#dcc9ec; }\n.dk-profile-field small,.dk-profile-recipes small,.dk-profile-count { font-weight:400; color:#b9a6c9; font-size:12px; }\n.dk-profile-count { color:#a9e3c0; }\n.dk-profile-recipes { border:1px solid #56406a; border-radius:4px; padding:12px; display:flex; flex-direction:column; gap:7px; }\n.dk-profile-recipes legend { padding:0 6px; color:#d9c4e8; font-weight:600; }\n.dk-profile-recipes label { display:flex; gap:9px; align-items:center; font-size:14px; }\n.dk-profile-installed { border:1px solid #56406a; border-radius:4px; padding:12px; display:flex; flex-direction:column; gap:7px; }\n.dk-profile-installed small { color:#b9a6c9; font-size:12px; }\n.dk-profile-file { display:inline-flex; align-items:center; gap:8px; font-size:13px; color:#d9c4e8; }\n.dk-profile-status:not(:empty) { padding:9px 11px; border-left:3px solid #7d5c96; background:#20152a; color:#e6d6f2; }\n.dk-profile-status[data-tone=bad] { border-color:#e07a7a; }\n.dk-profile-status[data-tone=good] { border-color:#7ad39a; }\n.dk-profile-status[data-tone=warn] { border-color:#e0c07a; }\n.dk-listing-decision { display:inline-flex; gap:6px; align-items:center; margin-left:8px; font-size:12px; }\n.dk-listing-decision select { padding:2px 5px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-listing-decision[data-state=approved] select { border-color:#5fa87a; }\n.dk-listing-decision[data-state=rejected] select { border-color:#c97a7a; }\n.dk-listing-decision[data-state=asked] select { border-color:#c9b07a; }\n.dk-decision-mark { color:#b9a6c9; white-space:nowrap; }\n.dk-listing-badge[data-lead=yes] { margin:0 6px 0 0; }\n.dk-detail-page { display:block; padding:12px 14px; margin:10px 0; border:1px solid #5b406d; border-radius:4px; background:#1c1426; }\n.dk-detail-page ul { margin:8px 0 0; padding-left:20px; }\n.dk-detail-page li { margin:4px 0; color:#e0d2ec; font-size:13px; line-height:1.55; }\n.dk-detail-page li[data-severity=error] { color:#f0b5b5; }\n.dk-detail-page li[data-severity=error]::marker { color:#e07a7a; }\n.dk-detail-page li[data-severity=review]::marker { color:#e0c07a; }\n.dk-detail-page small { display:block; margin-top:9px; color:#a493b4; font-size:11.5px; }\n.dk-reply { margin-top:14px; border:1px solid #56406a; border-radius:4px; padding:10px 12px; }\n.dk-reply summary { cursor:pointer; font-weight:600; color:#d9c4e8; }\n.dk-reply p { color:#b9a6c9; font-size:13px; }\n.dk-reply-choice { padding:5px 11px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-reply-choice[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-reply-text { width:100%; box-sizing:border-box; margin:10px 0; padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#efe4f7; font:13px/1.6 Consolas,'Courier New',monospace; }\n.dk-reply { margin-top:14px; border:1px solid #56406a; border-radius:4px; padding:10px 12px; }\n.dk-reply summary { cursor:pointer; font-weight:600; color:#d9c4e8; }\n.dk-reply p { color:#b9a6c9; font-size:13px; }\n.dk-reply-choice { padding:5px 11px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-reply-choice[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-reply-text { width:100%; box-sizing:border-box; margin:10px 0; padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#efe4f7; font:13px/1.6 Consolas,'Courier New',monospace; }\n.dk-listing-log { display:inline-flex; gap:8px; align-items:center; }\n.dk-compare-sides { display:grid; grid-template-columns:1fr 1fr; gap:12px; }\n.dk-compare-side { display:flex; flex-direction:column; gap:5px; font-weight:600; color:#d9c4e8; }\n.dk-compare-side textarea { font:13px/1.5 Consolas,'Courier New',monospace; padding:8px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#dcc9ec; width:100%; box-sizing:border-box; }\n.dk-compare-table { display:flex; flex-direction:column; border:1px solid #56406a; border-radius:4px; overflow:hidden; margin:10px 0; }\n.dk-compare-row { display:grid; grid-template-columns:minmax(120px,1fr) minmax(0,1.2fr) minmax(0,1.2fr); gap:10px; padding:7px 10px; border-bottom:1px solid #3d2c4c; font-size:13px; }\n.dk-compare-row:last-child { border-bottom:none; }\n.dk-compare-row:nth-child(odd) { background:#1d1426; }\n.dk-compare-row [data-larger=yes] { color:#a9e3c0; }\n@media (max-width:700px){ .dk-compare-sides,.dk-compare-row { grid-template-columns:1fr; } }\n.dk-listing-bar input[type=checkbox] { width:18px; height:18px; accent-color:#ad71d1; }\n.dk-listing-bar small { flex-basis:100%; color:#d2bedf; }\n.dk-listing-bar [role=status] { font-weight:600; }\nbutton.dk-listing-badge { display:inline-flex !important; align-items:center; justify-content:center; vertical-align:middle; flex-shrink:0; width:22px; height:22px; min-width:22px; padding:0 !important; margin:0 0 0 6px !important; border:1px solid currentColor !important; border-radius:4px !important; background:#160f1e !important; font:bold 15px/1 'Segoe UI',sans-serif !important; cursor:pointer; box-shadow:none !important; }\nbutton.dk-listing-badge[data-state=error] { color:#ff666d !important; }\nbutton.dk-listing-badge[data-state=pass] { color:#67df99 !important; }\nbutton.dk-listing-badge[data-state=review] { color:#f1c15b !important; }\nbutton.dk-listing-badge:focus-visible { outline:3px solid #eee !important; outline-offset:2px; }\n.dk-listing-dialog li { margin-block:8px; }\n.dk-listing-dialog h3 { overflow-wrap:anywhere; }\n\n@media(max-width:700px) {\n  #dp-inspector-tools { left:8px; right:8px; bottom:max(8px,env(safe-area-inset-bottom)); justify-content:center; }\n  #dp-inspector-tools button { min-height:44px; width:100%; }\n  .dk-hub { max-height:90dvh; }\n  .dk-hub header,.dk-hub-content { padding:12px; }\n  .dk-hub button { min-height:44px; }\n  .dk-hub input,.dk-hub select,.dk-hub textarea { font-size:16px; }\n  .dk-hub table tr { display:grid; grid-template-columns:1fr 1fr; padding:8px 0; }\n  .dk-hub table tr:first-child { display:none; }\n  .dk-hub table td { border:0; }\n  .dk-hub table td:first-child { grid-column:1/-1; }\n  .dk-hub .dk-inspector-table table tr { display:table-row; }\n  .dk-hub .dk-inspector-table table tr:first-child { display:table-row; }\n  .dk-hub .dk-inspector-table table td { border-bottom:1px solid #493357; }\n  button.dk-listing-badge { width:26px; height:26px; min-width:26px; font-size:17px !important; }\n}\n@media print { .dk-hub,#dp-inspector-tools { display:none !important; } }\n.dk-naming .dk-service-list { max-height:280px; overflow:auto; padding:6px 10px; background:#140e1c; border:1px solid #4b3559; border-radius:3px; }\n.dk-naming .dk-service-list p { margin:5px 0; overflow-wrap:anywhere; }\n.dk-naming .dk-service-list code { display:inline-block; min-width:96px; color:#e2bcfc; font:13px Consolas,monospace; }\n.dk-naming .dk-naming-service { margin:4px 0 8px; color:#cbb0e4; font:13px Consolas,monospace; }\nbutton.dk-listing-badge.dk-detail-badge { width:24px; height:24px; min-width:24px; font-size:16px !important; margin:0 0 0 8px !important; vertical-align:middle; }\n.dk-detail-links { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:10px 0 14px; font:14px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-detail-links .dk-detail-links-label { color:#c0adce; margin-right:2px; }\n.dk-detail-links a { padding:4px 9px; color:#e6cbff !important; background:#22162c; border:1px solid #6d5280; border-radius:3px; text-decoration:none; }\n.dk-detail-links a:hover { background:#3d2451; border-color:#c193e6; }\n.dk-detail-links a[data-exact=yes] { border-color:#9fdcb6; box-shadow:inset 0 0 0 1px #67df9933; }\n.dk-detail-links a:focus-visible,.dk-detail-links button:focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n.dk-detail-links .dk-detail-copy { padding:4px 9px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-detail-links .dk-detail-copy:hover { background:#563173; }\n@media print { .dk-detail-links,.dk-detail-badge { display:none !important; } }\n.dk-detail-links .dk-detail-vs { padding:4px 11px; color:#ffe6b8; background:#3d2a17; border:1px solid #a8813f; border-radius:3px; cursor:pointer; font:inherit; font-weight:600; }\n.dk-detail-links .dk-detail-vs:hover { background:#5a3d1f; border-color:#e0b464; }\n.dk-detail-compare { margin:0 0 16px; padding:12px 14px; background:#1a1223; border:1px solid #6d5280; border-radius:4px; font:14px/1.6 \"Segoe UI\",system-ui,sans-serif; color:#e4d5f2; }\n.dk-detail-compare h3 { margin:12px 0 6px; font-size:15px; color:#e6cbff; }\n.dk-detail-compare h3:first-child { margin-top:0; }\n.dk-detail-compare p { margin:4px 0 8px; }\n.dk-detail-compare small { display:block; margin-top:10px; color:#b9a7c7; font-size:12px; }\n.dk-detail-compare .dk-compare-note { color:#ffe6b8; }\n.dk-compare-slot { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:5px 0; }\n.dk-compare-slot > span { flex:1 1 220px; min-width:0; overflow-wrap:anywhere; color:#cdb8e0; }\n.dk-detail-compare button { padding:4px 10px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-detail-compare button:hover { background:#563173; border-color:#c193e6; }\n.dk-detail-compare button:focus-visible { outline:2px solid #e0bdff; outline-offset:2px; }\n.dk-detail-compare .dk-compare-drop { background:#2a1a22; border-color:#8a5a6a; }\n.dk-detail-compare .dk-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }\n@media print { .dk-detail-compare { display:none !important; } }\n.dk-listing-bar .dk-listing-audit { padding:5px 11px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-listing-bar .dk-listing-audit:hover { background:#563173; border-color:#c193e6; }\n.dk-hub .dk-listing-copy { margin-top:12px; }\n.dk-listing-dialog pre { max-height:50dvh; }\n.dk-listing-dialog pre { max-height:50dvh; }\n.dk-request-open { margin-left:6px; padding:2px 8px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:12px/1.5 \"Segoe UI\",system-ui,sans-serif; vertical-align:middle; }\n.dk-request-open:hover { background:#563173; border-color:#c193e6; }\n.dk-request-open:focus-visible { outline:2px solid #e0bdff; outline-offset:2px; }\n.dk-hub .dk-tracker-group { margin:12px 0; padding:8px 12px 10px; border:1px solid #6d5280; border-radius:4px; }\n.dk-hub .dk-tracker-group legend { padding:0 6px; color:#d9c4e8; font-weight:600; }\n.dk-hub .dk-tracker-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:6px 0; }\n.dk-hub .dk-tracker-row label { display:flex; align-items:center; gap:6px; min-width:190px; margin:0; cursor:pointer; }\n.dk-hub .dk-tracker-row input[type=checkbox] { width:16px; height:16px; accent-color:#ad71d1; }\n.dk-hub .dk-tracker-url,.dk-hub .dk-tracker-row input[type=text] { flex:1; min-width:230px; padding:4px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:12px/1.5 ui-monospace,Consolas,monospace; }\n.dk-hub .dk-tracker-row select { padding:4px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n@media print { .dk-request-open,.dk-request-bar,.dk-request-links { display:none !important; } }\n.dk-request-seen { margin-left:6px; color:#9fdcb6; font:12px/1.5 \"Segoe UI\",system-ui,sans-serif; white-space:nowrap; }\n.dk-request-float { position:absolute; z-index:2147483000; box-shadow:0 3px 10px #0009; }\n.dk-hub .dk-request-term { display:flex; flex-direction:column; gap:4px; margin:8px 0 4px; color:#d9c4e8; }\n.dk-hub .dk-request-term input { padding:6px 8px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:14px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-listing-badge[data-state=error][data-banned=yes] { box-shadow:0 0 0 2px #ff6b6b88; }\n@media print { .dk-request-seen,.dk-request-float { display:none !important; } }\n.dk-hub .dk-request-step { min-width:220px; }\n.dk-hub .dk-request-step[disabled] { opacity:.6; cursor:default; }\n\n/* A badge rides beside the title without adding height to the row: in grouped and\n   compact listing views a taller badge overflowed onto the title below it. */\nbutton.dk-listing-badge { line-height:0 !important; max-height:22px; box-sizing:border-box; position:relative; top:-1px; }\nbutton.dk-listing-badge.dk-detail-badge { max-height:24px; top:0; }\n@media(max-width:700px) { button.dk-listing-badge { width:26px; height:26px; min-width:26px; font-size:17px !important; max-height:26px; } }\n.dk-listing-bar .dk-listing-rules,.dk-hub .dk-naming-site { display:flex; gap:8px; align-items:center; }\n.dk-listing-bar .dk-listing-rules select,.dk-hub .dk-naming-site select { padding:3px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-hub .dk-naming-site { margin:0 0 10px; font-weight:600; color:#d9c4e8; }\n\n.dk-group-tag { color:#ffb454 !important; cursor:pointer; border-bottom:1px dotted currentColor; }\n.dk-group-tag:hover, .dk-group-tag:focus-visible { color:#ffd08a !important; outline:none; border-bottom-style:solid; }\n.dk-group-menu { position:absolute; z-index:2147483000; max-width:min(360px,92vw); padding:12px 14px; border:1px solid #7b5792; border-radius:8px; background:#160f1e; color:#eee; box-shadow:0 10px 30px #000a; font:14px/1.5 'Segoe UI',sans-serif; }\n.dk-group-menu strong { display:block; margin-bottom:6px; color:#ffb454; }\n.dk-group-menu ul { margin:0 0 10px; padding-left:18px; }\n.dk-group-menu li { margin-block:6px; }\n.dk-group-menu a { color:#dbc0ef; }\n.dk-group-menu small { display:block; color:#c8b9d2; }\n.dk-group-menu button { padding:5px 10px; border:1px solid #7b5792; border-radius:6px; background:#22162c; color:#eee; cursor:pointer; }\n.dk-listing-bar .dk-listing-groups-edit { padding:3px 9px; border:1px solid #6d5280; border-radius:3px; background:#2b1d36; color:#e6d6f2; cursor:pointer; font:inherit; }\n\n.dk-group-add { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:10px 0 6px; }\n.dk-group-add label { flex-basis:100%; color:#c8b9d2; font-size:12.5px; }\n.dk-group-add input { flex:1 1 130px; min-width:0; padding:5px 8px; border:1px solid #6d5280; border-radius:5px; background:#0f0a15; color:#eee; font:inherit; font-size:13px; }\n.dk-group-add small { flex-basis:100%; color:#f1c15b; font-size:12.5px; }\n";
 
 // MediaInfo text/JSON interpretation only. No media conversion, account writes or network.
 const DKOKTO_INSPECTOR = (() => {
@@ -206,6 +206,162 @@ const DKOKTO_COMPARE = ((inspector) => {
     }
     return {read,compare,report};
 })(typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./inspector.js'):DKOKTO_INSPECTOR);
+
+// Two releases side by side: what each page says about itself, kept in this browser.
+//
+// The text this writes follows the block layout used by HelperZ (Torrent Moderation
+// Helper, by MagnetZ), so a captured pair can be pasted straight into the same two-pane
+// diff tools — WinMerge, meld, Beyond Compare. The flag wording (⛔ [ HAS EXTRANEOUS
+// FILES ], ⛔ [ HAS TOP FOLDER ]) is HelperZ's too, so the two read alike.
+//
+// What is deliberately not carried over: HelperZ posts its payload to a companion server
+// on 127.0.0.1, which needs GM_xmlhttpRequest and a @connect entry. Nothing here leaves
+// the browser. Both slots live in this browser's own storage, the text reaches the
+// clipboard only when a button is pressed, and no new permission is asked for.
+//
+// Nothing here judges. It says what the two pages differ on; which release is better, and
+// whether a trump is allowed, is a decision the pages cannot make for you.
+const DKOKTO_CAPTURE = (() => {
+    const KEY='dkokto_compare_slots_v1';
+    const REPORT=200000, LINE=300, TITLE=300, FILES=500, HOST=80, SIZE=40;
+    // backing: swapped for a fake store in the Node checks, as internals.js allows.
+    let backing=null;
+    const store=()=>{if(backing)return backing;try{return window.localStorage;}catch{return null;}};
+    const one=(value,max)=>String(value??'').replace(/\s+/g,' ').trim().slice(0,max);
+    const body=(value,max)=>String(value??'').replace(/\r/g,'').replace(/[ \t]+$/gm,'').trim().slice(0,max);
+    const RULE='═'.repeat(10), EDGE='─'.repeat(5);
+    const bar=host=>RULE+'[ '+host+' ]'+RULE;
+    const part=label=>EDGE+'( '+label+' )'+EDGE;
+
+    const VIDEO=/\.(?:mkv|mp4|m4v|avi|wmv|ts|m2ts|mts|vob|mpg|mpeg|mov|flv|webm|iso)$/i;
+    const SUBTITLE=/\.(?:srt|ass|ssa|sub|idx|sup|vtt)$/i;
+    // A disc keeps its own directory tree, so its parts are not loose files.
+    const DISC=/(?:^|\/)(?:BDMV|CERTIFICATE|VIDEO_TS|AUDIO_TS)(?:\/|$)/i;
+
+    // A capture holds what the page said and nothing else — no lookups, no inference.
+    function clean(capture={}) {
+        const files=(Array.isArray(capture.files)?capture.files:[]).slice(0,FILES)
+            .map(file=>typeof file==='string'?{path:one(file,LINE),size:''}
+                :{path:one(file?.path,LINE),size:one(file?.size,SIZE)})
+            .filter(file=>file.path);
+        return {host:one(capture.host,HOST),url:one(capture.url,LINE),title:one(capture.title,TITLE),
+            size:one(capture.size,SIZE),kind:/^bdinfo$/i.test(capture.kind||'')?'BDInfo':'MediaInfo',
+            report:body(capture.report,REPORT),files,at:Number(capture.at)||0};
+    }
+    const empty=capture=>{const row=clean(capture);return !row.title&&!row.report&&!row.files.length;};
+
+    // The two things HelperZ flags, on the file list as the page gives it.
+    function flags(capture) {
+        const paths=clean(capture).files.map(file=>file.path),out=[];
+        const loose=paths.filter(path=>!VIDEO.test(path)&&!SUBTITLE.test(path)&&!DISC.test(path));
+        if(loose.length)out.push({code:'extra',label:'⛔ [ HAS EXTRANEOUS FILES ]',
+            detail:loose.length+' file'+(loose.length===1?'':'s')+' in the torrent that is neither video nor a subtitle: '+
+                loose.slice(0,6).map(path=>path.split('/').pop()).join(', ')+(loose.length>6?', …':'')+
+                '. Whether extras are allowed is this tracker’s rule to state, not this script’s.'});
+        const nested=paths.find(path=>path.includes('/'));
+        if(nested)out.push({code:'folder',label:'⛔ [ HAS TOP FOLDER ]',
+            detail:'The files sit inside a folder (“'+nested.split('/')[0].slice(0,60)+
+                '”). Some trackers want a single file with no wrapper — check this one’s rules.'});
+        return out;
+    }
+
+    // One release, in the block layout the diff tools are pointed at.
+    function payload(input) {
+        const capture=clean(input),host=capture.host||'unknown host';
+        const lines=[bar(host),'',part('Title'),'',capture.title||'(no release name read from the page)','',
+            part('Filename(s)'),''];
+        if(capture.files.length)
+            for(const file of capture.files)lines.push(file.path+(file.size?'  ·  '+file.size:''));
+        else lines.push('(no file list on the page)');
+        const marks=flags(capture);
+        if(marks.length){lines.push('');for(const mark of marks)lines.push(mark.label);}
+        lines.push('',part('Filesize'),'',capture.size||'(not stated on the page)','',
+            part(capture.kind),'',capture.report||'(no '+capture.kind+' on the page)','',bar(host));
+        return lines.join('\n');
+    }
+    const pair=(a,b)=>payload(a)+'\n\n'+payload(b);
+
+    // --- What the two pages differ on ---------------------------------------------------
+    const bytes=value=>{const match=String(value??'').match(/([\d.]+)\s*(KiB|MiB|GiB|TiB|KB|MB|GB|TB|bytes?)/i);
+        if(!match)return 0;
+        const unit=String(match[2]).toLowerCase();
+        const scale=unit.startsWith('ti')?1024**4:unit.startsWith('gi')?1024**3:unit.startsWith('mi')?1024**2
+            :unit.startsWith('ki')?1024:unit.startsWith('t')?1e12:unit.startsWith('g')?1e9
+            :unit.startsWith('m')?1e6:unit.startsWith('k')?1e3:1;
+        return Number(match[1])*scale||0;};
+    // The file list and the total size — the part of a trump decision a MediaInfo report
+    // does not carry. The media itself is compared by compare-core.js.
+    function differences(left,right) {
+        const a=clean(left),b=clean(right),rows=[];
+        const add=(label,one_,two,extra={})=>{if(one_!==two)rows.push({label,a:one_,b:two,...extra});};
+        add('Files in the torrent',String(a.files.length),String(b.files.length));
+        const first=bytes(a.size),second=bytes(b.size);
+        if(a.size!==b.size) {
+            const row={label:'Total size',a:a.size||'not stated',b:b.size||'not stated'};
+            if(first&&second&&first!==second) {
+                row.larger=first>second?'a':'b';
+                row.by=Math.round(Math.abs(first-second)/Math.max(first,second)*100)+'% larger';
+            }
+            rows.push(row);
+        }
+        const mark=(capture,code)=>flags(capture).find(flag=>flag.code===code);
+        for(const [code,label] of [['extra','Extraneous files'],['folder','Top folder']]) {
+            const one_=mark(a,code),two=mark(b,code);
+            if(!one_===!two)continue;
+            rows.push({label,a:one_?'yes — '+one_.detail:'none',b:two?'yes — '+two.detail:'none'});
+        }
+        add('Report posted',a.report?a.kind:'none',b.report?b.kind:'none');
+        return rows;
+    }
+    // Paste-ready, in the same words the panel shows.
+    function summary(left,right) {
+        const a=clean(left),b=clean(right),rows=differences(a,b);
+        const lines=['File-level comparison','A: '+(a.title||'(no name)'),'B: '+(b.title||'(no name)'),''];
+        if(!rows.length)lines.push('The two pages agree on every file-level field compared.');
+        for(const row of rows) {
+            lines.push(row.label+':','  A: '+row.a,'  B: '+row.b);
+            if(row.by)lines.push('  '+(row.larger==='a'?'A':'B')+' is '+row.by+'.');
+        }
+        lines.push('','Read from the two pages only. Neither is declared the better release: that is a',
+            'judgement the pages cannot make.');
+        return lines.join('\n');
+    }
+
+    // --- The two slots, in this browser only --------------------------------------------
+    function all() {
+        const s=store();
+        if(!s)return {a:null,b:null};
+        try{
+            const raw=s.getItem(KEY);
+            if(!raw)return {a:null,b:null};
+            const parsed=JSON.parse(raw);
+            return {a:parsed?.a?clean(parsed.a):null,b:parsed?.b?clean(parsed.b):null};
+        }catch{return {a:null,b:null};}
+    }
+    // Which slot a capture would go into: A first, then B, then round to A again.
+    const next=(slots=all())=>!slots.a?'a':!slots.b?'b':'a';
+    function put(slot,capture) {
+        const which=slot==='b'?'b':'a';
+        if(empty(capture))return {saved:false,reason:'There is nothing on this page to capture.',slots:all()};
+        const slots=all();
+        slots[which]=Object.assign(clean(capture),{at:Date.now()});
+        const s=store();
+        if(s)try{s.setItem(KEY,JSON.stringify(slots));}
+            catch{return {saved:false,slots:all(),
+                reason:'This browser would not store the capture. A very large report can fill the space it allows.'};}
+        return {saved:true,slot:which,slots};
+    }
+    function drop(slot) {
+        const s=store();
+        if(slot!=='a'&&slot!=='b'){if(s)try{s.removeItem(KEY);}catch{}return {a:null,b:null};}
+        const slots=all();slots[slot]=null;
+        if(s)try{s.setItem(KEY,JSON.stringify(slots));}catch{}
+        return slots;
+    }
+    const ready=(slots=all())=>!!slots.a&&!!slots.b;
+    return {payload,pair,flags,differences,summary,clean,all,put,drop,next,ready,KEY,REPORT,
+        use(fake){backing=fake;}};
+})();
 
 // What the torrent page itself says, checked against the release name.
 // A page carries facts a title cannot: the TMDB title and year, the category, type and
@@ -2020,8 +2176,16 @@ const DKOKTO_INSPECTOR_UI = (() => {
             compareOut.append(copyIt);
             message('Compared the two reports. Neither is declared better: that is a judgement they cannot make.');
         });
+        // Whatever the "vs" button on a torrent page captured, brought in here.
+        const useCaptured=button('Load the captured A and B',guard(()=>{
+            const slots=typeof DKOKTO_CAPTURE!=='undefined'?DKOKTO_CAPTURE.all():{a:null,b:null};
+            if(!slots.a&&!slots.b)throw Error('Nothing has been captured yet. The “vs” button on a torrent page captures one.');
+            if(slots.a){leftArea.value=slots.a.report;nameA.value=slots.a.title||nameA.value;}
+            if(slots.b){rightArea.value=slots.b.report;nameB.value=slots.b.title||nameB.value;}
+            message(slots.a&&slots.b?'Both captured releases are loaded.':'One side is captured so far; the other is still empty.');
+        }));
         const compareRow=el('div',undefined,'dk-row');
-        compareRow.append(button('Compare',runCompare),useCurrent);
+        compareRow.append(button('Compare',runCompare),useCurrent,useCaptured);
         trump.append(compareRow,compareOut);
         content.append(trump);
         const glossary=el('details');glossary.append(el('summary','What do HDR, DV, Atmos, REMUX and WEB-DL mean?'));for(const [term,explanation]of Object.entries(engine.glossary)){glossary.append(el('h3',term),el('p',explanation));}content.append(glossary);
@@ -2367,7 +2531,7 @@ const DKOKTO_LISTING = (() => {
     // torrent whose text reads as a release name is checked as well.
     const loose='a[href*="/torrents/"]';
     // This script's own additions, on any page: watching them would wake the scan again.
-    const own='.dk-group-menu,.dk-listing-badge,.dk-listing-decision,.dk-listing-bar,.dk-listing-dialog,.dk-detail-badge,.dk-detail-links,.dk-request-bar,.dk-request-links,.dk-request-open,#dkokto-request-dialog';
+    const own='.dk-group-menu,.dk-listing-badge,.dk-listing-decision,.dk-listing-bar,.dk-listing-dialog,.dk-detail-badge,.dk-detail-links,.dk-detail-compare,.dk-request-bar,.dk-request-links,.dk-request-open,#dkokto-request-dialog';
     // The chatbox and the ticker change constantly and never hold a listing, so their
     // churn is not a reason to look at the page again (a giveaway or chat script can
     // otherwise keep this awake).
@@ -2881,6 +3045,163 @@ const DKOKTO_LINKS_CORE = (() => {
     return {parse,links,variants,ids};
 })();
 
+// The "vs" button on a torrent page: capture this release, capture another, compare.
+//
+// It reads the loaded page — the release name, the file list with its sizes, the total
+// size, and whichever of MediaInfo or BDInfo is posted — and keeps it in one of two slots
+// in this browser. With both slots filled it shows what the two differ on and offers the
+// text on the clipboard: the two blocks for a two-pane diff tool, or the named differences.
+// Nothing is fetched, posted or sent anywhere, and no companion program is needed.
+const DKOKTO_CAPTURE_UI = (() => {
+    const core=typeof DKOKTO_CAPTURE!=='undefined'?DKOKTO_CAPTURE:null;
+    const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
+    const press=(label,cls,fn)=>{const b=el('button',label,cls);b.type='button';b.onclick=fn;return b;};
+    let panel=null,shown=false,note='';
+    const SIZE=/^\d+(?:\.\d+)?\s*(?:[KMGT]i?B|bytes)$/i;
+
+    // --- What this page says about itself -----------------------------------------------
+    const textOf=node=>node?DKOKTO_RELEASE_TITLE.clean(node.textContent):'';
+    function filesOf() {
+        const rows=[];
+        for(const row of document.querySelectorAll('.dialog__form[data-tab="list"] table tbody tr')) {
+            const cells=[...row.children].map(textOf);
+            const path=cells.find(value=>value&&!SIZE.test(value)&&!/^\d+$/.test(value));
+            if(!path)continue;
+            const size=cells.slice().reverse().find(value=>SIZE.test(value))||'';
+            if(!rows.some(entry=>entry.path===path))rows.push({path,size});
+        }
+        if(!rows.length)
+            for(const node of document.querySelectorAll('.dialog__form[data-tab="hierarchy"] span[style*="word-break"],.torrent__files li')) {
+                const value=textOf(node);
+                if(value&&/\.[a-z0-9]{2,4}$/i.test(value)&&!rows.some(entry=>entry.path===value))rows.push({path:value,size:''});
+            }
+        return rows.slice(0,500);
+    }
+    // The total the page states, wherever the theme puts it: named first, then by shape.
+    function sizeOf() {
+        for(const selector of ['li.torrent__size','.torrent__size','.meta__size','[class*="torrent__size"]']) {
+            const value=textOf(document.querySelector(selector));
+            if(value&&SIZE.test(value))return value;
+        }
+        for(const node of document.querySelectorAll('.torrent__meta *,.meta__details *,.torrent-meta *')) {
+            const value=textOf(node);
+            if(value&&SIZE.test(value)&&!node.querySelector('*'))return value;
+        }
+        return '';
+    }
+    function reportOf() {
+        const media=DKOKTO_INSPECTOR.readPage(document);
+        if(media.length)return {kind:'MediaInfo',report:media[0]};
+        const bd=[...document.querySelectorAll('code[x-ref="bdinfo"],.torrent-bdinfo-dump code,.torrent-bdinfo-dump pre')]
+            .filter(node=>!node.closest('#dkokto-hub,#dp-inspector-hub')).map(node=>node.textContent.trim()).filter(Boolean);
+        return bd.length?{kind:'BDInfo',report:bd[0]}:{kind:'MediaInfo',report:''};
+    }
+    const read=title=>({host:location.hostname,url:location.origin+location.pathname,
+        title:String(title||''),size:sizeOf(),files:filesOf(),...reportOf()});
+
+    // --- The panel ----------------------------------------------------------------------
+    function media(a,b) {
+        if(typeof DKOKTO_COMPARE==='undefined')return null;
+        if(a.kind!=='MediaInfo'||b.kind!=='MediaInfo'||!a.report||!b.report)return null;
+        try{
+            const left=DKOKTO_INSPECTOR.parse(a.report)[0],right=DKOKTO_INSPECTOR.parse(b.report)[0];
+            return left&&right?DKOKTO_COMPARE.compare(left,right):null;
+        }catch{return null;}
+    }
+    function table(rows,headA,headB) {
+        const wrap=el('div',undefined,'dk-compare-table');
+        const head=el('div',undefined,'dk-compare-row');
+        head.append(el('strong',''),el('strong',headA),el('strong',headB));
+        wrap.append(head);
+        for(const row of rows) {
+            const line=el('div',undefined,'dk-compare-row');
+            const a=el('span',row.a),b=el('span',row.b);
+            if(row.larger==='a')a.dataset.larger='yes';
+            if(row.larger==='b')b.dataset.larger='yes';
+            line.append(el('span',row.label+(row.by?' · '+row.by:'')),a,b);
+            wrap.append(line);
+        }
+        return wrap;
+    }
+    async function toClipboard(button,value,label) {
+        try{await navigator.clipboard.writeText(value);button.textContent='Copied';
+            setTimeout(()=>{if(button.isConnected)button.textContent=label;},1400);}
+        catch{window.prompt('Copy this text:',value);}
+    }
+    function draw(title) {
+        if(!panel)return;
+        panel.replaceChildren();
+        const slots=core.all();
+        panel.append(el('h3','Compare two releases'));
+        panel.append(el('p','Capture this page, open the other release and capture that, then copy the two blocks '+
+            'into a diff tool or read the differences here. Both are kept in this browser and nothing is sent anywhere.'));
+        if(note)panel.append(el('p',note,'dk-compare-note'));
+        for(const [key,label] of [['a','A'],['b','B']]) {
+            const row=el('div',undefined,'dk-compare-slot');
+            const held=slots[key];
+            row.append(el('strong',label+':'),el('span',held?held.title||'(captured, no name read)':'empty'));
+            row.append(press('Capture this page as '+label,'dk-compare-take',()=>{
+                const result=core.put(key,read(title));
+                note=result.saved?'This page is now '+label+'.':result.reason;
+                draw(title);
+            }));
+            if(held)row.append(press('Clear '+label,'dk-compare-drop',()=>{core.drop(key);note='';draw(title);}));
+            panel.append(row);
+        }
+        if(!core.ready(slots)) {
+            panel.append(el('small','Capture a release on each side to compare them.'));
+            return;
+        }
+        const a=slots.a,b=slots.b;
+        const nameA=a.title||'A',nameB=b.title||'B';
+        const fileRows=core.differences(a,b);
+        panel.append(el('h3','The files and the sizes'));
+        if(fileRows.length)panel.append(table(fileRows,nameA,nameB));
+        else panel.append(el('p','The two pages agree on every file-level field compared.'));
+        const result=media(a,b);
+        panel.append(el('h3','The reports'));
+        if(!result)
+            panel.append(el('p',a.kind==='BDInfo'||b.kind==='BDInfo'
+                ?'One side is a BDInfo, which this does not read as MediaInfo, so only the file-level comparison is shown.'
+                :'A MediaInfo report was not read on both sides, so only the file-level comparison is shown.'));
+        else if(!result.anyDifference)panel.append(el('p','The two reports agree on every field compared.'));
+        else {
+            panel.append(table(result.differences,nameA,nameB));
+            if(result.identical.length)panel.append(el('p','Same on both: '+result.identical.map(row=>row.label).join(', ')+'.'));
+        }
+        const both=core.pair(a,b);
+        const named=core.summary(a,b)+(result?'\n\n'+DKOKTO_COMPARE.report(result,{titleA:nameA,titleB:nameB}):'');
+        const row=el('div',undefined,'dk-row');
+        const blocks=press('Copy both blocks','dk-compare-copy',()=>toClipboard(blocks,both,'Copy both blocks'));
+        blocks.title='The two releases in the block layout a two-pane diff tool reads (WinMerge, meld).';
+        const diff=press('Copy the differences','dk-compare-copy',()=>toClipboard(diff,named,'Copy the differences'));
+        row.append(blocks,diff,press('Clear both','dk-compare-drop',()=>{core.drop();note='';draw(title);}));
+        panel.append(row);
+        panel.append(el('small','Neither release is declared the better one. Source, encode quality and provenance are '+
+            'not in a file list or a MediaInfo report, so the decision stays yours.'));
+    }
+    // The button lives in the lookup row, which is rebuilt whenever the name changes; the
+    // panel is one node, moved rather than duplicated, so a redraw never leaves two behind.
+    function mount(row,title) {
+        if(!core||!row)return;
+        const button=press('vs','dk-detail-vs',()=>{shown=!shown;place(row,title);});
+        button.title='Compare this release with another, for a trump decision. Nothing is sent anywhere.';
+        button.setAttribute('aria-expanded',shown?'true':'false');
+        row.append(button);
+        place(row,title);
+    }
+    function place(row,title) {
+        row.querySelector('.dk-detail-vs')?.setAttribute('aria-expanded',shown?'true':'false');
+        if(!shown){panel?.remove();return;}
+        if(!panel){panel=el('section',undefined,'dk-detail-compare');panel.setAttribute('aria-label','Compare two releases');}
+        draw(title);
+        const after=row.parentElement?.querySelector('.dk-detail-versions')||row;
+        if(panel.previousElementSibling!==after)after.after(panel);
+    }
+    const close=()=>{shown=false;panel?.remove();};
+    return {mount,read,close};
+})();
+
 // Torrent detail page: the same naming badge used on the listing, plus a row of
 // lookup links built from the title and the IDs already shown on the page.
 // Reads the loaded page only; no requests, submissions or downloads.
@@ -2963,6 +3284,8 @@ const DKOKTO_DETAIL = (() => {
         row.append(copy);
         (node.parentElement||node).insertBefore(row,node.nextSibling);
         versionsRow(row,title);
+        // The "vs" button: capture this release, capture another, compare the two.
+        try{DKOKTO_CAPTURE_UI.mount(row,title);}catch{}
     }
     // Other versions of the same title on this tracker: is there already something better?
     function versionsRow(after,title) {
@@ -3060,10 +3383,12 @@ const DKOKTO_DETAIL = (() => {
         row.append(el('small','Read from this page: the title it names, what it was filed as, its file list, its MediaInfo and its languages. Where a rule is quoted it is the tracker’s; where none is, the finding says so.'));
         node.closest('h1,h2,h3,p,div,section,li')?.after(row);
     }
+    const clear=()=>{try{DKOKTO_CAPTURE_UI.close();}catch{}
+        document.querySelectorAll('.dk-detail-links:not(.dk-request-links),.dk-detail-page,.dk-detail-compare').forEach(n=>n.remove());};
     function draw() {
-        if(!onPage()){dialog?.close();document.querySelectorAll('.dk-detail-links:not(.dk-request-links),.dk-detail-page').forEach(n=>n.remove());return;}
+        if(!onPage()){dialog?.close();clear();return;}
         const hit=found();
-        if(!hit||!hit.score||!hit.title){document.querySelectorAll('.dk-detail-links:not(.dk-request-links),.dk-detail-page').forEach(n=>n.remove());return;}
+        if(!hit||!hit.score||!hit.title){clear();return;}
         badge(hit.node,hit.title);linksRow(hit.node,hit.title);
         try{pageRow(hit.node,hit.title,DKOKTO_LISTING_CORE.category(document.querySelector('li.torrent__category a')?.textContent||''));}catch{}
     }
@@ -3075,7 +3400,7 @@ const DKOKTO_DETAIL = (() => {
     // churn is not a reason to look at the page again (a giveaway or chat script can
     // otherwise keep this awake).
     const NOISE='.chatbox,#chatbox,[class*="chatbox"],.ticker,[class*="ticker"],[class*="chat-"],#chat';
-    const OURS='.dk-group-menu,.dk-detail-page,.dk-detail-links,.dk-detail-badge,.dk-listing-badge,.dk-listing-bar,.dk-listing-dialog,.dk-request-bar,.dk-request-links,.dk-request-open,#dkokto-request-dialog,#dkokto-hub,#dkokto-tools,#dkokto-game-dialog,#dkokto-nav-dialog,#dp-inspector-hub,#dp-inspector-tools';
+    const OURS='.dk-group-menu,.dk-detail-page,.dk-detail-compare,.dk-detail-links,.dk-detail-badge,.dk-listing-badge,.dk-listing-bar,.dk-listing-dialog,.dk-request-bar,.dk-request-links,.dk-request-open,#dkokto-request-dialog,#dkokto-hub,#dkokto-tools,#dkokto-game-dialog,#dkokto-nav-dialog,#dp-inspector-hub,#dp-inspector-tools';
     function mount() {
         draw();
         if(mounted)return;mounted=true;
@@ -3445,7 +3770,7 @@ KrazyZone|KZANiME KZI KZMOViES LAZYFROG-KZ
 LDU|KeBaB
 LeechTurk|LTRG
 LegacyHD|LEGi0N
-LST|hallowed L0ST KIMJI coffee SQS Yuki
+LST|L0ST KIMJI coffee SQS Yuki hallowed
 M-Team|BMDru HDStar HDTime KiSHD MPAD M-Team MTeamTV OneHD Pack StBOX CNHK* R2HD* TnP* MTeam3D MTeamPAD
 MoreThanTV|E.N.D TEPES Dracula* GBL* MOLY* SOIL* VLAD* SMURF WDYM
 Movie-Torrentz|m2g ViP3R
