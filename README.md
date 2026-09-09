@@ -7,6 +7,15 @@ makes no requests of any kind — every link opens only when you click it.
 Newest first.
 
 ---
+## 1.20.2 — nothing appeared on a torrent page with a long cast list
+
+- The release-name search read only the first 400 candidate elements. Cast, crew, company and
+  keyword entries all carry "name" or "title" classes, so on a TV page the release name sat
+  past the cut and nothing was found: no badge, no lookup row, no vs button, no cross-check.
+- Bounded by how much is read and scored now (6000 read, 400 scored, short and long text
+  rejected first) rather than by document position. 8 ms a pass on a 3045-candidate page.
+- Reading a candidate's text no longer clones it unless something of this script's is inside.
+
 ## 1.20.1 — two torrents named the same release
 
 - Same name, different file: the panel now concludes rather than compares. "Named the same
