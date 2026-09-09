@@ -7,6 +7,19 @@ makes no requests of any kind — every link opens only when you click it.
 Newest first.
 
 ---
+## 1.19.0 — the "vs" button: two releases compared, clipboard only
+
+- A "vs" button in the lookup row on a torrent page: capture this release, capture another,
+  compare. Both slots are kept in this browser's own storage.
+- The payload follows HelperZ's block layout (Torrent Moderation Helper, by MagnetZ) and its
+  two flags, so a captured pair pastes into WinMerge, meld or any two-pane diff tool.
+- HelperZ's companion server on 127.0.0.1:5123 is deliberately not used: this script still
+  declares "@grant none" and lists no @connect address, and a check asserts both.
+- Merged rather than swapped: the panel adds the file-level comparison a MediaInfo report
+  cannot carry (file count, total size with the gap named, extraneous files, top folder)
+  above the existing report comparison. Neither release is declared the better one.
+- The Inspector's Compare panel gained "Load the captured A and B".
+
 ## 1.18.0 — the internal-groups directory, three sources merged
 
 - 968 groups across 153 trackers, up from 433 across 35, merged from the two directories the
