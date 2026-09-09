@@ -7,6 +7,11 @@ makes no requests of any kind — every link opens only when you click it.
 Newest first.
 
 ---
+1.22.0 — the settings are the same settings on every tracker
+The trackers you are on, added trackers and their rules, the internal-groups list and the per-tracker rule choice moved to Tampermonkey's per-script store, shared by every site the script runs on. Browser storage is per domain and could not do it. No new permission.
+The audit, the decision log, private notes and seen requests stay per site: they are a record of work on that tracker, not a setting.
+A setup made before this version is carried up the first time it is read; writes reach both stores, so an older copy of the script still reads what the newer one did.
+
 1.21.2 — three things reported from the trackers
 Show the JSON answered an empty form with the save-time error about the key. It shows the draft now and says what is still needed; Save as file stays strict and says so.
 The lookup row's own-tracker search was labelled "Search DarkPeers" on every tracker. It is named after the site you are on now, or the hostname, or "Search this tracker".
