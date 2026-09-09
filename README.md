@@ -7,6 +7,15 @@ makes no requests of any kind — every link opens only when you click it.
 Newest first.
 
 ---
+## 1.17.3 — a group name can have a space in it
+
+- "…x265-Goki TAoE" is one group tag. It was read as no tag at all, so those rows were asked
+  why no group tag closed the title and the tag was never marked. A tag may now be up to four
+  words, rejected if any word is a technical token — so a title that really has no tag still
+  says so, and "x264-R-A-R-B-G" is still one group.
+- A tag that *begins* with a banned name is raised as a question naming both spellings, never
+  reported as the banned group itself.
+
 ## 1.17.2 — adding a group where you meet it
 
 - The tag menu carries an **Add … to a tracker** field, so the menu that says a group has no
