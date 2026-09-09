@@ -7,6 +7,13 @@ makes no requests of any kind — every link opens only when you click it.
 Newest first.
 
 ---
+## 1.17.2 — adding a group where you meet it
+
+- The tag menu carries an **Add … to a tracker** field, so the menu that says a group has no
+  home is where you give it one. Adding appends and redraws the menu.
+- **Internal groups…** has an Add row of its own. Only **Save list** replaces the whole list,
+  and it now reports what it did.
+
 ## 1.17.1 — the internal tracker is a link
 
 - "Listed as internal at …" links to the tracker where its address is already known — from the
