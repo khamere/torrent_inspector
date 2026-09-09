@@ -7,6 +7,24 @@ makes no requests of any kind — every link opens only when you click it.
 Newest first.
 
 ---
+Fixed in 1.21.1
+
+Five bugs found in a code review of 1.21.0. Each was reproduced against the module before it was changed, and each fix carries a check confirmed to fail with the bug put back.
+
+A bitrate or size with its thousands separated was read as its first group. MediaInfo writes 8 000 kb/s; the comparison read that as 8, so a 12.5 Mb/s release was reported as 100% higher than an 8 Mb/s one instead of 36%. The separators — space, no-break space, thin space, comma — now come out before the number is read.
+
+The AKA position check could never fire on a resolution. \d{3,4}[pi] was written inside a regex literal, where it matches a backslash rather than digits, so a title whose only technical word before the AKA was 1080p passed silently while the same title with a year was caught.
+
+A profile copied from a built-in carried a rule it did not describe. Every conditional group was exported with a WEB-DL pattern, so a copy of DarkPeers said HDT was allowed for Remuxes and then allowed it only on WEB-DLs.
+
+Editing a banned list did nothing until a reload if the length did not change. The built list was cached on the lengths of a profile's lists plus its label, so renaming a group left the old list in force: the group just removed was still refused, and its replacement was not.
+
+Three lines that did nothing are gone.
+
+Three efficiency findings from the same review are done: the torrent page stamps its inputs cheaply instead of re-parsing the MediaInfo and re-reading the file table on every redraw; listingPage() is answered once per pass rather than two or three times (on a queue each answer walks every loose torrent link); and the audit store no longer rewrites itself when nothing has changed.
+
+Three were measured and left alone, on purpose: precompiling the naming regexes (200 titles check in 19.5 ms, so there is nothing there worth the risk in the module with 61 checks on it), memoising the release-name search across modules (saves about 8 ms a burst, at the cost of a cached answer about a page that may have changed — which is the fault behind the last three visible bugs), and folding the duplicated el(), clipboard and dialog helpers, which is worth doing as its own job rather than beside five behaviour fixes.
+
 ## 1.21.0 — every UNIT3D tracker it can be pointed at, in a list you can walk
 
 - 41 UNIT3D trackers, up from 11. Codebase from HDVinnie's Private Trackers Spreadsheet;
