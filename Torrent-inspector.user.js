@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DarkPeers - Torrent Inspector
 // @namespace    dkokto.darkpeers.inspector
-// @version      1.17.0
+// @version      1.17.1
 // @description  Torrent Inspector and automatic listing naming badges, checked against DarkPeers or Zenith rules. Reads the page only; makes no requests.
 // @author       🤖T.R.A.V.I.S (original Chungus Edition); DKOKTO personal customization
 // @match        https://darkpeers.org/*
@@ -3415,9 +3415,12 @@ const DKOKTO_INTERNALS = (seed => {
             }
             const cells=line.replace(/^\||\|$/g,'').split(/\s*\|\s*|\t+/).map(cell=>cell.trim()).filter(Boolean);
             // Two cells is the directory form this ships in and exports: Tracker|groups.
-            // A line carrying an address is the other form: Group | Tracker | https://…
-            if(cells.length===2&&!/^https?:/i.test(cells[1])) {
-                for(const token of groupTokens(cells[1]))rows.push({...token,tracker:cells[0]});
+            // Three, where the last is an address, gives that whole tracker its address:
+            // Tracker|group group group|https://… — one line, not one per group.
+            if(cells.length===2&&!/^https?:/i.test(cells[1])||
+               cells.length===3&&/^https?:/i.test(cells[2])&&/\s/.test(cells[1])) {
+                const url=cells.length===3?cells[2]:'';
+                for(const token of groupTokens(cells[1]))rows.push({...token,tracker:cells[0],url});
                 continue;
             }
             const parts=cells.length>=2?cells
@@ -3463,10 +3466,13 @@ const DKOKTO_INTERNALS = (seed => {
         for(const row of Array.isArray(list)?list:[]) {
             if(!valid(row))continue;
             const name=text(row.tracker,LABEL);
-            if(!byTracker.has(name))byTracker.set(name,[]);
-            byTracker.get(name).push(text(row.group,NAME)+(row.inactive?' (inactive)':''));
+            if(!byTracker.has(name))byTracker.set(name,{groups:[],url:''});
+            const bucket=byTracker.get(name);
+            bucket.groups.push(text(row.group,NAME)+(row.inactive?' (inactive)':''));
+            if(!bucket.url&&row.url)bucket.url=row.url;
         }
-        return [...byTracker].map(([tracker,groups])=>tracker+'|'+groups.join(' ')).join('\n');
+        return [...byTracker].map(([tracker,rows])=>
+            tracker+'|'+rows.groups.join(' ')+(rows.url?'|'+rows.url:'')).join('\n');
     }
     return {all,save,clear,find,homes,parse,format,defaults,usingDefaults,KEY,MAX};
 })(typeof module!=='undefined'&&module.exports&&typeof require==='function'
@@ -3475,7 +3481,7 @@ const DKOKTO_INTERNALS = (seed => {
 // The release group tag, marked in the name and opened on click. It shows where the group
 // is internal — from your own list, never invented — and searches for its other releases.
 // Nothing is fetched: every entry is a link that opens only when you click it.
-const DKOKTO_GROUP_TAG = ((internals,requests) => {
+const DKOKTO_GROUP_TAG = ((internals,requests,trackers) => {
     const CLASS='dk-group-tag', MENU='dk-group-menu';
     let menu=null,openFor=null;
     const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
@@ -3486,13 +3492,32 @@ const DKOKTO_GROUP_TAG = ((internals,requests) => {
     }
     // Same-origin search for the group's other releases here. A link, not a request.
     const hereSearch=tag=>'/torrents?name='+encodeURIComponent(tag);
+    // A tracker's address, taken from the cross-check list you already keep rather than
+    // guessed at: a private tracker's domain moves, and a wrong one is worse than none.
+    // The directory's short name is matched against both the label and the key, so BTN
+    // finds BroadcasTheNet and PTP finds PassThePopcorn.
+    const flat=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,'');
+    function trackerLink(name) {
+        const target=flat(name);
+        if(!target)return '';
+        let list=[];
+        try{list=trackers?.list?.()||[];}catch{list=[];}
+        for(const site of list) {
+            if(flat(site.label)!==target&&flat(site.key)!==target)continue;
+            const address=String(site.search||'').split(/[?#]/)[0];
+            try{const url=new URL(address);return url.protocol==='https:'?url.origin+'/':'';}catch{return '';}
+        }
+        return '';
+    }
     function entries(tag) {
         const rows=[],homes=internals.homes(tag);
         // A group can be internal at several trackers, and the list says so rather than
         // picking one. "Listed as", not "is": this is a community directory, not a fact.
-        for(const home of homes)rows.push({
-            label:'Listed as internal at '+home.tracker+(home.inactive?' — marked inactive':''),
-            href:home.url||''});
+        for(const home of homes) {
+            const href=home.url||trackerLink(home.tracker);
+            rows.push({label:'Listed as internal at '+home.tracker+(home.inactive?' — marked inactive':''),
+                href,note:href||!trackers?'':'no address on the list — add one in Internal groups…'});
+        }
         if(!homes.length)rows.push({note:'No home tracker recorded for '+tag+
             '. Add one in Internal groups… if you know it.'});
         rows.push({label:'Releases by '+tag+' on this tracker',href:hereSearch(tag)});
@@ -3605,7 +3630,8 @@ const DKOKTO_GROUP_TAG = ((internals,requests) => {
     }
     return {mark,close,editor,CLASS,MENU};
 })(typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./internals.js'):DKOKTO_INTERNALS,
-   typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./requests-core.js'):DKOKTO_REQUESTS_CORE);
+   typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./requests-core.js'):DKOKTO_REQUESTS_CORE,
+   typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./trackers.js'):DKOKTO_TRACKERS);
 
 // Which requests you have already cross-checked, so a sweep down the list does not
 // repeat itself. Ids and dates only, kept in this browser, bounded and never sent.
