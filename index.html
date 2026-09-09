@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <title>Torrent Inspector — naming checks and MediaInfo for UNIT3D trackers</title>
-<meta name="description" content="A Tampermonkey userscript for UNIT3D trackers: every loaded release title checked against the naming rules, the MediaInfo already on the page read properly, and a cross-check against the trackers you are on. No requests, no posting, nothing stored outside your browser.">
+<meta name="description" content="A Tampermonkey userscript for UNIT3D trackers: every release title checked against the naming rules as the page renders, the MediaInfo already on the page read properly, release groups linked to where they are internal, and a cross-check against the trackers you are on. No requests, no posting, nothing stored outside your browser.">
 <style>
   :root{
     --bg:#0f0b14; --panel:#160f1e; --panel-2:#1b1226; --line:#3b2a4a; --line-2:#553d6b;
     --ink:#efe7f6; --dim:#c3b2d3; --faint:#9d8bad;
     --violet:#c79bf0; --violet-2:#8952ab; --amber:#ffb454; --green:#67df99; --red:#ff666d;
-    --radius:12px; --wrap:960px;
+    --radius:12px; --wrap:980px;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
@@ -34,24 +34,27 @@
   code,kbd{font-family:ui-monospace,Consolas,"Cascadia Mono",monospace}
   code{background:#100a17; border:1px solid var(--line); border-radius:5px; padding:1px 6px; font-size:.92em; overflow-wrap:anywhere}
   kbd{background:#241733; border:1px solid var(--line-2); border-bottom-width:2px; border-radius:5px; padding:1px 6px; font-size:.85em}
+  pre{margin:12px 0 0; padding:12px 14px; background:#100a17; border:1px solid var(--line); border-radius:8px; overflow-x:auto}
+  pre code{background:none; border:0; padding:0; font-size:13.5px; line-height:1.6}
 
-  header.top{padding:56px 0 28px; border-bottom:1px solid var(--line)}
+  header.top{padding:52px 0 30px; border-bottom:1px solid var(--line)}
   .eyebrow{margin:0 0 10px; color:var(--faint); font-size:12px; letter-spacing:.18em; text-transform:uppercase}
-  h1{margin:0 0 6px; font-size:clamp(30px,6vw,46px); line-height:1.1; letter-spacing:-.01em}
+  h1{margin:0; font-size:clamp(30px,6vw,46px); line-height:1.1; letter-spacing:-.01em}
   h1 .dot{color:var(--amber)}
   .lede{margin:14px 0 0; max-width:62ch; font-size:clamp(17px,2.4vw,19px); color:var(--dim)}
-  .pills{display:flex; flex-wrap:wrap; gap:8px; margin:22px 0 0; padding:0; list-style:none}
+  .pills{display:flex; flex-wrap:wrap; gap:8px; margin:20px 0 0; padding:0; list-style:none}
   .pill{border:1px solid var(--line-2); border-radius:999px; padding:4px 12px; font-size:13px; color:var(--dim); background:#170f21}
   .pill b{color:var(--ink); font-weight:600}
-  .cta{display:flex; flex-wrap:wrap; gap:12px; margin:26px 0 0}
-  .btn{
-    display:inline-block; padding:11px 18px; border-radius:9px; text-decoration:none; font-weight:600;
-    border:1px solid var(--line-2); background:#241733; color:var(--ink);
-  }
+  .cta{display:flex; flex-wrap:wrap; gap:12px; margin:24px 0 0}
+  .btn{display:inline-block; padding:11px 18px; border-radius:9px; text-decoration:none; font-weight:600;
+    border:1px solid var(--line-2); background:#241733; color:var(--ink)}
   .btn.primary{background:linear-gradient(180deg,#7d47a6,#5f3382); border-color:#8f5cb8}
   .btn:hover{border-color:var(--violet)}
+  .toc{margin:26px 0 0; padding:0; display:flex; flex-wrap:wrap; gap:8px 18px; list-style:none; font-size:14.5px}
+  .toc a{color:var(--dim); text-decoration:none; border-bottom:1px dotted var(--line-2); padding-bottom:1px}
+  .toc a:hover{color:var(--ink); border-bottom-color:var(--violet)}
 
-  section{padding:46px 0; border-bottom:1px solid var(--line)}
+  section{padding:44px 0; border-bottom:1px solid var(--line)}
   section:last-of-type{border-bottom:0}
   h2{margin:0 0 6px; font-size:clamp(21px,3.4vw,27px); letter-spacing:-.01em}
   h2 + .sub{margin:0 0 22px; color:var(--faint); max-width:66ch}
@@ -61,16 +64,15 @@
   .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px}
   .card p{margin:0; color:var(--dim); font-size:15px}
   .card p + p{margin-top:10px}
+  .card.lead{border-color:var(--line-2); background:linear-gradient(180deg,#1d1329,#160f1e)}
 
   .rows{background:var(--panel-2); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden}
   .row{display:flex; gap:12px; align-items:baseline; flex-wrap:wrap; padding:13px 16px; border-top:1px solid #2a1d38}
   .row:first-child{border-top:0}
   .name{font-weight:600; overflow-wrap:anywhere}
-  .badge{
-    display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto;
+  .badge{display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto;
     width:22px; height:22px; border:1px solid currentColor; border-radius:4px;
-    background:#160f1e; font:bold 14px/1 "Segoe UI",sans-serif;
-  }
+    background:#160f1e; font:bold 14px/1 "Segoe UI",sans-serif}
   .badge.pass{color:var(--green)} .badge.err{color:var(--red)} .badge.rev{color:var(--amber)}
   .why{width:100%; margin:2px 0 0; color:var(--faint); font-size:13.5px}
   .tag{color:var(--amber); border-bottom:1px dotted currentColor}
@@ -79,6 +81,7 @@
   ul.plain li{margin:7px 0}
   ol.steps{margin:0; padding-left:22px}
   ol.steps li{margin:10px 0}
+  ol.steps b{color:var(--ink)}
   .note{border-left:3px solid var(--violet-2); background:#170f21; padding:12px 16px; border-radius:0 8px 8px 0; color:var(--dim); font-size:15px}
   .note strong{color:var(--ink)}
   table{width:100%; border-collapse:collapse; font-size:15px}
@@ -86,7 +89,11 @@
   th{color:var(--faint); font-weight:600; font-size:13px; letter-spacing:.04em; text-transform:uppercase}
   td:first-child{white-space:nowrap; color:var(--ink)}
   .scroll{overflow-x:auto}
-  footer{padding:34px 0 60px; color:var(--faint); font-size:14px}
+  .qa{margin:0}
+  .qa dt{margin:18px 0 4px; font-weight:600}
+  .qa dt:first-child{margin-top:0}
+  .qa dd{margin:0; color:var(--dim)}
+  footer{padding:32px 0 60px; color:var(--faint); font-size:14px}
   footer p{margin:0 0 8px}
 </style>
 </head>
@@ -97,62 +104,93 @@
     <p class="eyebrow">Tampermonkey userscript · UNIT3D trackers</p>
     <h1>Torrent Inspector<span class="dot">.</span></h1>
     <p class="lede">
-      Every release title on the page checked against the naming rules as it renders, the MediaInfo
-      already on the page read properly, and a cross-check against the trackers you are on —
-      without a single request leaving your browser.
+      It reads the page you are already on: every release name checked against the naming rules,
+      the MediaInfo the uploader posted checked against what the title claims, and each release
+      group linked to where it is internal. Nothing is ever fetched, posted or changed.
     </p>
     <ul class="pills">
-      <li class="pill"><b>1.17.0</b></li>
+      <li class="pill"><b>1.17.2</b></li>
       <li class="pill">DarkPeers · Zenith · <b>your own trackers</b></li>
       <li class="pill">No requests, no posting</li>
-      <li class="pill">Nothing stored outside your browser</li>
+      <li class="pill">Everything stays in your browser</li>
     </ul>
     <div class="cta">
       <a class="btn primary" href="https://raw.githubusercontent.com/khamere/torrent_inspector/main/Torrent-inspector.user.js" rel="noreferrer noopener">Install the script</a>
       <a class="btn" href="https://github.com/khamere/torrent_inspector/blob/main/Torrent-inspector.user.js" rel="noreferrer noopener">View the source</a>
-      <a class="btn" href="#never">What it never does</a>
+      <a class="btn" href="#questions">Questions</a>
     </div>
+    <nav aria-label="On this page"><ul class="toc">
+      <li><a href="#badges">The badges</a></li>
+      <li><a href="#group">Release groups</a></li>
+      <li><a href="#moderating">Moderating</a></li>
+      <li><a href="#inspector">MediaInfo</a></li>
+      <li><a href="#crosscheck">Cross-check</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#questions">Questions</a></li>
+      <li><a href="#never">What it never does</a></li>
+    </ul></nav>
   </div>
 </header>
+
+<section id="start">
+  <div class="wrap">
+    <h2>What you get, in one minute</h2>
+    <p class="sub">Install it, open a listing, and three things are different.</p>
+    <div class="grid">
+      <div class="card lead">
+        <h3>1 · Every title is judged</h3>
+        <p>A <span style="color:var(--green)">✓</span>, <span style="color:var(--red)">✕</span> or <span style="color:var(--amber)">?</span> beside each release name. Hover for the reason in one line; click for the full explanation, the corrections and a copyable report.</p>
+      </div>
+      <div class="card lead">
+        <h3>2 · The group is a link</h3>
+        <p>The <span class="tag">-GROUP</span> at the end of a name opens where that group is internal, its other releases here, and the same search on your trackers.</p>
+      </div>
+      <div class="card lead">
+        <h3>3 · The MediaInfo is checked</h3>
+        <p>On a torrent's page, what the title claims is compared with the report the uploader posted — resolution, codecs, audio, HDR, languages.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
 <section id="badges">
   <div class="wrap">
     <h2>Every loaded title, checked as the page renders</h2>
     <p class="sub">
-      Open a listing, a member's uploads, bookmarks, a moderation queue or a film's own page.
-      Every release name gets a badge. Hover for the reason, click for the whole judgement.
+      Listings, a member's uploads, bookmarks, playlists, the home page panels, a film's own page,
+      and the moderation queues.
     </p>
 
-    <div class="rows" role="img" aria-label="Three example rows showing a pass, an error and a review badge">
+    <div class="rows">
       <div class="row">
         <span class="badge pass" aria-hidden="true">✓</span>
         <span class="name">The Money Pit 1986 1080p BluRay DTS 5.1 x264-<span class="tag">iJiA</span></span>
-        <p class="why">The supported title checks passed — not that the media, the source history or tracker approval were verified.</p>
+        <p class="why"><b>Passed.</b> The supported title checks found nothing wrong — not a promise that the media, the source history or tracker approval were verified.</p>
       </div>
       <div class="row">
         <span class="badge err" aria-hidden="true">✕</span>
         <span class="name">Dead.Silence.2007.2160p.UHD.BluRay.DTS-HD.MA.5.1.DV.HDR.x265-<span class="tag">B0MBARDiERS</span></span>
-        <p class="why">The guide writes display titles with spaces. Corrected for you: <em>Dead Silence 2007 2160p UHD BluRay DTS-HD MA 5.1 DV HDR x265-B0MBARDiERS</em> — the dots that belong (H.264, DDP5.1) are kept.</p>
+        <p class="why"><b>Corrections found.</b> The guide writes display titles with spaces, so it writes the fix out for you — <em>Dead Silence 2007 2160p UHD BluRay DTS-HD MA 5.1 DV HDR x265-B0MBARDiERS</em> — keeping the dots that belong, like H.264 and DDP5.1.</p>
       </div>
       <div class="row">
         <span class="badge rev" aria-hidden="true">?</span>
         <span class="name">Bottle Top Bill 2005 540p WEB-DL AAC 2.0 H.264</span>
-        <p class="why">Something needs your judgement — an uncertain category, a standing rule a title cannot settle, or a missing release group tag. It asks rather than guessing.</p>
+        <p class="why"><b>Your judgement needed.</b> An uncertain category, a rule the title alone cannot settle, or a missing group tag. It asks instead of guessing.</p>
       </div>
     </div>
 
     <div class="grid" style="margin-top:18px">
       <div class="card">
-        <h3>Whose rules</h3>
-        <p>A <b>Rules</b> dropdown picks DarkPeers, Zenith, or a tracker you add yourself. It changes the upload rules and the banned-group list, not the shared naming guide — so the same title can be clean on one and rejected on the other.</p>
+        <h3>Whose rules?</h3>
+        <p>A <b>Rules</b> dropdown in the bar: DarkPeers, Zenith, or a tracker you add. It changes the upload rules and the banned-group list — the naming guide itself is shared — so the same title can be clean on one tracker and rejected on another.</p>
       </div>
       <div class="card">
         <h3>Add your own tracker</h3>
-        <p>Paste a tracker's banned list straight off its page, tick the rules that apply, and it is checked like the built-in ones. Profiles export and import as JSON.</p>
+        <p><b>Tracker rules…</b> takes a tracker's banned list pasted straight off its page, plus tick-boxes for the rules that apply. Profiles export and import as JSON.</p>
       </div>
       <div class="card">
-        <h3>Audit a sweep</h3>
-        <p><b>Audit loaded titles</b> lists every release name on the page with its faults, as text you can copy — and keeps what you checked while browsing, so an audit can span a sweep of pages.</p>
+        <h3>Audit a whole sweep</h3>
+        <p><b>Audit loaded titles</b> lists every name on the page with its faults as copyable text, and remembers what you checked while browsing so one audit can cover many pages.</p>
       </div>
     </div>
   </div>
@@ -160,28 +198,43 @@
 
 <section id="group">
   <div class="wrap">
-    <h2>The release group, and where it is internal</h2>
-    <p class="sub">New in 1.17.0.</p>
-    <p>
-      The group tag at the end of a name is marked. Click it and you get every tracker the
-      directory <em>lists</em> it as internal at — not just the first, since <code>DON</code> is HDBits
-      and UHDBits, and <code>LoRD</code> is Bit-HDTV, HD-Torrents and UHDBits — a search for that group's
-      other releases here, and the same search on the trackers you have chosen.
-    </p>
+    <h2>Release groups, and where they are internal</h2>
+    <p class="sub">Click the group tag at the end of any release name.</p>
+
     <div class="grid">
       <div class="card">
-        <h3>Listed as, not is</h3>
-        <p>It ships with a community directory of internal groups, dated in the source. A directory can be stale, so every entry reads <em>“listed as internal at”</em>, and a group that is not on it is reported as not on it — never guessed at.</p>
+        <h3>What the menu shows</h3>
+        <p><b>Listed as internal at …</b> — every tracker, not just one. <code>DON</code> comes back HDBits <em>and</em> UHDBits; <code>LoRD</code> comes back Bit-HDTV, HD-Torrents <em>and</em> UHDBits.</p>
+        <p>Then that group's other releases on the tracker you are on, and the same search on each tracker you have chosen for the cross-check.</p>
       </div>
       <div class="card">
-        <h3>Your list, your corrections</h3>
-        <p><b>Internal groups…</b> takes a directory page pasted whole, or lines of <code>Tracker|group group group</code>. Save replaces the shipped list; Clear brings it back. It stays in your browser.</p>
+        <h3>Where the list comes from</h3>
+        <p>It ships with a community directory of internal groups — 433 groups across 35 trackers — dated in the source. Because a directory can go stale, every line reads <em>“listed as internal at”</em>, and a group that is not on it is reported as not on it rather than guessed at.</p>
       </div>
       <div class="card">
-        <h3>It shares the page politely</h3>
-        <p>If another script has already made that tag a link, this one leaves it completely alone — no wrapping, no rewriting, nothing for two scripts to fight over.</p>
+        <h3>Why some are not links</h3>
+        <p>A tracker's line links to it when the script already has that tracker's address, from your cross-check list. Private tracker domains move, so it will not invent one — those lines stay as plain text until you supply an address.</p>
       </div>
     </div>
+
+    <h3 style="margin:28px 0 8px; font-size:17px">Adding a group takes about five seconds</h3>
+    <ol class="steps">
+      <li><b>From the release itself.</b> Click the group tag. If it has no home yet, the menu says so and offers <em>“Add GRiMM to a tracker”</em> — type the tracker (your known ones are suggested), press <b>Add</b>, and the menu redraws with the new entry. Nothing else to open.</li>
+      <li><b>From the list.</b> In a listing bar, <b>Internal groups…</b> sits next to <em>Tracker rules…</em>. It has an <b>Add</b> row — group, tracker, Add — which appends to the list.</li>
+      <li><b>In bulk.</b> The same panel holds the whole list as text, one tracker per line. Paste a directory page in as it stands, or write lines yourself:
+        <pre><code>OnlyEncodes+|OnlyWeb GRiMM
+BeyondHD|BHDStudio FraMeSToR FLUX|https://beyond-hd.me</code></pre>
+        A third field gives that whole tracker an address, so its lines become links.</li>
+    </ol>
+    <p class="note" style="margin-top:18px">
+      <strong>The two Add paths append; only “Save list” replaces the whole list.</strong>
+      Save tells you what it did — <em>“Saved: 434 entries”</em>, or <em>“— 3 fewer than before”</em> — so a
+      mis-paste announces itself. <b>Clear list</b> puts the shipped directory back.
+    </p>
+    <p class="note" style="margin-top:12px">
+      If another script has already turned that group tag into a link, this one <strong>leaves it completely alone</strong> —
+      no wrapping, no rewriting, nothing for two scripts to fight over.
+    </p>
   </div>
 </section>
 
@@ -192,17 +245,17 @@
     <div class="grid">
       <div class="card">
         <h3>A decision log</h3>
-        <p>Every row gets <em>Approved / Rejected / Asked the uploader / Left for someone else</em>, ticked with the date so a sweep does not repeat itself. Rejecting or asking prompts for a note.</p>
+        <p>Each row gets <em>Approved / Rejected / Asked the uploader / Left for someone else</em>, ticked with the date so a sweep does not repeat itself. Rejecting or asking prompts for a note.</p>
         <p>It records what <b>you</b> decided. It changes nothing on the tracker and never leaves your browser.</p>
       </div>
       <div class="card">
         <h3>A reply, written from the findings</h3>
-        <p>Inside the badge dialog: a draft message with the corrections numbered in the guide's own words, the release name and its link, and a closing line. Four outcomes, one suggested — a banned group suggests a rejection rather than a rename.</p>
-        <p>Manual checks appear as <em>worth confirming</em>, never as faults. Edit it before you copy it; nothing is sent.</p>
+        <p>Inside the badge dialog: a draft with the corrections numbered in the guide's own words, the release name and its link, and a closing line. Four outcomes, one suggested — a banned group suggests a rejection, not a rename.</p>
+        <p>Manual checks appear as <em>worth confirming</em>, never as faults. Edit before you copy; nothing is sent.</p>
       </div>
       <div class="card">
         <h3>What the page itself says</h3>
-        <p>The TMDB title and year against the name; the Type and Resolution filed against what the name claims; the file list, containers, samples and whether a pack's files agree; whether MediaInfo or BDInfo was posted; and <code>Dual-Audio</code> / <code>MULTi</code> against the page's own original language.</p>
+        <p>TMDB title and year against the name. The Type and Resolution filed against what the name claims. The file list — containers, samples, a lone film in a folder, whether a season pack's files agree. Whether MediaInfo or BDInfo was posted. And <code>Dual-Audio</code> / <code>MULTi</code> against the page's own original language.</p>
       </div>
     </div>
     <p class="note" style="margin-top:18px">
@@ -216,7 +269,7 @@
 <section id="inspector">
   <div class="wrap">
     <h2>The MediaInfo already on the page, read properly</h2>
-    <p class="sub"><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd>, or paste a report of your own.</p>
+    <p class="sub"><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd> on a torrent page — or paste a report of your own.</p>
     <div class="scroll">
       <table>
         <thead><tr><th>The title claims</th><th>Checked against the report</th></tr></thead>
@@ -224,8 +277,8 @@
           <tr><td>1080p, 2160p</td><td>The actual pixel dimensions, and progressive against the scan type</td></tr>
           <tr><td>x264, x265, AV1</td><td>The video format the report names</td></tr>
           <tr><td>DD+ 5.1, DTS-HD MA, Atmos</td><td>The default audio track — DD and DD+ kept apart — and the channel layout against the reported count</td></tr>
-          <tr><td>DV, HDR10+</td><td>Whether the HDR format is actually present</td></tr>
-          <tr><td>Dual-Audio, MULTi</td><td>The languages actually in the file, and subtitles for non-English audio</td></tr>
+          <tr><td>DV, HDR10+</td><td>Whether that HDR format is actually there</td></tr>
+          <tr><td>Dual-Audio, MULTi</td><td>The languages in the file, and subtitles for non-English audio</td></tr>
           <tr><td>REMUX</td><td>Chapters, and a TrueHD track's compatibility track where the tracker requires one</td></tr>
         </tbody>
       </table>
@@ -236,8 +289,8 @@
         <p>Paste a report on each side, or load the page's as A. It names what the two differ on and marks the larger number with the percentage. It does <b>not</b> pick a winner: source, encode quality and provenance are not in a report, and it says so.</p>
       </div>
       <div class="card">
-        <h3>The naming box</h3>
-        <p>Check a title against the chosen tracker's rules before you upload, with reference fields (official title, original-language title, service) that make the manual checks decidable, and a searchable copy of the 261 streaming-service abbreviations.</p>
+        <h3>Check a title before you upload</h3>
+        <p>The naming box checks against the chosen tracker's rules, with reference fields — official title, original-language title, service — that make the manual checks decidable, and a searchable list of the 261 streaming-service abbreviations.</p>
       </div>
       <div class="card">
         <h3>Private notes</h3>
@@ -250,11 +303,11 @@
 <section id="crosscheck">
   <div class="wrap">
     <h2>Is it already on a tracker you are on?</h2>
-    <p class="sub">Links, built and opened only when you click them.</p>
+    <p class="sub">Links, built on the page and opened only when you click them.</p>
     <ul class="plain">
       <li><b>Already uploaded?</b> — the <em>exact</em> release name searched on every tracker you have chosen, so you find out before you spend the effort. Exact means exact: a different edition or group will not match, and it says so.</li>
-      <li><b>On a request</b> — every row on <code>/requests</code> gets a search button, and a request's own page shows the links under its title. 26 trackers are built in, each with its own editable search address; anything missing can be added.</li>
-      <li><b>Other versions</b> — what else exists here, under the name on a torrent's own page, next to IMDb, TMDB, Trakt, Letterboxd, JustWatch, Blu-ray.com, srrDB, and MyAnimeList / MusicBrainz / Open Library / IGDB as the category warrants.</li>
+      <li><b>On a request</b> — every row on <code>/requests</code> gets a search button, and a request's own page shows the links under its title. 26 trackers are built in, each with an editable search address; anything missing can be added.</li>
+      <li><b>Other versions</b> — what else exists here, beside IMDb, TMDB, Trakt, Letterboxd, JustWatch, Blu-ray.com, srrDB, and MyAnimeList / MusicBrainz / Open Library / IGDB as the category warrants.</li>
       <li><b>Search all</b> opens them in tabs. Browsers allow one tab per click and silently block the rest, so if yours refuses a burst they are offered one at a time, with <em>Copy every link</em> as the fallback.</li>
     </ul>
     <p class="note" style="margin-top:16px">
@@ -270,28 +323,54 @@
     <ol class="steps">
       <li>Install <a href="https://www.tampermonkey.net/" rel="noreferrer noopener">Tampermonkey</a> if you do not have it.</li>
       <li>Click <a href="https://raw.githubusercontent.com/khamere/torrent_inspector/main/Torrent-inspector.user.js" rel="noreferrer noopener"><b>Install the script</b></a>. Tampermonkey recognises a <code>.user.js</code> address and opens its own install page.</li>
-      <li>Read what it asks for — the matches and the permissions are at the top — then press <b>Install</b>.</li>
-      <li>Reload the tracker.</li>
+      <li>Read what it asks for — the matches and permissions are listed at the top — then press <b>Install</b>.</li>
+      <li>Reload the tracker. The bar appears above the listing.</li>
     </ol>
     <p style="margin-top:16px; color:var(--dim)">
-      Updating later is the same click: Tampermonkey replaces the existing script rather than adding a second copy.
+      Updating later is the same click: Tampermonkey replaces the script rather than adding a second copy.
       Prefer to do it by hand? Open <a href="https://github.com/khamere/torrent_inspector/blob/main/Torrent-inspector.user.js" rel="noreferrer noopener">the file on GitHub</a>,
       copy it, and paste it over the contents of a new Tampermonkey script.
     </p>
-    <p class="note" style="margin-top:18px">
-      If you download the file instead, do not double-click it — Windows will try to run it as a script rather than install it.
+    <p class="note" style="margin-top:16px">
+      If you download the file instead, do not double-click it — Windows tries to <em>run</em> a <code>.js</code> file rather than install it.
+      Keep one copy enabled. If the full <b>DKOKTO Scene Edition</b> is running on the same page, this one stands aside so the two never clash.
     </p>
+  </div>
+</section>
+
+<section id="questions">
+  <div class="wrap">
+    <h2>Questions people actually ask</h2>
+    <dl class="qa">
+      <dt>Where do I add an internal group?</dt>
+      <dd>Click the group tag on any release and use the <b>Add</b> field in the menu — that is the quick way. The full list lives behind <b>Internal groups…</b> in the listing bar, next to <em>Tracker rules…</em>. Those are different panels: <em>Tracker rules</em> is naming rules and banned groups, <em>Internal groups</em> is which tracker a group belongs to.</dd>
+
+      <dt>Why is “Listed as internal at …” not a link for my tracker?</dt>
+      <dd>Because the script does not have that tracker's address, and it will not guess one — private tracker domains move, and a wrong link is worse than none. Add the tracker to your cross-check list and the link appears everywhere automatically, or put the address on its line: <code>Tracker|group group group|https://address</code>.</dd>
+
+      <dt>Will it clash with my other userscripts?</dt>
+      <dd>It tries hard not to. If another script has already turned a group tag into a link, this one leaves that tag alone entirely. If the full DKOKTO Scene Edition is present, this one stands down.</dd>
+
+      <dt>Does a green ✓ mean the upload is fine?</dt>
+      <dd>No. It means the <em>supported title checks</em> passed. The media, the source history and tracker approval are not verified, and the tool says so rather than implying more than it knows.</dd>
+
+      <dt>Can it approve, reject or post for me?</dt>
+      <dd>No. It never writes to the tracker. The decision log records what you decided, for you, in your browser; the reply builder writes a draft you copy yourself.</dd>
+
+      <dt>Where is my data kept?</dt>
+      <dd>In your own browser, each store with a fixed cap: notes, settings, the audit, the decision log, tracker profiles and the internal-groups list. Nothing is uploaded, and clearing your browser data clears it.</dd>
+    </dl>
   </div>
 </section>
 
 <section id="never">
   <div class="wrap">
     <h2>Reads, never writes</h2>
-    <p class="sub">The whole point of the thing, and the part worth checking yourself.</p>
+    <p class="sub">The whole point of the thing, and the part worth checking yourself in the source.</p>
     <div class="grid">
       <div class="card">
         <h3>No requests</h3>
-        <p>Nothing is fetched, crawled, uploaded or downloaded. Every link opens only when you click it. There is no API access, no <code>@connect</code> beyond the original, and no cookie, passkey or credential is read.</p>
+        <p>Nothing is fetched, crawled, uploaded or downloaded. Every link opens only when you click it. No API access, and no cookie, passkey or credential is read.</p>
       </div>
       <div class="card">
         <h3>No writing to the tracker</h3>
@@ -299,21 +378,20 @@
       </div>
       <div class="card">
         <h3>Local, bounded, yours</h3>
-        <p>Notes, settings, the audit, the decision log, tracker profiles and the internal-groups list live in your own browser, each with a fixed cap, and are never sent anywhere.</p>
+        <p>Every list it keeps lives in your browser with a fixed cap, and is never sent anywhere.</p>
       </div>
     </div>
     <p class="note" style="margin-top:18px">
-      A green <b>✓</b> means the supported title checks passed — <strong>not</strong> that the media, the source history
-      or tracker approval were verified. Where the tool cannot know something it says so rather than guessing,
-      and where it is applying a rule it names the rule.
+      Where the tool cannot know something it says so rather than guessing, and where it applies a rule it names the rule.
+      That is the design, not a disclaimer.
     </p>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    <p><b>Torrent Inspector 1.17.0</b> — a personal fork, offered as-is.</p>
-    <p>Found something wrong? A screenshot with the badge's tooltip visible is the fastest fix — several of the bugs in this line were found exactly that way, and each one now has a test built from the row that showed it up.</p>
+    <p><b>Torrent Inspector 1.17.2</b> — a personal fork, offered as-is.</p>
+    <p>Found something wrong? A screenshot with the badge's tooltip visible is the fastest fix — several bugs in this line were found exactly that way, and each one now has a test built from the row that showed it up.</p>
   </div>
 </footer>
 
