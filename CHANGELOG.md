@@ -7,6 +7,11 @@ makes no requests of any kind — every link opens only when you click it.
 Newest first.
 
 ---
+1.21.2 — three things reported from the trackers
+Show the JSON answered an empty form with the save-time error about the key. It shows the draft now and says what is still needed; Save as file stays strict and says so.
+The lookup row's own-tracker search was labelled "Search DarkPeers" on every tracker. It is named after the site you are on now, or the hostname, or "Search this tracker".
+DarkPeers and Zenith are in the cross-check catalogue; the tracker you are standing on is skipped instead, with its reason. Writing that check found the host being lowercased after the www. prefix was stripped, so WWW.DarkPeers.org was not recognised.
+
 Fixed in 1.21.1
 
 Five bugs found in a code review of 1.21.0. Each was reproduced against the module before it was changed, and each fix carries a check confirmed to fail with the bug put back.
