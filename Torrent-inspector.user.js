@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DarkPeers - Torrent Inspector
 // @namespace    dkokto.darkpeers.inspector
-// @version      1.17.3
+// @version      1.18.0
 // @description  Torrent Inspector and automatic listing naming badges, checked against DarkPeers or Zenith rules. Reads the page only; makes no requests.
 // @author       🤖T.R.A.V.I.S (original Chungus Edition); DKOKTO personal customization
 // @match        https://darkpeers.org/*
@@ -3331,50 +3331,171 @@ const DKOKTO_REQUESTS_CORE = ((links,trackers) => {
 
 // Which tracker a release group is internal to.
 //
-// Source, in hand and cited rather than invented: the InviteHawk directory "Internal
-// Encoders / Groups from Private Trackers" (topic 154380), as pasted by the user on
-// 9 September 2026. It is a community directory, not a tracker's own staff list, so it can
-// be out of date or incomplete — every entry is shown as "listed as internal at", and the
-// list is yours to correct in Internal groups…
+// Sources, in hand and cited rather than invented — all three supplied by the user, and all
+// three community-maintained directories rather than any tracker's own staff list:
+//   · InviteHawk "Internal Encoders / Groups from Private Trackers" (topic 154380), 9 Sep 2026
+//   · rentry.org/internals — internal groups and their respective trackers, 9 Sep 2026
+//   · pastes.io/yiahe8Xf — site / P2P groups table, 9 Sep 2026
+// They disagree in places and go out of date, which is why every entry is offered as
+// "listed as internal at" and the whole list can be replaced in Internal groups….
 //
 // Format: one tracker per line, "Tracker|group group group". A group written "NAME*" is
-// marked inactive in the source. A group internal at several trackers appears on each line.
+// marked inactive — retired or disbanded — by whichever source carried it. A group internal
+// at several trackers appears on each line.
 const DKOKTO_INTERNALS_DATA = `
-AsianCinema|ARiN KAWAiREMUX iZON3
-AvistaZ|AppleTor
-BeyondHD|BeyondHD BHDStudio BMF decibeL D-Z0N3 FLUX FraMeSToR HiFi iFT iROBOT Legacy MKVULTRA NCmt RPG TDD W4NK3R ZR
-Bit-HDTV|BitHD LoRD
-Blutopia|BLURANiUM BLUTONiUM JKP WiLDCAT CultFilms ReCult
-BTN|NTb HiSD KiNGS TOMMY
-CHDBits|CHDBits SGNB CHDTV CHPAD CHWEB CHDHKTV StBOX OneHD
-Desi-Torrents|DDR DrC DUS ExDR IcTv M2Tv TmG TeamTolly TDBB xDM
-Filelist|playHD playTV playMUSIC playON playMB playSD playBD
-HD-Only|Only 4HDO MLN PHOENiX DBHD KiKi ONLY PEWE
-HD-Space|RightSiZE SpaceHD Boss BluPanther CRiSPY HDSpace HDCLUB
+1st Torrent|HuN-No1 HuN-TRiNiTY Hun-TvDay
+24HD.cc|cpg
+3ChangTrai|3cTMuSiC 3cTWeB 3cHaNgTrAj 3CT 3CuTi DoCuMeNtArY HDVNBits cal3ndar TBN 3CTeDU Legend LsD T4H
+AfrBits|"Prodji RG"
+Aither|ARTiCUN0 ATELiER Dooky Headpatter KHEZU Kitsune MainFrame NAN0 PiRAMiDHEAD Stelks VaLTiEL WiTCHCRAFT
+Allotracker|ESiR LiberTeam LKT RAW
+AlphaRatio|AR nikt0 x0r Chivaman OFT SM737
+Anthelion|ANThELIa
+AsianCinema|ARiN iZON3 KAWAiREMUX
+AvistaZ|AppleTor HoneyG Imagine NEXT TRiToN ANDY Archie HBO iTsOK Luvmichelle MagicStar MMR MrHulk PandaMoon RSG
+Awesome-HD|BMF decibeL D-Z0N3 FTW-HD HiFi NCmt OISTiLe TDD TeeHee ZQ BTT* de* drealiT* eXcommunicado* FoRM* G3N3* HDRemuX* NiBuRu* Penumbra* Positive* SaNcTi* SHeNTo* Senpai* xander*
+Bajaunapeli|"Team B1P"
+BD25|EuReKA
+BDBits.org|BDbits
+BeyondHD|BeyondHD BHDStudio BMF decibeL D-Z0N3 FLUX FraMeSToR HiFi iFT iROBOT Legacy MKVULTRA NCmt RPG TDD W4NK3R ZR 4KINGS* ALeSiO* FASM* FLAWL3SS* HDX* LoNeWolf* MOOSE* NibuRu* Nightripper* SC4R* SiPS* CRFW S0NNY ILP MiU BHD FL JayRoyal NOSiViD PHOENiX TheProne
+BiGilT|CHT PWP VOD
+Bit-HDTV|BitHD BluHD BluPanther Boom BReWeRS Grond HDxT HighCode MarGe PriMeHD WiNNy FLAWL3SS* LoRD
+Bithorlo|BHO
+BitHumen|Gianni No1 TRiNiTY
+BitMeTV|biTMeTV
+Blu-bits|3DNORD aZA BluHD JohnGalt LoNeWolf PriMeHD RealHD SWEMUX SYNERGY
+Blu-Evolution|BluEvo Jack Jem Ruxi
+Bluebird-HD|BLUEBIRD CMEGRoup
+BlueTigers|ASPHiXiAS TeamSuW
+Blutopia|BLURANiUM BLUTONiUM CultFilms JKP LEGi0N PmP ReCult WiLDCAT BaggerInc* YInMn* CONSORTiUM DAMN TeMPo Tux ISA
+Broadcity|BdC
+BTN|BTW HiSD iT00NZ KiNGS LAZY NTb TOMMY TVSmash CBM* dbR* ESPNtb* HiSQ* HPN* HRiP* iPRiP* JJ* kpbong* LoTV* PreBS* TOPKEK* TTVa* CMRG herkz TrollHD NTG
+BwTracker|DUSIcTv DUS IcTv
+capybarabr|BiOMA CapyLabs
+CHDBits|CHDBits CHDHKTV CHDTV CHPAD CHWEB OneHD SGNB StBOX AREA11 CHD CHD3D CHDPAD
+Cinemaz|TRiToN
+ClearJAV|ClearJAV
+CMCT|CMCT CMCTV
+CN|TBH
+CZteamTtracker|CzT
+DanishBits|UNiTY UNiTYSERiER
+DarkPeers|DarkSouls WhiskeyJack
+Desi-Torrents|DDR DrC ExDR M2Tv TmG TeamTolly TDBB xDM DUS* IcTv*
+DownRev|DownRev lonelywolf
+Elite-pirates|AQOS
+EliteHD|HDClub
+ExtraTorrent|ETHD ETRG ettv
+FearNoPeer|EiNSTEIN_SiR23 onlyfaffs HiFiWiFi SM737
+Feedurneed|ACAB FooKaS
+Filelist|playBD playHD playMUSIC playSD playTV playWEB playON playMB
+FT3|FTX
+Fuzer|FuzePacks FuzerHD FuzerSD Silver007 SPIL Sweet-Star
+GKS|ESiR GKS LKT RAW
+Greek-Team.cc|GLM GrLTv GTRD MtToG
+HD-Bits.com|BobOki HDBriSe PLRVRTX
+HD-MKV|mkvrg ShaqSalazar
+HD-Only|4HDO DBHD KiKi MLN ONLY PEWE PHOENiX
+HD-Space|Boss BluPanther CRiSPY HDCLUB HDSpace RightSiZE SpaceHD 4K4U Gh0st HDSTaRS HomeTheater KM aZA RipleyHD ShocK
 HD-Spain|GrupoHDS
-HD-Torrents|557953* BaggerInc BiZKiT BluDragon DopeHD* DownRev* E.N.D gc04* HB* HDBS* HiDt* HDMaNiAcS* HDT HDVN JM JustHD KRaLiMaRKo LoRD POH SD* Slbenfica StillChoosing* SPHD SumVision uRaMeSHi* ViSTA* ViSUALHD*
-HDArea|HDArea EPiC HDApad HDATV
-HDBits|(C)Z AE AJ8 AJP Arucard AtZLIT AW Azul BBW BG BoK Cache Chotab CJ CRiSC Cristi Crow CtrlHD CyCR0 D4 DChighdef DeblocKING DiGG DiR DiRTY disc DBO DON DoNOLi EA EbP Eby ESiR ETH EucHD ExY FANDANGO fLAMEhd FSK Ft4U fty Funner GMoRK GoLDSToNE Green greenHD H2 h264iRMU HALYNA HDB HDC HDBiRD HDL HDxT H@M hymen HZ IDE iCO iLL IMDTHS iNFLiKTED iNK iOZO J4F JAVLiU JCH jTV k2 KASHMiR KolHD Krispy KTN KweeK Lesnick LiNG LolHD lulz M794 madoff MAGiC martic McFly MCR MdM MDR MeDDlER MiBr MMI Moshy Mojo NaRB NiP NiX nmd NorTV NTb NWO OAS ONYX pB PerfectionHD PHiN PiNG PiMP PiPicK Positive Prestige Prime PXE QDP quaz QXE RDK123 Redux REPTiLE RightSiZE RuDE RZF S26 SbR SG sJR SK Skazhutin SLO SMoKeR somedouches SbY SrS SSG SuBHD TayTO tBit ThD THORA tK TM toho TOMMY Tree TrollHD tRuAVC tRuEHD TSE TsH UioP UxO V VanRay VietHD ViNYL WESTSiDE WiHD XSHD yadong1985 YanY Z Zim'D ZQ
-HDChina|HDWinG HDWTV HDCTV iHD HDChina KiSHD OpenMV HDC CrsS LU9998 NGB CMCT JOMA beAst KHQ DIY TAiCHi
-HDPter|EPiC HDPter Pbk HDPad HDPTV HDPterOST
+HD-SportBits|Reborn4HD
+HD-Torrents|BiZKiT E.N.D HDT KRaLiMaRKo LoRD SumVision 557953* BaggerInc* BluDragon* DopeHD* DownRev* gc04* HB* HDBS* HiDt* HDMaNiAcS* HDVN* JM* JustHD* POH* SD* Slbenfica* StillChoosing* uRaMeSHi* ViSTA* ViSUALHD* HGN SPHD
+HD-Unit3d|Archmage DeamoN GHiA HDU JoN Soltu UNiT3D
+HD-Viet|HDViE
+HD4FANS|beAst HDRemuX
+HD4Free|GF44 LEGi0N MarGe
+HDAccess|HDAccess
+HDAhoy|YoHo
+HDArea|EPiC HDApad HDArea HDATV
+HDBits|AE AJ8 AJP Arucard AtZLIT AW Azul BBW BG BoK Cache Chotab CJ CRiSC Cristi Crow CtrlHD CyCR0 D4 DChighdef DeblocKING DiGG DiR DiRTY disc DBO DON DoNOLi EA EbP Eby ESiR ETH EucHD FANDANGO fLAMEhd FSK Ft4U fty Funner Geek GMoRK GoLDSToNE Green greenHD H2 h264iRMU HALYNA HDB HDC HDBiRD HDL HDxT hymen HZ iCO iLL IMDTHS iNFLiKTED iNK iOZO J4F JAVLiU JCH jTV k2 KolHD Krispy KTN KweeK Lesnick LiNG LolHD lulz M794 madoff MAGiC martic McFly MCR MdM MDR MeDDlER MMI Mondo Moshy Mojo NaRB NiP NiX nmd NorTV NTb NWO OAS ONYX pB PerfectionHD PHiN PiNG PiMP PiPicK Positive Prestige Prime PTer PXE QDP quaz QXE RDK123 REPTiLE RightSiZE RuDE RZF S26 SbR SG sJR SK Skazhutin SLO SMoKeR somedouches SbY SPEED SrS SSG SuBHD TayTO tBit ThD THORA tK TM toho Tree tRuAVC tRuEHD TSE TsH UioP UxO VanRay VietHD ViNYL WESTSiDE WiHD XSHD yadong1985 YanY Z (C)Z ExY H@M IDE KASHMiR MiBr Redux TOMMY TrollHD V Zim'D ZQ
+HDCenter|HDC jTV NERDS pmHD Tvr
+HDChina|beAst CMCT CrsS DIY HDC HDChina HDCTV HDWinG HDWTV iHD JOMA KiSHD LU9998 NGB OpenMV TAiCHi KHQ
+HDCity|0DAY HDCITY NoPA NoVA TLF
+HDClub|HDClub
+HDCN|HDCN
+HDEvo|HDEvo
+HDFrench-Zone|HDZ
+HDHome|HDBiger HDBigerTV
+HDLeech|DGN HDL MeRCuRY
+HDME|FourGHD HDme iCandy INTL LegacyHD MoBileHD Ruxi
+HDPter|EPiC HDPad HDPter HDPterOST HDPTV Pbk
+HDQueen|HDQueen PHD
+HDRoad|HDRoad R2HD MySilu
+HDRush|BluPanther HDRush JsR MZ0N3 PHDR PSYPHER TheVortex
 HDSky|HDS HDSPad HDSTV
-intheShadow|QOS
-M-Team.cc|M-Team KiSHD BMDru HDStar HDTime Pack CNHK MPAD MTeamTV OneHD R2HD* StBOX TnP*
-MoreThanTV|Dracula VLAD TEPES SOIL
-OpenCD|OpenCD LLM KHQ
-OurBits|OurBits OurTV OurPad PbK HosT
-PixelHD|PxHD PxEHD Px3D PxHD-Mobies
+HDsource|HDS iNCEPTiON Ms89 muah OYHD ViaHD
+HDStar|beAst HDS HDSPAD HDSTAR HDSTV
+HDtime|HDTime
+HDWing|HDWinG HDWTV HomeTheater iHD
+Hebits|HebHD HebTV iSrael ZionHD ZionSD
+Hon3yHD|Hon3y
+HQMusic|HQM MRHQ OwL
+HQSource|ELiTE
+HUNO|HONE LSt PRPL QxR SEV SiGLA SMURF TAoE Vyndros
+HypeRay|Geek HyPad Hyper Neon Original PureTV Tron TronTV iMusic
+IceTorrents|SubZero
+InfinityHD|flower fraktl NhanNguyen
+intheShadow|Q0S Q0SWeb QOS
+iPlay|iHD
+IPT|CMRG d3g EVO CBM FLAWL3SS
+ItaTorrents|ITT
+iTS|Q0S
+JoyHD|JoyHD
+KHDBits|KiSHD
+KrazyZone|KZANiME KZI KZMOViES LAZYFROG-KZ
+LDU|KeBaB
+LeechTurk|LTRG
+LegacyHD|LEGi0N
+LST|L0ST KIMJI coffee SQS Yuki
+M-Team|BMDru HDStar HDTime KiSHD MPAD M-Team MTeamTV OneHD Pack StBOX CNHK* R2HD* TnP* MTeam3D MTeamPAD
+MoreThanTV|E.N.D TEPES Dracula* GBL* MOLY* SOIL* VLAD* SMURF WDYM
+Movie-Torrentz|m2g ViP3R
+MySpleen|449 Atomsk MySpleen
+Norbits|Norbits
+NordicQuality|BANDOLEROS FiSTER PiTBULL UNDERDOGS
+OldToonsWorld|OldT
+OnlyEncodes+|BiNGUS Breeze DarQ "DarQ HONE" DBMS edge2020 edwood "Goki TAoE" Goki GRiMM noxxus OnlyWeb PrimeX Ralphy sCOOTER Vialle
+OpenCD|KHQ LLM OpenCD
+OurBits|FLTTH HosT OurBits OurPad OurTV PbK
+PixelHD|Px3D PxEHD PxHD PxHD-Mobies PS3-TEAM* PxHDA
+PolishSource|FiM iNTERnet PSiG
 PolishTracker|PSiG AtM presa FARNA pawel2006 DeiX FGHJ SliMDiCK iNTERnet
-PrivateHD|TRiToN
-PTN|SKALiWAGZ OmertaHD
-PTP|TBB HANDJOB HRiP
-Speed.cd|diversity scott24
-SpeedApp|FZHD FZBD FZ4K NViDiON EShare PiPS CRC 41RGB iREAL MOO SubZero HDMAN ANDRONIKA FZWEB FZSD SPBD SPHD SPSD SPWEB SPDVD SPTV SP4K
-TorrentLeech|EPSiLON
-TTG|WiKi NGB DoA BDClub OoKU
-UHDBits|DON ExREN HaB HDVN iFT JM LoRD KASHMiR LEGi0N MKVTeamZQ PIS POH PRiMaLHD TayTO UHDRemux DKT EEEEE GoNeHD KHu LDX LHD LiquidHD $a!nt TCO VoLT
-World-In-HD|PULSE TMB GAIA WiHD FURAX LFN HGR
-Xthor|JUSTFORFUN CARPEDiEM A3L BlackFlag BOUQUINE Giorgy NLX5 LiBE RTAD Poney ReBot ViKINGS FRATERNiTY WEEDS GHZ NEO SCiTiS BSD MYSTERiON Scaph ALLDAYiN CHiLL RiPiT DELiCiOUS CherryCoke DEMON iXTHOR QWERTZ LOOKSMAX SpiriTus DZ DavidGoodenough* Tokuchi* Yn1D* QUALiTY* LEGi*
+PrivateHD|TRiToN Absinth* EPSiLON* HDBEE* MARBLECAKE* SiGMA* UTR-HD*
+PTerClub|PTer PTerWEB AdBlue AREY BdC BMDru c0kE CatEDU cfandora JKCT KMX nLiBRA PTerMV PTerTV XPcl ZTR Kenobi iFT
+PTN|OmertaHD SKALiWAGZ
+PTP|PTP HRiP* TBB* HANDJOB O2STK CMRG ILP
+RARBG|RARBG
+ReelFliX|RFX SM737 XFR
+ReleaseZone|RZ-RG
+RevolutionTT|NPW
+ScanBytes|ScanExclusive
+SceneFZ|FZHD FZMusic
+SDbits|CtrlSD HYPE MMI RR
+SeedPool|Aisha LEGi0N MOONBLOOD OND seedpool SPx
+Simpledevelopment|SiMPLE
+Speed.cd|DiVERSiTY MutzNutz scott24
+SpeedApp|41RGB ANDRONIKA EShare CRC FZ4K FZBD FZHD FZSD FZWEB HDMAN iREAL MOO NViDiON PiPS SP4K SPBD SPDVD SPHD SPSD SPTV SPWEB SubZero SPMusic
+Superbits|EGEN GRANiTEN PANDEMONiUM VideoGod YOLO
+TeamOS|TEAMOS
+TeamTPTB|TPTB
+TehConnection|BaH HaB MKu schwoom TCO TSDC
+Telly|mkvCinemas Telly
+TNTracker|DEFUSED LoC POE
+TorrentBD|MRN KamiKaze ALiEN Grimmjaw NaNoMyTe GunGravE NG AP XZVN Galahal IHK DeathSs12 KISS ParVej PROPHET pyromancer TarTacular NyX JNH RUN MeGaTroN ANIMOUS ElPro ExCaLiBuR WiNT3R
+TorrentLand|Castellano "Eml Team" EmlHDTeam
+TorrentLeech|OFT 4K4U EPSiLON FLIGHTS RU4HD UnKn0wn TAoE
+TorViet|EbP EPiK HDvB L2Bits LolHD KiD VietHD
+TrackerHD|TRCKHD
+TTG|BDClub DoA NGB OoKU WiKi ARiN BMDru DTKTV JX npuer TTG
+UHDBits|DON ExREN HaB HDVN iFT JM LoRD KASHMiR LEGi0N MKVTeamZQ PIS POH PRiMaLHD TayTO UHDRemux JKP SwRd DKT EEEEE GoNeHD KHu LDX LHD LiquidHD $a!nt TCO VoLT
+Upload.cx|BLOOM REWiND
+Upscale Vault|UpscaleVault
+Usenet|EuReKA Troll3D TrollHD TrollUHD
+VNBits|VNB VNBIts
+World-In-HD|FURAX GAIA Heman HGR LFN PULSE STEAL TMB WiHD
+Xthor|CARPEDiEM JUSTFORFUN A3L BlackFlag BOUQUINE Giorgy NLX5 LiBE RTAD Poney ReBot ViKINGS FRATERNiTY WEEDS GHZ NEO SCiTiS BSD MYSTERiON Scaph ALLDAYiN CHiLL RiPiT DELiCiOUS CherryCoke DEMON iXTHOR QWERTZ LOOKSMAX SpiriTus DZ DavidGoodenough* Tokuchi* Yn1D* QUALiTY* LEGi*
+XtremeZone|Werip XtremeHD
+YUScene|R&H YUTeamHD
+Ztracker|ARROW
 `;
 
 // Which tracker a release group is internal to.
@@ -3387,7 +3508,7 @@ Xthor|JUSTFORFUN CARPEDiEM A3L BlackFlag BOUQUINE Giorgy NLX5 LiBE RTAD Poney Re
 // No network, posting or account access in this module.
 const DKOKTO_INTERNALS = (seed => {
     // LINK, not URL: a constant called URL would shadow the URL parser used just below.
-    const KEY='dkokto_internal_groups_v1', MAX=1200, NAME=40, LABEL=48, LINK=300;
+    const KEY='dkokto_internal_groups_v1', MAX=2500, NAME=40, LABEL=48, LINK=300;
     // backing: swapped for a fake store in the Node checks, exactly as trackers.js allows.
     let backing=null;
     const store=()=>{if(backing)return backing;try{return window.localStorage;}catch{return null;}};
@@ -3421,7 +3542,17 @@ const DKOKTO_INTERNALS = (seed => {
     const GROUP=/^[\p{L}\p{N}$@(][\p{L}\p{N}$@!'’.+_)-]{0,23}$/u;
     function groupTokens(line) {
         const out=[];
-        for(const raw of String(line||'').split(/\s+/)) {
+        // A group name can contain a space — "Goki TAoE", "DarQ HONE" — so a quoted name is
+        // taken whole before the rest of the line is split on spaces.
+        let rest=String(line||'');
+        for(const match of rest.match(/"[^"]{1,40}"/g)||[]) {
+            const name=match.slice(1,-1).trim();
+            const starred=/\*$/.test(name);
+            const bare=starred?name.slice(0,-1).trim():name;
+            if(bare&&bare.length<=40)out.push({group:bare,inactive:starred});
+            rest=rest.replace(match,' ');
+        }
+        for(const raw of rest.split(/\s+/)) {
             const token=raw.replace(/[.,;]+$/,'').trim();
             if(!token)continue;
             if(/^\(?inactive\)?\.?$/i.test(token)){if(out.length)out[out.length-1].inactive=true;continue;}
@@ -3436,25 +3567,56 @@ const DKOKTO_INTERNALS = (seed => {
         }
         return out;
     }
-    // Three shapes are accepted, because a list arrives however it arrives:
-    //   Tracker|group group group      the directory form this ships in, and what it exports
+    // Whatever shape the list arrives in, because directories are written by hand:
+    //   Tracker|group group group      the form this ships in, and what it exports
+    //   Tracker|groups|https://…       with one address for that whole tracker
     //   Group | Tracker | https://…    one group per line, with an optional address
-    //   the InviteHawk page pasted whole, icons, headers and all
+    //   Tracker: group, group          a colon and a comma-separated list
+    //   ## Tracker  /  **Tracker**     a heading, then the groups on the lines under it
+    //   an icon line, the tracker, its groups (the InviteHawk page pasted whole)
+    const HEADING=/^(?:#{1,6}\s+(.+?)\s*#*|\*\*(.+?)\*\*|__(.+?)__)$/;
+    const SKIP=/^(?:internal\s+groups?.*|groups?|trackers?|index|contents?|table of contents|last updated.*|updated.*|source.*)$/i;
     function parse(input) {
         const rows=[];
         const lines=String(input||'').split(/\r?\n/).map(line=>line.trim());
+        // A heading names the tracker whose groups follow it, until the next heading.
+        let heading='';
         for(let i=0;i<lines.length;i++) {
             const line=lines[i];
-            if(!line||/^[-|+\s]+$/.test(line))continue;
+            if(!line||/^[-|+=~_*\s]+$/.test(line)){heading=heading;continue;}
             if(/^\[/.test(line)||/^[A-Z0-9] Trackers$/i.test(line)||/^Tracker\s*→/.test(line))continue;
             // The pasted page: an icon line, then the tracker, then its groups.
             if(/^[\p{Extended_Pictographic}️\s]+$/u.test(line)) {
                 const tracker=lines[i+1]||'',groups=lines[i+2]||'';
                 if(tracker&&groups&&!/^\[/.test(tracker)) {
                     for(const token of groupTokens(groups))rows.push({...token,tracker:tracker.replace(/\s+/g,' ')});
-                    i+=2;
+                    i+=2;heading='';
                 }
                 continue;
+            }
+            // A heading on its own line names the tracker for the lines beneath it.
+            const head=line.match(HEADING);
+            if(head) {
+                const name=text(head[1]||head[2]||head[3],LABEL);
+                heading=SKIP.test(name)?'':name;
+                continue;
+            }
+            // "Tracker: group, group, group" — the tracker and its groups on one line.
+            const colon=line.match(/^([^:|]{1,48}?)\s*:\s*(.+)$/);
+            // A tracker's name is short and is not a sentence lead-in, and its groups do not
+            // end in a full stop — so "Note: these are the groups I know of." is prose.
+            const leadIn=/^(?:note|notes|source|sources|updated|last updated|see|warning|credit|credits|disclaimer|edit)$/i;
+            if(colon&&!/^https?$/i.test(colon[1])&&!leadIn.test(colon[1].trim())&&
+               colon[1].trim().split(/\s+/).length<=4&&!/[.!?]$/.test(colon[2].trim())) {
+                for(const token of groupTokens(colon[2].replace(/,/g,' ')))
+                    rows.push({...token,tracker:colon[1]});
+                continue;
+            }
+            // Under a heading, a bullet or a plain run of names belongs to that tracker.
+            if(heading&&!/[|]/.test(line)) {
+                const body=line.replace(/^[-*•·]\s*/,'').replace(/,/g,' ');
+                const found=groupTokens(body);
+                if(found.length){for(const token of found)rows.push({...token,tracker:heading});continue;}
             }
             const cells=line.replace(/^\||\|$/g,'').split(/\s*\|\s*|\t+/).map(cell=>cell.trim()).filter(Boolean);
             // Two cells is the directory form this ships in and exports: Tracker|groups.
@@ -3522,7 +3684,8 @@ const DKOKTO_INTERNALS = (seed => {
             const name=text(row.tracker,LABEL);
             if(!byTracker.has(name))byTracker.set(name,{groups:[],url:''});
             const bucket=byTracker.get(name);
-            bucket.groups.push(text(row.group,NAME)+(row.inactive?' (inactive)':''));
+            const label=text(row.group,NAME);
+            bucket.groups.push((/\s/.test(label)?'"'+label+'"':label)+(row.inactive?' (inactive)':''));
             if(!bucket.url&&row.url)bucket.url=row.url;
         }
         return [...byTracker].map(([tracker,rows])=>
