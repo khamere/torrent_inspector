@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DarkPeers - Torrent Inspector
 // @namespace    dkokto.darkpeers.inspector
-// @version      1.22.0
+// @version      1.23.0
 // @description  Torrent Inspector and automatic listing naming badges, checked against DarkPeers or Zenith rules. Reads the page only; makes no requests.
 // @author       🤖T.R.A.V.I.S (original Chungus Edition); DKOKTO personal customization
 // @match        https://darkpeers.org/*
@@ -65,7 +65,7 @@
 
 (function () {
     'use strict';
-    const DPTI_CSS = "/* Standalone Torrent Inspector styling. Scoped to this script's own dialog,\n   launcher and listing badges; site theming is left untouched. */\n#dp-inspector-tools { position:fixed; right:14px; bottom:14px; z-index:2147482000; display:flex; gap:8px; }\n#dp-inspector-tools button { font:600 14px/1.2 \"Segoe UI\",system-ui,sans-serif; color:#f4e8ff; background:#3d2551; border:1px solid #a97fc6; border-radius:5px; padding:10px 14px; cursor:pointer; box-shadow:0 2px 10px #0009; }\n#dp-inspector-tools button:hover { background:#643784; }\n#dp-inspector-tools button:focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n\n.dk-hub { box-sizing:border-box; width:min(940px,calc(100vw - 24px)); max-height:88dvh; padding:0; overflow:auto; background:#15101d; color:#f0e9f6; border:1px solid #af83c8; border-radius:6px; font:15px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-hub::backdrop { background:#07040bcc; }\n.dk-hub header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 20px; background:linear-gradient(#392447,#20152b); }\n.dk-hub h2 { margin:0; font:600 22px Consolas,monospace; }\n.dk-hub-content { padding:16px 20px; }\n.dk-hub :is(button,input,select,textarea) { box-sizing:border-box; font:inherit; color:#f4e8ff; background:#24182f; border:1px solid #9873b0; border-radius:3px; padding:8px 10px; min-width:0; }\n.dk-hub button { cursor:pointer; }\n.dk-hub button:hover,.dk-hub button[aria-pressed=true] { background:#643784; }\n.dk-hub button:disabled { opacity:.5; cursor:default; }\n.dk-hub input:not([type=checkbox]),.dk-hub textarea { width:100%; }\n.dk-hub input[type=checkbox] { width:20px; height:20px; accent-color:#ad71d1; }\n.dk-hub label { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin:12px 0; }\n.dk-hub a { color:#e0b6ff; overflow-wrap:anywhere; }\n.dk-hub :is(button,a,input,textarea,select,summary):focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n.dk-hub .dk-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:10px 0; }\n.dk-hub .dk-row a { flex:1; min-width:140px; }\n.dk-hub pre { background:#0c0811; padding:12px; max-height:45dvh; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; font:13px/1.5 Consolas,monospace; }\n.dk-hub table { width:100%; border-collapse:collapse; }\n.dk-hub th,.dk-hub td { text-align:left; padding:6px; border-bottom:1px solid #493357; }\n.dk-hub td label { font-size:0; margin:0; }\n.dk-hub td select { font-size:14px; width:100%; }\n.dk-hub-message { padding:0 20px 16px; color:#e2bcfc; white-space:pre-wrap; }\n.dk-hub details { padding:12px 0; border-top:1px solid #624771; }\n.dk-hub summary { cursor:pointer; }\n\n.dk-inspector-table { overflow-x:auto; max-width:100%; }\n.dk-hub .dk-inspector-table table { min-width:640px; font-size:13px; }\n.dk-hub .dk-inspector-table td { vertical-align:top; overflow-wrap:anywhere; max-width:240px; }\n.dk-inspector-checks { padding:10px 14px; background:#25182f; border-left:3px solid #bd91d9; }\n.dk-naming { border:1px solid #725587; padding:12px; margin:12px 0 20px; background:#1c1425; }\n.dk-naming .dk-naming-status { font-weight:700; color:#ead7ff; }\n.dk-naming .dk-naming-errors { border-left:3px solid #e9ad71; padding-left:24px; }\n.dk-naming li { margin:8px 0; }\n.dk-naming details { margin:12px 0; }\n.dk-naming summary { cursor:pointer; color:#dabcdf; }\n\n.dk-listing-bar { display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; padding:12px; margin:8px 0; background:#21162b; border:1px solid #725587; color:#f0e9f6; font:14px/1.5 'Segoe UI',sans-serif; }\n.dk-listing-bar label { display:flex; gap:8px; align-items:center; cursor:pointer; }\n.dk-listing-bar .dk-listing-rules,.dk-hub .dk-naming-site { display:flex; gap:8px; align-items:center; }\n.dk-listing-bar .dk-listing-rules select,.dk-hub .dk-naming-site select { padding:3px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-hub .dk-naming-site { margin:0 0 10px; font-weight:600; color:#d9c4e8; }\n.dk-listing-bar .dk-listing-rules-edit,.dk-hub .dk-naming-site button { padding:3px 9px; border:1px solid #6d5280; border-radius:3px; background:#2b1d36; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-listing-bar .dk-listing-rules-edit:hover,.dk-hub .dk-naming-site button:hover { background:#3a2748; }\n.dk-profile-dialog { max-width:760px; width:92vw; }\n.dk-profile-tabs { display:flex; gap:8px; margin:0 0 14px; flex-wrap:wrap; }\n.dk-profile-tabs button { padding:6px 12px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-profile-tabs button[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-profile-form { display:flex; flex-direction:column; gap:14px; }\n.dk-profile-field { display:flex; flex-direction:column; gap:5px; font-weight:600; color:#d9c4e8; }\n.dk-profile-field :is(input,textarea,select) { padding:7px 9px; border:1px solid #6d5280; border-radius:3px; background:#1b1222; color:#efe4f7; font:inherit; }\n.dk-profile-field textarea,.dk-profile-json { font:13px/1.5 Consolas,'Courier New',monospace; width:100%; box-sizing:border-box; }\n.dk-profile-json { padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#dcc9ec; }\n.dk-profile-field small,.dk-profile-recipes small,.dk-profile-count { font-weight:400; color:#b9a6c9; font-size:12px; }\n.dk-profile-count { color:#a9e3c0; }\n.dk-profile-recipes { border:1px solid #56406a; border-radius:4px; padding:12px; display:flex; flex-direction:column; gap:7px; }\n.dk-profile-recipes legend { padding:0 6px; color:#d9c4e8; font-weight:600; }\n.dk-profile-recipes label { display:flex; gap:9px; align-items:center; font-size:14px; }\n.dk-profile-installed { border:1px solid #56406a; border-radius:4px; padding:12px; display:flex; flex-direction:column; gap:7px; }\n.dk-profile-installed small { color:#b9a6c9; font-size:12px; }\n.dk-profile-file { display:inline-flex; align-items:center; gap:8px; font-size:13px; color:#d9c4e8; }\n.dk-profile-status:not(:empty) { padding:9px 11px; border-left:3px solid #7d5c96; background:#20152a; color:#e6d6f2; }\n.dk-profile-status[data-tone=bad] { border-color:#e07a7a; }\n.dk-profile-status[data-tone=good] { border-color:#7ad39a; }\n.dk-profile-status[data-tone=warn] { border-color:#e0c07a; }\n.dk-listing-decision { display:inline-flex; gap:6px; align-items:center; margin-left:8px; font-size:12px; }\n.dk-listing-decision select { padding:2px 5px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-listing-decision[data-state=approved] select { border-color:#5fa87a; }\n.dk-listing-decision[data-state=rejected] select { border-color:#c97a7a; }\n.dk-listing-decision[data-state=asked] select { border-color:#c9b07a; }\n.dk-decision-mark { color:#b9a6c9; white-space:nowrap; }\n.dk-listing-badge[data-lead=yes] { margin:0 6px 0 0; }\n.dk-detail-page { display:block; padding:12px 14px; margin:10px 0; border:1px solid #5b406d; border-radius:4px; background:#1c1426; }\n.dk-detail-page ul { margin:8px 0 0; padding-left:20px; }\n.dk-detail-page li { margin:4px 0; color:#e0d2ec; font-size:13px; line-height:1.55; }\n.dk-detail-page li[data-severity=error] { color:#f0b5b5; }\n.dk-detail-page li[data-severity=error]::marker { color:#e07a7a; }\n.dk-detail-page li[data-severity=review]::marker { color:#e0c07a; }\n.dk-detail-page small { display:block; margin-top:9px; color:#a493b4; font-size:11.5px; }\n.dk-reply { margin-top:14px; border:1px solid #56406a; border-radius:4px; padding:10px 12px; }\n.dk-reply summary { cursor:pointer; font-weight:600; color:#d9c4e8; }\n.dk-reply p { color:#b9a6c9; font-size:13px; }\n.dk-reply-choice { padding:5px 11px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-reply-choice[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-reply-text { width:100%; box-sizing:border-box; margin:10px 0; padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#efe4f7; font:13px/1.6 Consolas,'Courier New',monospace; }\n.dk-reply { margin-top:14px; border:1px solid #56406a; border-radius:4px; padding:10px 12px; }\n.dk-reply summary { cursor:pointer; font-weight:600; color:#d9c4e8; }\n.dk-reply p { color:#b9a6c9; font-size:13px; }\n.dk-reply-choice { padding:5px 11px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-reply-choice[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-reply-text { width:100%; box-sizing:border-box; margin:10px 0; padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#efe4f7; font:13px/1.6 Consolas,'Courier New',monospace; }\n.dk-listing-log { display:inline-flex; gap:8px; align-items:center; }\n.dk-compare-sides { display:grid; grid-template-columns:1fr 1fr; gap:12px; }\n.dk-compare-side { display:flex; flex-direction:column; gap:5px; font-weight:600; color:#d9c4e8; }\n.dk-compare-side textarea { font:13px/1.5 Consolas,'Courier New',monospace; padding:8px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#dcc9ec; width:100%; box-sizing:border-box; }\n.dk-compare-table { display:flex; flex-direction:column; border:1px solid #56406a; border-radius:4px; overflow:hidden; margin:10px 0; }\n.dk-compare-row { display:grid; grid-template-columns:minmax(120px,1fr) minmax(0,1.2fr) minmax(0,1.2fr); gap:10px; padding:7px 10px; border-bottom:1px solid #3d2c4c; font-size:13px; }\n.dk-compare-row:last-child { border-bottom:none; }\n.dk-compare-row:nth-child(odd) { background:#1d1426; }\n.dk-compare-row [data-larger=yes] { color:#a9e3c0; }\n@media (max-width:700px){ .dk-compare-sides,.dk-compare-row { grid-template-columns:1fr; } }\n.dk-listing-bar input[type=checkbox] { width:18px; height:18px; accent-color:#ad71d1; }\n.dk-listing-bar small { flex-basis:100%; color:#d2bedf; }\n.dk-listing-bar [role=status] { font-weight:600; }\nbutton.dk-listing-badge { display:inline-flex !important; align-items:center; justify-content:center; vertical-align:middle; flex-shrink:0; width:22px; height:22px; min-width:22px; padding:0 !important; margin:0 0 0 6px !important; border:1px solid currentColor !important; border-radius:4px !important; background:#160f1e !important; font:bold 15px/1 'Segoe UI',sans-serif !important; cursor:pointer; box-shadow:none !important; }\nbutton.dk-listing-badge[data-state=error] { color:#ff666d !important; }\nbutton.dk-listing-badge[data-state=pass] { color:#67df99 !important; }\nbutton.dk-listing-badge[data-state=review] { color:#f1c15b !important; }\nbutton.dk-listing-badge:focus-visible { outline:3px solid #eee !important; outline-offset:2px; }\n.dk-listing-dialog li { margin-block:8px; }\n.dk-listing-dialog h3 { overflow-wrap:anywhere; }\n\n@media(max-width:700px) {\n  #dp-inspector-tools { left:8px; right:8px; bottom:max(8px,env(safe-area-inset-bottom)); justify-content:center; }\n  #dp-inspector-tools button { min-height:44px; width:100%; }\n  .dk-hub { max-height:90dvh; }\n  .dk-hub header,.dk-hub-content { padding:12px; }\n  .dk-hub button { min-height:44px; }\n  .dk-hub input,.dk-hub select,.dk-hub textarea { font-size:16px; }\n  .dk-hub table tr { display:grid; grid-template-columns:1fr 1fr; padding:8px 0; }\n  .dk-hub table tr:first-child { display:none; }\n  .dk-hub table td { border:0; }\n  .dk-hub table td:first-child { grid-column:1/-1; }\n  .dk-hub .dk-inspector-table table tr { display:table-row; }\n  .dk-hub .dk-inspector-table table tr:first-child { display:table-row; }\n  .dk-hub .dk-inspector-table table td { border-bottom:1px solid #493357; }\n  button.dk-listing-badge { width:26px; height:26px; min-width:26px; font-size:17px !important; }\n}\n@media print { .dk-hub,#dp-inspector-tools { display:none !important; } }\n.dk-naming .dk-service-list { max-height:280px; overflow:auto; padding:6px 10px; background:#140e1c; border:1px solid #4b3559; border-radius:3px; }\n.dk-naming .dk-service-list p { margin:5px 0; overflow-wrap:anywhere; }\n.dk-naming .dk-service-list code { display:inline-block; min-width:96px; color:#e2bcfc; font:13px Consolas,monospace; }\n.dk-naming .dk-naming-service { margin:4px 0 8px; color:#cbb0e4; font:13px Consolas,monospace; }\nbutton.dk-listing-badge.dk-detail-badge { width:24px; height:24px; min-width:24px; font-size:16px !important; margin:0 0 0 8px !important; vertical-align:middle; }\n.dk-detail-links { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:10px 0 14px; font:14px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-detail-links .dk-detail-links-label { color:#c0adce; margin-right:2px; }\n.dk-detail-links a { padding:4px 9px; color:#e6cbff !important; background:#22162c; border:1px solid #6d5280; border-radius:3px; text-decoration:none; }\n.dk-detail-links a:hover { background:#3d2451; border-color:#c193e6; }\n.dk-detail-links a[data-exact=yes] { border-color:#9fdcb6; box-shadow:inset 0 0 0 1px #67df9933; }\n.dk-detail-links a:focus-visible,.dk-detail-links button:focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n.dk-detail-links .dk-detail-copy { padding:4px 9px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-detail-links .dk-detail-copy:hover { background:#563173; }\n@media print { .dk-detail-links,.dk-detail-badge { display:none !important; } }\n.dk-detail-links .dk-detail-vs { padding:4px 11px; color:#ffe6b8; background:#3d2a17; border:1px solid #a8813f; border-radius:3px; cursor:pointer; font:inherit; font-weight:600; }\n.dk-detail-links .dk-detail-vs:hover { background:#5a3d1f; border-color:#e0b464; }\n.dk-detail-compare { margin:0 0 16px; padding:12px 14px; background:#1a1223; border:1px solid #6d5280; border-radius:4px; font:14px/1.6 \"Segoe UI\",system-ui,sans-serif; color:#e4d5f2; }\n.dk-detail-compare h3 { margin:12px 0 6px; font-size:15px; color:#e6cbff; }\n.dk-detail-compare h3:first-child { margin-top:0; }\n.dk-detail-compare p { margin:4px 0 8px; }\n.dk-detail-compare small { display:block; margin-top:10px; color:#b9a7c7; font-size:12px; }\n.dk-detail-compare .dk-compare-note { color:#ffe6b8; }\n.dk-compare-slot { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:5px 0; }\n.dk-compare-slot > span { flex:1 1 220px; min-width:0; overflow-wrap:anywhere; color:#cdb8e0; }\n.dk-detail-compare button { padding:4px 10px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-detail-compare button:hover { background:#563173; border-color:#c193e6; }\n.dk-detail-compare button:focus-visible { outline:2px solid #e0bdff; outline-offset:2px; }\n.dk-detail-compare .dk-compare-drop { background:#2a1a22; border-color:#8a5a6a; }\n.dk-detail-compare .dk-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }\n.dk-detail-compare .dk-compare-verdict { margin:10px 0 14px; padding:10px 12px; border-radius:4px; border:1px solid #8a6aa3; background:#241730; }\n.dk-detail-compare .dk-compare-verdict strong { display:block; margin-bottom:4px; font-size:15px; }\n.dk-detail-compare .dk-compare-verdict p { margin:0; }\n.dk-detail-compare .dk-compare-verdict[data-state=differs] { border-color:#d08a6a; background:#2c1a18; }\n.dk-detail-compare .dk-compare-verdict[data-state=differs] strong { color:#ffc9a8; }\n.dk-detail-compare .dk-compare-verdict[data-state=matches] { border-color:#6ea87f; background:#16241b; }\n.dk-detail-compare .dk-compare-verdict[data-state=matches] strong { color:#a9e3c0; }\n@media print { .dk-detail-compare { display:none !important; } }\n.dk-listing-bar .dk-listing-audit { padding:5px 11px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-listing-bar .dk-listing-audit:hover { background:#563173; border-color:#c193e6; }\n.dk-hub .dk-listing-copy { margin-top:12px; }\n.dk-listing-dialog pre { max-height:50dvh; }\n.dk-listing-dialog pre { max-height:50dvh; }\n.dk-request-open { margin-left:6px; padding:2px 8px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:12px/1.5 \"Segoe UI\",system-ui,sans-serif; vertical-align:middle; }\n.dk-request-open:hover { background:#563173; border-color:#c193e6; }\n.dk-request-open:focus-visible { outline:2px solid #e0bdff; outline-offset:2px; }\n.dk-hub .dk-tracker-find { display:block; width:100%; box-sizing:border-box; margin:10px 0 4px; padding:7px 10px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:4px; font:inherit; }\n.dk-hub .dk-tracker-find:focus-visible { outline:2px solid #e0bdff; outline-offset:1px; }\n.dk-hub details.dk-tracker-group { padding:0; }\n.dk-hub details.dk-tracker-group > summary { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 12px; color:#d9c4e8; font-weight:600; cursor:pointer; list-style:none; }\n.dk-hub details.dk-tracker-group > summary::-webkit-details-marker { display:none; }\n.dk-hub details.dk-tracker-group > summary::before { content:'▸'; margin-right:6px; color:#a98cc4; }\n.dk-hub details.dk-tracker-group[open] > summary::before { content:'▾'; }\n.dk-hub details.dk-tracker-group > summary:hover { background:#241730; }\n.dk-hub details.dk-tracker-group > summary:focus-visible { outline:2px solid #e0bdff; outline-offset:-2px; }\n.dk-hub .dk-tracker-count { padding:1px 8px; color:#cdb8e0; background:#2c1d3a; border-radius:10px; font:12px/1.6 inherit; font-weight:400; }\n.dk-hub details.dk-tracker-group > .dk-tracker-row { padding:0 12px 0 26px; }\n.dk-hub details.dk-tracker-group > .dk-tracker-row:last-child { padding-bottom:10px; }\n.dk-hub .dk-tracker-tag { margin-left:6px; padding:1px 6px; color:#c9b3dc; background:#2a1c37; border:1px solid #4b3a5c; border-radius:9px; font-size:11px; font-weight:400; }\n.dk-hub .dk-tracker-address-toggle { padding:3px 9px; color:#e6cbff; background:#2a1a38; border:1px solid #6d5280; border-radius:3px; cursor:pointer; font:12px inherit; }\n.dk-hub .dk-tracker-address-toggle:hover { background:#3d2451; }\n.dk-hub .dk-tracker-address-toggle[aria-expanded=true] { background:#482b60; border-color:#c193e6; }\n.dk-hub details.dk-tracker-group .dk-tracker-row label { flex:0 0 auto; min-width:260px; justify-content:flex-start; text-align:left; }\n.dk-hub details.dk-tracker-group .dk-tracker-row label > span.dk-tracker-tag { flex:0 0 auto; }\n.dk-hub .dk-tracker-group { margin:12px 0; padding:8px 12px 10px; border:1px solid #6d5280; border-radius:4px; }\n.dk-hub .dk-tracker-group legend { padding:0 6px; color:#d9c4e8; font-weight:600; }\n.dk-hub .dk-tracker-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:6px 0; }\n.dk-hub .dk-tracker-row label { display:flex; align-items:center; gap:6px; min-width:190px; margin:0; cursor:pointer; }\n.dk-hub .dk-tracker-row input[type=checkbox] { width:16px; height:16px; accent-color:#ad71d1; }\n.dk-hub .dk-tracker-url,.dk-hub .dk-tracker-row input[type=text] { flex:1; min-width:230px; padding:4px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:12px/1.5 ui-monospace,Consolas,monospace; }\n.dk-hub .dk-tracker-row select { padding:4px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n@media print { .dk-request-open,.dk-request-bar,.dk-request-links { display:none !important; } }\n.dk-request-seen { margin-left:6px; color:#9fdcb6; font:12px/1.5 \"Segoe UI\",system-ui,sans-serif; white-space:nowrap; }\n.dk-request-float { position:absolute; z-index:2147483000; box-shadow:0 3px 10px #0009; }\n.dk-hub .dk-request-term { display:flex; flex-direction:column; gap:4px; margin:8px 0 4px; color:#d9c4e8; }\n.dk-hub .dk-request-term input { padding:6px 8px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:14px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-listing-badge[data-state=error][data-banned=yes] { box-shadow:0 0 0 2px #ff6b6b88; }\n@media print { .dk-request-seen,.dk-request-float { display:none !important; } }\n.dk-hub .dk-request-step { min-width:220px; }\n.dk-hub .dk-request-step[disabled] { opacity:.6; cursor:default; }\n\n/* A badge rides beside the title without adding height to the row: in grouped and\n   compact listing views a taller badge overflowed onto the title below it. */\nbutton.dk-listing-badge { line-height:0 !important; max-height:22px; box-sizing:border-box; position:relative; top:-1px; }\nbutton.dk-listing-badge.dk-detail-badge { max-height:24px; top:0; }\n@media(max-width:700px) { button.dk-listing-badge { width:26px; height:26px; min-width:26px; font-size:17px !important; max-height:26px; } }\n.dk-listing-bar .dk-listing-rules,.dk-hub .dk-naming-site { display:flex; gap:8px; align-items:center; }\n.dk-listing-bar .dk-listing-rules select,.dk-hub .dk-naming-site select { padding:3px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-hub .dk-naming-site { margin:0 0 10px; font-weight:600; color:#d9c4e8; }\n\n.dk-group-tag { color:#ffb454 !important; cursor:pointer; border-bottom:1px dotted currentColor; }\n.dk-group-tag:hover, .dk-group-tag:focus-visible { color:#ffd08a !important; outline:none; border-bottom-style:solid; }\n.dk-group-menu { position:absolute; z-index:2147483000; max-width:min(360px,92vw); padding:12px 14px; border:1px solid #7b5792; border-radius:8px; background:#160f1e; color:#eee; box-shadow:0 10px 30px #000a; font:14px/1.5 'Segoe UI',sans-serif; }\n.dk-group-menu strong { display:block; margin-bottom:6px; color:#ffb454; }\n.dk-group-menu ul { margin:0 0 10px; padding-left:18px; }\n.dk-group-menu li { margin-block:6px; }\n.dk-group-menu a { color:#dbc0ef; }\n.dk-group-menu small { display:block; color:#c8b9d2; }\n.dk-group-menu button { padding:5px 10px; border:1px solid #7b5792; border-radius:6px; background:#22162c; color:#eee; cursor:pointer; }\n.dk-listing-bar .dk-listing-groups-edit { padding:3px 9px; border:1px solid #6d5280; border-radius:3px; background:#2b1d36; color:#e6d6f2; cursor:pointer; font:inherit; }\n\n.dk-group-add { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:10px 0 6px; }\n.dk-group-add label { flex-basis:100%; color:#c8b9d2; font-size:12.5px; }\n.dk-group-add input { flex:1 1 130px; min-width:0; padding:5px 8px; border:1px solid #6d5280; border-radius:5px; background:#0f0a15; color:#eee; font:inherit; font-size:13px; }\n.dk-group-add small { flex-basis:100%; color:#f1c15b; font-size:12.5px; }\n";
+    const DPTI_CSS = "/* Standalone Torrent Inspector styling. Scoped to this script's own dialog,\n   launcher and listing badges; site theming is left untouched. */\n#dp-inspector-tools { position:fixed; right:14px; bottom:14px; z-index:2147482000; display:flex; gap:8px; }\n#dp-inspector-tools button { font:600 14px/1.2 \"Segoe UI\",system-ui,sans-serif; color:#f4e8ff; background:#3d2551; border:1px solid #a97fc6; border-radius:5px; padding:10px 14px; cursor:pointer; box-shadow:0 2px 10px #0009; }\n#dp-inspector-tools button:hover { background:#643784; }\n#dp-inspector-tools button:focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n\n.dk-hub { box-sizing:border-box; width:min(940px,calc(100vw - 24px)); max-height:88dvh; padding:0; overflow:auto; background:#15101d; color:#f0e9f6; border:1px solid #af83c8; border-radius:6px; font:15px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-hub::backdrop { background:#07040bcc; }\n.dk-hub header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 20px; background:linear-gradient(#392447,#20152b); }\n.dk-hub h2 { margin:0; font:600 22px Consolas,monospace; }\n.dk-hub-content { padding:16px 20px; }\n.dk-hub :is(button,input,select,textarea) { box-sizing:border-box; font:inherit; color:#f4e8ff; background:#24182f; border:1px solid #9873b0; border-radius:3px; padding:8px 10px; min-width:0; }\n.dk-hub button { cursor:pointer; }\n.dk-hub button:hover,.dk-hub button[aria-pressed=true] { background:#643784; }\n.dk-hub button:disabled { opacity:.5; cursor:default; }\n.dk-hub input:not([type=checkbox]),.dk-hub textarea { width:100%; }\n.dk-hub input[type=checkbox] { width:20px; height:20px; accent-color:#ad71d1; }\n.dk-hub label { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin:12px 0; }\n.dk-hub a { color:#e0b6ff; overflow-wrap:anywhere; }\n.dk-hub :is(button,a,input,textarea,select,summary):focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n.dk-hub .dk-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:10px 0; }\n.dk-hub .dk-row a { flex:1; min-width:140px; }\n.dk-hub pre { background:#0c0811; padding:12px; max-height:45dvh; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; font:13px/1.5 Consolas,monospace; }\n.dk-hub table { width:100%; border-collapse:collapse; }\n.dk-hub th,.dk-hub td { text-align:left; padding:6px; border-bottom:1px solid #493357; }\n.dk-hub td label { font-size:0; margin:0; }\n.dk-hub td select { font-size:14px; width:100%; }\n.dk-hub-message { padding:0 20px 16px; color:#e2bcfc; white-space:pre-wrap; }\n.dk-hub details { padding:12px 0; border-top:1px solid #624771; }\n.dk-hub summary { cursor:pointer; }\n\n.dk-inspector-table { overflow-x:auto; max-width:100%; }\n.dk-hub .dk-inspector-table table { min-width:640px; font-size:13px; }\n.dk-hub .dk-inspector-table td { vertical-align:top; overflow-wrap:anywhere; max-width:240px; }\n.dk-inspector-checks { padding:10px 14px; background:#25182f; border-left:3px solid #bd91d9; }\n.dk-naming { border:1px solid #725587; padding:12px; margin:12px 0 20px; background:#1c1425; }\n.dk-naming .dk-naming-status { font-weight:700; color:#ead7ff; }\n.dk-naming .dk-naming-errors { border-left:3px solid #e9ad71; padding-left:24px; }\n.dk-naming li { margin:8px 0; }\n.dk-naming details { margin:12px 0; }\n.dk-naming summary { cursor:pointer; color:#dabcdf; }\n\n.dk-listing-bar { display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; padding:12px; margin:8px 0; background:#21162b; border:1px solid #725587; color:#f0e9f6; font:14px/1.5 'Segoe UI',sans-serif; }\n.dk-listing-bar label { display:flex; gap:8px; align-items:center; cursor:pointer; }\n.dk-listing-bar .dk-listing-rules,.dk-hub .dk-naming-site { display:flex; gap:8px; align-items:center; }\n.dk-listing-bar .dk-listing-rules select,.dk-hub .dk-naming-site select { padding:3px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-hub .dk-naming-site { margin:0 0 10px; font-weight:600; color:#d9c4e8; }\n.dk-listing-bar .dk-listing-rules-edit,.dk-hub .dk-naming-site button { padding:3px 9px; border:1px solid #6d5280; border-radius:3px; background:#2b1d36; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-listing-bar .dk-listing-rules-edit:hover,.dk-hub .dk-naming-site button:hover { background:#3a2748; }\n.dk-profile-dialog { max-width:760px; width:92vw; }\n.dk-profile-tabs { display:flex; gap:8px; margin:0 0 14px; flex-wrap:wrap; }\n.dk-profile-tabs button { padding:6px 12px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-profile-tabs button[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-profile-form { display:flex; flex-direction:column; gap:14px; }\n.dk-profile-field { display:flex; flex-direction:column; gap:5px; font-weight:600; color:#d9c4e8; }\n.dk-profile-field :is(input,textarea,select) { padding:7px 9px; border:1px solid #6d5280; border-radius:3px; background:#1b1222; color:#efe4f7; font:inherit; }\n.dk-profile-field textarea,.dk-profile-json { font:13px/1.5 Consolas,'Courier New',monospace; width:100%; box-sizing:border-box; }\n.dk-profile-json { padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#dcc9ec; }\n.dk-profile-field small,.dk-profile-recipes small,.dk-profile-count { font-weight:400; color:#b9a6c9; font-size:12px; }\n.dk-profile-count { color:#a9e3c0; }\n.dk-profile-recipes { border:1px solid #56406a; border-radius:4px; padding:12px; display:flex; flex-direction:column; gap:7px; }\n.dk-profile-recipes legend { padding:0 6px; color:#d9c4e8; font-weight:600; }\n.dk-profile-recipes label { display:flex; gap:9px; align-items:center; font-size:14px; }\n.dk-profile-installed { border:1px solid #56406a; border-radius:4px; padding:12px; display:flex; flex-direction:column; gap:7px; }\n.dk-profile-installed small { color:#b9a6c9; font-size:12px; }\n.dk-profile-file { display:inline-flex; align-items:center; gap:8px; font-size:13px; color:#d9c4e8; }\n.dk-profile-status:not(:empty) { padding:9px 11px; border-left:3px solid #7d5c96; background:#20152a; color:#e6d6f2; }\n.dk-profile-status[data-tone=bad] { border-color:#e07a7a; }\n.dk-profile-status[data-tone=good] { border-color:#7ad39a; }\n.dk-profile-status[data-tone=warn] { border-color:#e0c07a; }\n.dk-listing-decision { display:inline-flex; gap:6px; align-items:center; margin-left:8px; font-size:12px; }\n.dk-listing-decision select { padding:2px 5px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-listing-decision[data-state=approved] select { border-color:#5fa87a; }\n.dk-listing-decision[data-state=rejected] select { border-color:#c97a7a; }\n.dk-listing-decision[data-state=asked] select { border-color:#c9b07a; }\n.dk-decision-mark { color:#b9a6c9; white-space:nowrap; }\n.dk-listing-badge[data-lead=yes] { margin:0 6px 0 0; }\n.dk-detail-page { display:block; padding:12px 14px; margin:10px 0; border:1px solid #5b406d; border-radius:4px; background:#1c1426; }\n.dk-detail-page ul { margin:8px 0 0; padding-left:20px; }\n.dk-detail-page li { margin:4px 0; color:#e0d2ec; font-size:13px; line-height:1.55; }\n.dk-detail-page li[data-severity=error] { color:#f0b5b5; }\n.dk-detail-page li[data-severity=error]::marker { color:#e07a7a; }\n.dk-detail-page li[data-severity=review]::marker { color:#e0c07a; }\n.dk-detail-page small { display:block; margin-top:9px; color:#a493b4; font-size:11.5px; }\n.dk-reply { margin-top:14px; border:1px solid #56406a; border-radius:4px; padding:10px 12px; }\n.dk-reply summary { cursor:pointer; font-weight:600; color:#d9c4e8; }\n.dk-reply p { color:#b9a6c9; font-size:13px; }\n.dk-reply-choice { padding:5px 11px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-reply-choice[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-reply-text { width:100%; box-sizing:border-box; margin:10px 0; padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#efe4f7; font:13px/1.6 Consolas,'Courier New',monospace; }\n.dk-reply { margin-top:14px; border:1px solid #56406a; border-radius:4px; padding:10px 12px; }\n.dk-reply summary { cursor:pointer; font-weight:600; color:#d9c4e8; }\n.dk-reply p { color:#b9a6c9; font-size:13px; }\n.dk-reply-choice { padding:5px 11px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-reply-choice[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-reply-text { width:100%; box-sizing:border-box; margin:10px 0; padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#efe4f7; font:13px/1.6 Consolas,'Courier New',monospace; }\n.dk-listing-log { display:inline-flex; gap:8px; align-items:center; }\n.dk-compare-sides { display:grid; grid-template-columns:1fr 1fr; gap:12px; }\n.dk-compare-side { display:flex; flex-direction:column; gap:5px; font-weight:600; color:#d9c4e8; }\n.dk-compare-side textarea { font:13px/1.5 Consolas,'Courier New',monospace; padding:8px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#dcc9ec; width:100%; box-sizing:border-box; }\n.dk-compare-table { display:flex; flex-direction:column; border:1px solid #56406a; border-radius:4px; overflow:hidden; margin:10px 0; }\n.dk-compare-row { display:grid; grid-template-columns:minmax(120px,1fr) minmax(0,1.2fr) minmax(0,1.2fr); gap:10px; padding:7px 10px; border-bottom:1px solid #3d2c4c; font-size:13px; }\n.dk-compare-row:last-child { border-bottom:none; }\n.dk-compare-row:nth-child(odd) { background:#1d1426; }\n.dk-compare-row [data-larger=yes] { color:#a9e3c0; }\n@media (max-width:700px){ .dk-compare-sides,.dk-compare-row { grid-template-columns:1fr; } }\n.dk-listing-bar input[type=checkbox] { width:18px; height:18px; accent-color:#ad71d1; }\n.dk-listing-bar small { flex-basis:100%; color:#d2bedf; }\n.dk-listing-bar [role=status] { font-weight:600; }\nbutton.dk-listing-badge { display:inline-flex !important; align-items:center; justify-content:center; vertical-align:middle; flex-shrink:0; width:22px; height:22px; min-width:22px; padding:0 !important; margin:0 0 0 6px !important; border:1px solid currentColor !important; border-radius:4px !important; background:#160f1e !important; font:bold 15px/1 'Segoe UI',sans-serif !important; cursor:pointer; box-shadow:none !important; }\nbutton.dk-listing-badge[data-state=error] { color:#ff666d !important; }\nbutton.dk-listing-badge[data-state=pass] { color:#67df99 !important; }\nbutton.dk-listing-badge[data-state=review] { color:#f1c15b !important; }\nbutton.dk-listing-badge:focus-visible { outline:3px solid #eee !important; outline-offset:2px; }\n.dk-listing-dialog li { margin-block:8px; }\n.dk-listing-dialog h3 { overflow-wrap:anywhere; }\n\n@media(max-width:700px) {\n  #dp-inspector-tools { left:8px; right:8px; bottom:max(8px,env(safe-area-inset-bottom)); justify-content:center; }\n  #dp-inspector-tools button { min-height:44px; width:100%; }\n  .dk-hub { max-height:90dvh; }\n  .dk-hub header,.dk-hub-content { padding:12px; }\n  .dk-hub button { min-height:44px; }\n  .dk-hub input,.dk-hub select,.dk-hub textarea { font-size:16px; }\n  .dk-hub table tr { display:grid; grid-template-columns:1fr 1fr; padding:8px 0; }\n  .dk-hub table tr:first-child { display:none; }\n  .dk-hub table td { border:0; }\n  .dk-hub table td:first-child { grid-column:1/-1; }\n  .dk-hub .dk-inspector-table table tr { display:table-row; }\n  .dk-hub .dk-inspector-table table tr:first-child { display:table-row; }\n  .dk-hub .dk-inspector-table table td { border-bottom:1px solid #493357; }\n  button.dk-listing-badge { width:26px; height:26px; min-width:26px; font-size:17px !important; }\n}\n@media print { .dk-hub,#dp-inspector-tools { display:none !important; } }\n.dk-naming .dk-service-list { max-height:280px; overflow:auto; padding:6px 10px; background:#140e1c; border:1px solid #4b3559; border-radius:3px; }\n.dk-naming .dk-service-list p { margin:5px 0; overflow-wrap:anywhere; }\n.dk-naming .dk-service-list code { display:inline-block; min-width:96px; color:#e2bcfc; font:13px Consolas,monospace; }\n.dk-naming .dk-naming-service { margin:4px 0 8px; color:#cbb0e4; font:13px Consolas,monospace; }\nbutton.dk-listing-badge.dk-detail-badge { width:24px; height:24px; min-width:24px; font-size:16px !important; margin:0 0 0 8px !important; vertical-align:middle; }\n.dk-detail-links { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:10px 0 14px; font:14px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-detail-links .dk-detail-links-label { color:#c0adce; margin-right:2px; }\n.dk-detail-links a { padding:4px 9px; color:#e6cbff !important; background:#22162c; border:1px solid #6d5280; border-radius:3px; text-decoration:none; }\n.dk-detail-links a:hover { background:#3d2451; border-color:#c193e6; }\n.dk-detail-links a[data-exact=yes] { border-color:#9fdcb6; box-shadow:inset 0 0 0 1px #67df9933; }\n.dk-detail-links a:focus-visible,.dk-detail-links button:focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n.dk-detail-links .dk-detail-copy { padding:4px 9px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-detail-links .dk-detail-copy:hover { background:#563173; }\n@media print { .dk-detail-links,.dk-detail-badge { display:none !important; } }\n.dk-detail-links .dk-detail-vs { padding:4px 11px; color:#ffe6b8; background:#3d2a17; border:1px solid #a8813f; border-radius:3px; cursor:pointer; font:inherit; font-weight:600; }\n.dk-detail-links .dk-detail-vs:hover { background:#5a3d1f; border-color:#e0b464; }\n/* [ MULTIPLE FILES ]: a pack says so under its name, and copies its list on click. */\n.dk-detail-files { margin:4px 0 2px; text-align:center; }\n.dk-detail-files-copy { padding:2px 8px; color:#b9a7c6; background:none; border:1px solid transparent; border-radius:4px; cursor:pointer; font:inherit; font-size:13px; letter-spacing:.08em; }\n.dk-detail-files-copy:hover, .dk-detail-files-copy:focus-visible { color:#f0e4ff; border-color:#8a6aa3; background:#2a1b38; }\n.dk-detail-files-copy[data-copied] { color:#9fe0a4; border-color:#4f8a56; }\n.dk-detail-compare { margin:0 0 16px; padding:12px 14px; background:#1a1223; border:1px solid #6d5280; border-radius:4px; font:14px/1.6 \"Segoe UI\",system-ui,sans-serif; color:#e4d5f2; }\n.dk-detail-compare h3 { margin:12px 0 6px; font-size:15px; color:#e6cbff; }\n.dk-detail-compare h3:first-child { margin-top:0; }\n.dk-detail-compare p { margin:4px 0 8px; }\n.dk-detail-compare small { display:block; margin-top:10px; color:#b9a7c7; font-size:12px; }\n.dk-detail-compare .dk-compare-note { color:#ffe6b8; }\n.dk-compare-slot { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:5px 0; }\n.dk-compare-slot > span { flex:1 1 220px; min-width:0; overflow-wrap:anywhere; color:#cdb8e0; }\n.dk-detail-compare button { padding:4px 10px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-detail-compare button:hover { background:#563173; border-color:#c193e6; }\n.dk-detail-compare button:focus-visible { outline:2px solid #e0bdff; outline-offset:2px; }\n.dk-detail-compare .dk-compare-drop { background:#2a1a22; border-color:#8a5a6a; }\n.dk-detail-compare .dk-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }\n.dk-detail-compare .dk-compare-verdict { margin:10px 0 14px; padding:10px 12px; border-radius:4px; border:1px solid #8a6aa3; background:#241730; }\n.dk-detail-compare .dk-compare-verdict strong { display:block; margin-bottom:4px; font-size:15px; }\n.dk-detail-compare .dk-compare-verdict p { margin:0; }\n.dk-detail-compare .dk-compare-verdict[data-state=differs] { border-color:#d08a6a; background:#2c1a18; }\n.dk-detail-compare .dk-compare-verdict[data-state=differs] strong { color:#ffc9a8; }\n.dk-detail-compare .dk-compare-verdict[data-state=matches] { border-color:#6ea87f; background:#16241b; }\n.dk-detail-compare .dk-compare-verdict[data-state=matches] strong { color:#a9e3c0; }\n@media print { .dk-detail-compare { display:none !important; } }\n.dk-listing-bar .dk-listing-audit { padding:5px 11px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-listing-bar .dk-listing-audit:hover { background:#563173; border-color:#c193e6; }\n.dk-hub .dk-listing-copy { margin-top:12px; }\n.dk-listing-dialog pre { max-height:50dvh; }\n.dk-listing-dialog pre { max-height:50dvh; }\n.dk-request-open { margin-left:6px; padding:2px 8px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:12px/1.5 \"Segoe UI\",system-ui,sans-serif; vertical-align:middle; }\n.dk-request-open:hover { background:#563173; border-color:#c193e6; }\n.dk-request-open:focus-visible { outline:2px solid #e0bdff; outline-offset:2px; }\n.dk-hub .dk-tracker-find { display:block; width:100%; box-sizing:border-box; margin:10px 0 4px; padding:7px 10px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:4px; font:inherit; }\n.dk-hub .dk-tracker-find:focus-visible { outline:2px solid #e0bdff; outline-offset:1px; }\n.dk-hub details.dk-tracker-group { padding:0; }\n.dk-hub details.dk-tracker-group > summary { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 12px; color:#d9c4e8; font-weight:600; cursor:pointer; list-style:none; }\n.dk-hub details.dk-tracker-group > summary::-webkit-details-marker { display:none; }\n.dk-hub details.dk-tracker-group > summary::before { content:'▸'; margin-right:6px; color:#a98cc4; }\n.dk-hub details.dk-tracker-group[open] > summary::before { content:'▾'; }\n.dk-hub details.dk-tracker-group > summary:hover { background:#241730; }\n.dk-hub details.dk-tracker-group > summary:focus-visible { outline:2px solid #e0bdff; outline-offset:-2px; }\n.dk-hub .dk-tracker-count { padding:1px 8px; color:#cdb8e0; background:#2c1d3a; border-radius:10px; font:12px/1.6 inherit; font-weight:400; }\n.dk-hub details.dk-tracker-group > .dk-tracker-row { padding:0 12px 0 26px; }\n.dk-hub details.dk-tracker-group > .dk-tracker-row:last-child { padding-bottom:10px; }\n.dk-hub .dk-tracker-tag { margin-left:6px; padding:1px 6px; color:#c9b3dc; background:#2a1c37; border:1px solid #4b3a5c; border-radius:9px; font-size:11px; font-weight:400; }\n.dk-hub .dk-tracker-address-toggle { padding:3px 9px; color:#e6cbff; background:#2a1a38; border:1px solid #6d5280; border-radius:3px; cursor:pointer; font:12px inherit; }\n.dk-hub .dk-tracker-address-toggle:hover { background:#3d2451; }\n.dk-hub .dk-tracker-address-toggle[aria-expanded=true] { background:#482b60; border-color:#c193e6; }\n.dk-hub details.dk-tracker-group .dk-tracker-row label { flex:0 0 auto; min-width:260px; justify-content:flex-start; text-align:left; }\n.dk-hub details.dk-tracker-group .dk-tracker-row label > span.dk-tracker-tag { flex:0 0 auto; }\n.dk-hub .dk-tracker-group { margin:12px 0; padding:8px 12px 10px; border:1px solid #6d5280; border-radius:4px; }\n.dk-hub .dk-tracker-group legend { padding:0 6px; color:#d9c4e8; font-weight:600; }\n.dk-hub .dk-tracker-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:6px 0; }\n.dk-hub .dk-tracker-row label { display:flex; align-items:center; gap:6px; min-width:190px; margin:0; cursor:pointer; }\n.dk-hub .dk-tracker-row input[type=checkbox] { width:16px; height:16px; accent-color:#ad71d1; }\n.dk-hub .dk-tracker-url,.dk-hub .dk-tracker-row input[type=text] { flex:1; min-width:230px; padding:4px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:12px/1.5 ui-monospace,Consolas,monospace; }\n.dk-hub .dk-tracker-row select { padding:4px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n@media print { .dk-request-open,.dk-request-bar,.dk-request-links { display:none !important; } }\n.dk-request-seen { margin-left:6px; color:#9fdcb6; font:12px/1.5 \"Segoe UI\",system-ui,sans-serif; white-space:nowrap; }\n.dk-request-float { position:absolute; z-index:2147483000; box-shadow:0 3px 10px #0009; }\n.dk-hub .dk-request-term { display:flex; flex-direction:column; gap:4px; margin:8px 0 4px; color:#d9c4e8; }\n.dk-hub .dk-request-term input { padding:6px 8px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:14px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-listing-badge[data-state=error][data-banned=yes] { box-shadow:0 0 0 2px #ff6b6b88; }\n@media print { .dk-request-seen,.dk-request-float { display:none !important; } }\n.dk-hub .dk-request-step { min-width:220px; }\n.dk-hub .dk-request-step[disabled] { opacity:.6; cursor:default; }\n\n/* A badge rides beside the title without adding height to the row: in grouped and\n   compact listing views a taller badge overflowed onto the title below it. */\nbutton.dk-listing-badge { line-height:0 !important; max-height:22px; box-sizing:border-box; position:relative; top:-1px; }\nbutton.dk-listing-badge.dk-detail-badge { max-height:24px; top:0; }\n@media(max-width:700px) { button.dk-listing-badge { width:26px; height:26px; min-width:26px; font-size:17px !important; max-height:26px; } }\n.dk-listing-bar .dk-listing-rules,.dk-hub .dk-naming-site { display:flex; gap:8px; align-items:center; }\n.dk-listing-bar .dk-listing-rules select,.dk-hub .dk-naming-site select { padding:3px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-hub .dk-naming-site { margin:0 0 10px; font-weight:600; color:#d9c4e8; }\n\n.dk-group-tag { color:#ffb454 !important; cursor:pointer; border-bottom:1px dotted currentColor; }\n.dk-group-tag:hover, .dk-group-tag:focus-visible { color:#ffd08a !important; outline:none; border-bottom-style:solid; }\n.dk-group-menu { position:absolute; z-index:2147483000; max-width:min(360px,92vw); padding:12px 14px; border:1px solid #7b5792; border-radius:8px; background:#160f1e; color:#eee; box-shadow:0 10px 30px #000a; font:14px/1.5 'Segoe UI',sans-serif; }\n.dk-group-menu strong { display:block; margin-bottom:6px; color:#ffb454; }\n.dk-group-menu ul { margin:0 0 10px; padding-left:18px; }\n.dk-group-menu li { margin-block:6px; }\n.dk-group-menu a { color:#dbc0ef; }\n.dk-group-menu small { display:block; color:#c8b9d2; }\n.dk-group-menu button { padding:5px 10px; border:1px solid #7b5792; border-radius:6px; background:#22162c; color:#eee; cursor:pointer; }\n.dk-listing-bar .dk-listing-groups-edit { padding:3px 9px; border:1px solid #6d5280; border-radius:3px; background:#2b1d36; color:#e6d6f2; cursor:pointer; font:inherit; }\n\n.dk-group-add { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:10px 0 6px; }\n.dk-group-add label { flex-basis:100%; color:#c8b9d2; font-size:12.5px; }\n.dk-group-add input { flex:1 1 130px; min-width:0; padding:5px 8px; border:1px solid #6d5280; border-radius:5px; background:#0f0a15; color:#eee; font:inherit; font-size:13px; }\n.dk-group-add small { flex-basis:100%; color:#f1c15b; font-size:12.5px; }\n";
 
 // Where the settings live, so that they are the same settings on every tracker.
 //
@@ -445,16 +445,27 @@ const DKOKTO_CAPTURE = (() => {
     // A disc keeps its own directory tree, so its parts are not loose files.
     const DISC=/(?:^|\/)(?:BDMV|CERTIFICATE|VIDEO_TS|AUDIO_TS)(?:\/|$)/i;
 
+    // An exact byte count, where the page carried one. Pages round what they show — 17.56
+    // GiB is anything from 18.85 to 18.86 billion bytes — so the byte count is kept as its
+    // own field and never worked back out of the rounded figure.
+    const count=value=>{const number=Number(value);
+        return Number.isFinite(number)&&number>0&&number<=Number.MAX_SAFE_INTEGER?Math.round(number):0;};
+    const digits=value=>String(count(value));
     // A capture holds what the page said and nothing else — no lookups, no inference.
     function clean(capture={}) {
         const files=(Array.isArray(capture.files)?capture.files:[]).slice(0,FILES)
-            .map(file=>typeof file==='string'?{path:one(file,LINE),size:''}
-                :{path:one(file?.path,LINE),size:one(file?.size,SIZE)})
+            .map(file=>typeof file==='string'?{path:one(file,LINE),size:'',bytes:0}
+                :{path:one(file?.path,LINE),size:one(file?.size,SIZE),bytes:count(file?.bytes)})
             .filter(file=>file.path);
         return {host:one(capture.host,HOST),url:one(capture.url,LINE),title:one(capture.title,TITLE),
-            size:one(capture.size,SIZE),kind:/^bdinfo$/i.test(capture.kind||'')?'BDInfo':'MediaInfo',
+            size:one(capture.size,SIZE),bytes:count(capture.bytes),
+            kind:/^bdinfo$/i.test(capture.kind||'')?'BDInfo':'MediaInfo',
             report:body(capture.report,REPORT),files,at:Number(capture.at)||0};
     }
+    // The size as the page gave it: the words it showed, and the byte count behind them.
+    const sizeText=capture=>{const row=clean(capture);
+        if(!row.bytes)return row.size;
+        return (row.size?row.size+'  ·  ':'')+digits(row.bytes)+' B';};
     const empty=capture=>{const row=clean(capture);return !row.title&&!row.report&&!row.files.length;};
 
     // The two things HelperZ flags, on the file list as the page gives it.
@@ -478,11 +489,14 @@ const DKOKTO_CAPTURE = (() => {
         const lines=[bar(host),'',part('Title'),'',capture.title||'(no release name read from the page)','',
             part('Filename(s)'),''];
         if(capture.files.length)
-            for(const file of capture.files)lines.push(file.path+(file.size?'  ·  '+file.size:''));
+            for(const file of capture.files) {
+                const size=[file.size,file.bytes?digits(file.bytes)+' B':''].filter(Boolean).join('  ·  ');
+                lines.push(file.path+(size?'  ·  '+size:''));
+            }
         else lines.push('(no file list on the page)');
         const marks=flags(capture);
         if(marks.length){lines.push('');for(const mark of marks)lines.push(mark.label);}
-        lines.push('',part('Filesize'),'',capture.size||'(not stated on the page)','',
+        lines.push('',part('Filesize'),'',sizeText(capture)||'(not stated on the page)','',
             part(capture.kind),'',capture.report||'(no '+capture.kind+' on the page)','',bar(host));
         return lines.join('\n');
     }
@@ -506,12 +520,20 @@ const DKOKTO_CAPTURE = (() => {
         const a=clean(left),b=clean(right),rows=[];
         const add=(label,one_,two,extra={})=>{if(one_!==two)rows.push({label,a:one_,b:two,...extra});};
         add('Files in the torrent',String(a.files.length),String(b.files.length));
-        const first=bytes(a.size),second=bytes(b.size);
-        if(a.size!==b.size) {
-            const row={label:'Total size',a:a.size||'not stated',b:b.size||'not stated'};
+        // The exact counts where the pages carried them, and the rounded figures otherwise.
+        // Two files can both show "5.7 GiB" and still differ by a hundred megabytes, so an
+        // exact count on both sides decides whether the sizes differ at all.
+        const first=a.bytes||bytes(a.size),second=b.bytes||bytes(b.size);
+        const exact=!!a.bytes&&!!b.bytes;
+        if(exact?first!==second:a.size!==b.size) {
+            const row={label:'Total size',a:sizeText(a)||'not stated',b:sizeText(b)||'not stated'};
             if(first&&second&&first!==second) {
                 row.larger=first>second?'a':'b';
-                row.by=Math.round(Math.abs(first-second)/Math.max(first,second)*100)+'% larger';
+                const share=Math.round(Math.abs(first-second)/Math.max(first,second)*100);
+                // With both counts exact, the difference itself is worth more than a
+                // percentage that rounds two files 688 bytes apart to "0% larger".
+                row.by=exact?(share?share+'% larger · ':'')+digits(Math.abs(first-second))+' B more'
+                    :share+'% larger';
             }
             rows.push(row);
         }
@@ -610,7 +632,7 @@ const DKOKTO_CAPTURE = (() => {
         return slots;
     }
     const ready=(slots=all())=>!!slots.a&&!!slots.b;
-    return {payload,pair,flags,differences,summary,clean,all,put,drop,next,ready,KEY,REPORT,
+    return {payload,pair,flags,differences,summary,clean,all,put,drop,next,ready,KEY,REPORT,sizeText,
         sameRelease,verdict,verdictText,
         use(fake){backing=fake;}};
 })();
@@ -861,7 +883,7 @@ const DKOKTO_RELEASE_TITLE = (() => {
     // panel of ours that shows release names — the comparison, the group menu, the
     // findings row — would otherwise be searched for the page's release name and win,
     // and then the badge and the lookup row would be built inside our own output.
-    const SKIP='.dk-detail-links,.dk-detail-compare,.dk-detail-page,.dk-group-menu,.dk-listing-decision,'
+    const SKIP='.dk-detail-links,.dk-detail-compare,.dk-detail-page,.dk-detail-files,.dk-group-menu,.dk-listing-decision,'
         +'.dk-request-links,.dk-request-bar,.dk-request-page,.dk-listing-dialog,.dk-listing-bar,.dk-hub,'
         +'#dkokto-hub,#dkokto-tools,#dkokto-game-dialog,#dkokto-nav-dialog,#dkokto-banner,#dkokto-request-dialog,'
         +'#dp-inspector-hub,#dp-inspector-tools,.torrent-mediainfo-dump,textarea,input,pre,code,nav,footer';
@@ -3445,6 +3467,196 @@ const DKOKTO_LINKS_CORE = (() => {
     return {parse,links,variants,ids};
 })();
 
+// The file list of a torrent, as text, with the sizes the page actually states.
+//
+// UNIT3D writes the exact byte count into the title of every size it shows — the total as
+// title="{{ $torrent->size }} B" on .torrent__size-link, and each node of the file tree as
+// title="{{ $node['size'] }} B" (resources/views/torrent/partials/general.blade.php and
+// file-tree-node.blade.php). The rounded "17.56 GiB" is what you see; the byte count is
+// right there beside it, and it is the number a trump decision actually turns on.
+//
+// So nothing here is computed from a rounded figure and then presented as exact. A byte
+// count is printed only where the page gave one; where it did not, the page's own wording
+// is printed instead.
+// No network, posting or account access in this module.
+const DKOKTO_FILES_CORE = (() => {
+    const MAX=2000, LINE=300;
+    const one=(value,max)=>String(value??'').replace(/\s+/g,' ').trim().slice(0,max);
+    // A byte count as a page writes it: "9974836899 B", "9,974,836,899 B", and with the
+    // narrow no-break space UNIT3D uses (&#x202F;) or a plain &nbsp; before the B. It must
+    // be the whole value — "1.14 GiB" is not a byte count, and neither is "2 B or so".
+    function bytesFromTitle(value) {
+        const text=String(value??'').replace(/[\u00a0\u2007\u2009\u202f]/g,' ').trim();
+        const match=text.match(/^(\d[\d ,]*)\s*B$/i);
+        if(!match)return 0;
+        const count=Number(match[1].replace(/[ ,]/g,''));
+        return Number.isFinite(count)&&count>0&&count<=Number.MAX_SAFE_INTEGER?Math.round(count):0;
+    }
+    const digits=value=>String(Math.round(Number(value)||0));
+    const grouped=value=>digits(value).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+    const rows=files=>(Array.isArray(files)?files:[]).slice(0,MAX)
+        .map(file=>typeof file==='string'?{path:one(file,LINE),size:'',bytes:0}
+            :{path:one(file?.path,LINE),size:one(file?.size,40),bytes:bytesOf(file?.bytes)})
+        .filter(file=>file.path);
+    const bytesOf=value=>{const count=Number(value);
+        return Number.isFinite(count)&&count>0?Math.round(count):0;};
+    // The folder every file sits in, where they all sit in one. A torrent of loose files
+    // has none, and files in different folders have none in common.
+    function topFolder(files) {
+        const list=rows(files);
+        if(!list.length)return '';
+        const first=list[0].path.split('/');
+        if(first.length<2)return '';
+        const folder=first[0];
+        return list.every(file=>file.path.startsWith(folder+'/'))?folder:'';
+    }
+    const isPack=files=>rows(files).length>1;
+    // The total: the one the page stated where it stated one, and otherwise the files added
+    // up — but only when every one of them carried a byte count, because a sum that quietly
+    // leaves a file out is worse than no sum at all.
+    function total(files,stated=0) {
+        const exact=bytesOf(stated);
+        if(exact)return exact;
+        const list=rows(files);
+        if(!list.length||list.some(file=>!file.bytes))return 0;
+        return list.reduce((sum,file)=>sum+file.bytes,0);
+    }
+    // One file per line, name then size, the way a torrent client prints it — which is the
+    // form it was asked for, and the form that pastes into a report without editing.
+    function listing(files,{name='',stated=0}={}) {
+        const list=rows(files);
+        if(!list.length)return '';
+        const folder=topFolder(list)||one(name,LINE);
+        const sum=total(list,stated);
+        const line=(label,bytes,size)=>label+(bytes?' '+digits(bytes)+' B':size?' '+size:'');
+        const out=[];
+        if(folder)out.push(line(folder,sum,''));
+        const cut=topFolder(list);
+        for(const file of list)
+            out.push(line(cut?file.path.slice(cut.length+1):file.path,file.bytes,file.size));
+        return out.join('\n');
+    }
+    return {bytesFromTitle,topFolder,isPack,total,listing,rows,grouped,digits,MAX};
+})();
+
+// The file list on a torrent page: read once, used by everything that needs it.
+//
+// It also puts the [ MULTIPLE FILES ] marker under the release name of a pack. Click it and
+// the whole list goes to the clipboard — the folder and its total, then every file with the
+// exact byte count the page carries — which is what a season pack usually has to be pasted
+// as when it is being checked or reported.
+//
+// Reading only: no request, no download, nothing submitted. The clipboard is written when
+// the marker is pressed and at no other time.
+const DKOKTO_FILES_UI = (() => {
+    const core=typeof DKOKTO_FILES_CORE!=='undefined'?DKOKTO_FILES_CORE:null;
+    const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
+    const SIZE=/^\d+(?:\.\d+)?\s*(?:[KMGT]i?B|bytes)$/i;
+    const textOf=node=>{if(!node)return '';
+        try{return DKOKTO_RELEASE_TITLE.clean(node.textContent||'');}
+        catch{return String(node.textContent||'').replace(/\s+/g,' ').trim();}};
+    // The exact byte count a page puts in the title of a size it has rounded for display.
+    // Looked for on the element itself and on what it contains, never guessed at.
+    function titleBytes(node) {
+        if(!node)return 0;
+        const own=core.bytesFromTitle(node.getAttribute?.('title'));
+        if(own)return own;
+        for(const inner of node.querySelectorAll?.('[title]')||[]) {
+            const found=core.bytesFromTitle(inner.getAttribute('title'));
+            if(found)return found;
+        }
+        return 0;
+    }
+    // The file tree writes the name and the size as separate cells of one grid row, so the
+    // size that belongs to a name is found by going up a level, not by guessing an order.
+    function nearBytes(node) {
+        let at=node;
+        for(let up=0;up<3&&at;up++) {
+            at=at.parentElement;
+            if(!at)break;
+            for(const inner of at.querySelectorAll('[title]')) {
+                if(inner===node||inner.contains(node))continue;
+                const found=core.bytesFromTitle(inner.getAttribute('title'));
+                if(found)return found;
+            }
+        }
+        return 0;
+    }
+    function list() {
+        const rows=[];
+        for(const row of document.querySelectorAll('.dialog__form[data-tab="list"] table tbody tr')) {
+            const cells=[...row.children];
+            const values=cells.map(textOf);
+            const path=values.find(value=>value&&!SIZE.test(value)&&!/^\d+$/.test(value));
+            if(!path||rows.some(entry=>entry.path===path))continue;
+            const at=values.lastIndexOf(values.slice().reverse().find(value=>SIZE.test(value)));
+            const size=at>=0?values[at]:'';
+            rows.push({path,size,bytes:titleBytes(at>=0?cells[at]:null)||titleBytes(row)});
+        }
+        if(!rows.length)
+            for(const node of document.querySelectorAll('.dialog__form[data-tab="hierarchy"] span[style*="word-break"],.torrent__files li')) {
+                const path=textOf(node);
+                if(!path||!/\.[a-z0-9]{2,4}$/i.test(path)||rows.some(entry=>entry.path===path))continue;
+                rows.push({path,size:'',bytes:nearBytes(node)});
+            }
+        return rows.slice(0,core?core.MAX:2000);
+    }
+    // The total the page states, wherever the theme puts it: named first, then by shape.
+    function stated() {
+        for(const selector of ['li.torrent__size','.torrent__size','.meta__size','[class*="torrent__size"]']) {
+            const node=document.querySelector(selector);
+            const value=textOf(node);
+            if(value&&SIZE.test(value))return {size:value,bytes:titleBytes(node)};
+        }
+        for(const node of document.querySelectorAll('.torrent__meta *,.meta__details *,.torrent-meta *')) {
+            const value=textOf(node);
+            if(value&&SIZE.test(value)&&!node.querySelector('*'))return {size:value,bytes:titleBytes(node)};
+        }
+        return {size:'',bytes:0};
+    }
+    const clipboardText=(title,rows=list(),size=stated())=>
+        core?core.listing(rows,{name:title,stated:size.bytes}):'';
+
+    // --- The marker ---------------------------------------------------------------------
+    const CLASS='dk-detail-files';
+    let holder=null;
+    function copy(button,value) {
+        const done=()=>{button.dataset.copied='yes';button.textContent='[ COPIED ]';
+            setTimeout(()=>{if(button.isConnected){delete button.dataset.copied;button.textContent=button.dataset.label;}},1400);};
+        try{navigator.clipboard.writeText(value).then(done,()=>window.prompt('Copy the file list:',value));}
+        catch{window.prompt('Copy the file list:',value);}
+    }
+    // Under the release name, and only for a torrent that holds more than one file.
+    function mark(node,title) {
+        if(!core||!node)return;
+        const rows=list();
+        if(!core.isPack(rows)){clear();return;}
+        const size=stated();
+        const value=clipboardText(title,rows,size);
+        const label='[ MULTIPLE FILES ]';
+        const signature=rows.length+''+value;
+        const parent=node.parentElement||node;
+        if(holder&&holder.isConnected) {
+            if(holder.dataset.signature===signature)return;
+        } else {
+            holder=el('div',undefined,CLASS);
+            const button=el('button',label,'dk-detail-files-copy');
+            button.type='button';button.dataset.label=label;
+            button.onclick=()=>copy(button,button.dataset.value||'');
+            holder.append(button);
+        }
+        holder.dataset.signature=signature;
+        const button=holder.querySelector('button');
+        button.dataset.value=value;
+        button.title=rows.length+' files in this torrent'+(size.size?' · '+size.size:'')+
+            ' — click to copy the list with the sizes the page states';
+        button.setAttribute('aria-label','Copy the list of '+rows.length+' files with their sizes');
+        if(!holder.isConnected)parent.insertBefore(holder,node.nextSibling);
+    }
+    const clear=()=>{holder?.remove();holder=null;};
+    return {list,stated,clipboardText,mark,clear,CLASS};
+})();
+
 // The "vs" button on a torrent page: capture this release, capture another, compare.
 //
 // It reads the loaded page — the release name, the file list with its sizes, the total
@@ -3460,35 +3672,9 @@ const DKOKTO_CAPTURE_UI = (() => {
     const SIZE=/^\d+(?:\.\d+)?\s*(?:[KMGT]i?B|bytes)$/i;
 
     // --- What this page says about itself -----------------------------------------------
-    const textOf=node=>node?DKOKTO_RELEASE_TITLE.clean(node.textContent):'';
-    function filesOf() {
-        const rows=[];
-        for(const row of document.querySelectorAll('.dialog__form[data-tab="list"] table tbody tr')) {
-            const cells=[...row.children].map(textOf);
-            const path=cells.find(value=>value&&!SIZE.test(value)&&!/^\d+$/.test(value));
-            if(!path)continue;
-            const size=cells.slice().reverse().find(value=>SIZE.test(value))||'';
-            if(!rows.some(entry=>entry.path===path))rows.push({path,size});
-        }
-        if(!rows.length)
-            for(const node of document.querySelectorAll('.dialog__form[data-tab="hierarchy"] span[style*="word-break"],.torrent__files li')) {
-                const value=textOf(node);
-                if(value&&/\.[a-z0-9]{2,4}$/i.test(value)&&!rows.some(entry=>entry.path===value))rows.push({path:value,size:''});
-            }
-        return rows.slice(0,500);
-    }
-    // The total the page states, wherever the theme puts it: named first, then by shape.
-    function sizeOf() {
-        for(const selector of ['li.torrent__size','.torrent__size','.meta__size','[class*="torrent__size"]']) {
-            const value=textOf(document.querySelector(selector));
-            if(value&&SIZE.test(value))return value;
-        }
-        for(const node of document.querySelectorAll('.torrent__meta *,.meta__details *,.torrent-meta *')) {
-            const value=textOf(node);
-            if(value&&SIZE.test(value)&&!node.querySelector('*'))return value;
-        }
-        return '';
-    }
+    // The file list and the total size are read by files.js, which also carries the exact
+    // byte counts the page puts in the title of every size it rounds for display.
+    const filesOf=()=>DKOKTO_FILES_UI.list().slice(0,500);
     function reportOf() {
         const media=DKOKTO_INSPECTOR.readPage(document);
         if(media.length)return {kind:'MediaInfo',report:media[0]};
@@ -3496,8 +3682,9 @@ const DKOKTO_CAPTURE_UI = (() => {
             .filter(node=>!node.closest('#dkokto-hub,#dp-inspector-hub')).map(node=>node.textContent.trim()).filter(Boolean);
         return bd.length?{kind:'BDInfo',report:bd[0]}:{kind:'MediaInfo',report:''};
     }
-    const read=title=>({host:location.hostname,url:location.origin+location.pathname,
-        title:String(title||''),size:sizeOf(),files:filesOf(),...reportOf()});
+    const read=title=>{const size=DKOKTO_FILES_UI.stated();
+        return {host:location.hostname,url:location.origin+location.pathname,
+            title:String(title||''),size:size.size,bytes:size.bytes,files:filesOf(),...reportOf()};};
 
     // --- The panel ----------------------------------------------------------------------
     function media(a,b) {
@@ -3838,12 +4025,16 @@ const DKOKTO_DETAIL = (() => {
         node.closest('h1,h2,h3,p,div,section,li')?.after(row);
     }
     const clear=()=>{try{DKOKTO_CAPTURE_UI.close();}catch{}
-        document.querySelectorAll('.dk-detail-links:not(.dk-request-links),.dk-detail-page,.dk-detail-compare').forEach(n=>n.remove());};
+        try{DKOKTO_FILES_UI.clear();}catch{}
+        document.querySelectorAll('.dk-detail-links:not(.dk-request-links),.dk-detail-page,.dk-detail-compare,.dk-detail-files').forEach(n=>n.remove());};
     function draw() {
         if(!onPage()){dialog?.close();clear();return;}
         const hit=found();
         if(!hit||!hit.score||!hit.title){clear();return;}
-        badge(hit.node,hit.title);linksRow(hit.node,hit.title);
+        badge(hit.node,hit.title);
+        // A torrent of more than one file says so under its name, and hands you the list.
+        try{DKOKTO_FILES_UI.mark(hit.node,hit.title);}catch{}
+        linksRow(hit.node,hit.title);
         try{pageRow(hit.node,hit.title,DKOKTO_LISTING_CORE.category(document.querySelector('li.torrent__category a')?.textContent||''));}catch{}
     }
     // A page that keeps changing (chat, timers) must not starve the redraw, and must
@@ -3854,7 +4045,7 @@ const DKOKTO_DETAIL = (() => {
     // churn is not a reason to look at the page again (a giveaway or chat script can
     // otherwise keep this awake).
     const NOISE='.chatbox,#chatbox,[class*="chatbox"],.ticker,[class*="ticker"],[class*="chat-"],#chat';
-    const OURS='.dk-group-menu,.dk-detail-page,.dk-detail-compare,.dk-detail-links,.dk-detail-badge,.dk-listing-badge,.dk-listing-bar,.dk-listing-dialog,.dk-request-bar,.dk-request-links,.dk-request-open,#dkokto-request-dialog,#dkokto-hub,#dkokto-tools,#dkokto-game-dialog,#dkokto-nav-dialog,#dp-inspector-hub,#dp-inspector-tools';
+    const OURS='.dk-group-menu,.dk-detail-page,.dk-detail-compare,.dk-detail-links,.dk-detail-badge,.dk-listing-badge,.dk-listing-bar,.dk-listing-dialog,.dk-request-bar,.dk-request-links,.dk-detail-files,.dk-request-open,#dkokto-request-dialog,#dkokto-hub,#dkokto-tools,#dkokto-game-dialog,#dkokto-nav-dialog,#dp-inspector-hub,#dp-inspector-tools';
     function mount() {
         draw();
         if(mounted)return;mounted=true;
@@ -4183,6 +4374,10 @@ const DKOKTO_REQUESTS_CORE = ((links,trackers) => {
 //   · InviteHawk "Internal Encoders / Groups from Private Trackers" (topic 154380), 9 Sep 2026
 //   · rentry.org/internals — internal groups and their respective trackers, 9 Sep 2026
 //   · pastes.io/yiahe8Xf — site / P2P groups table, 9 Sep 2026
+//   · the user, as a DarkPeers moderator, 9 Sep 2026 — JBENT, "JBENT TAoE", OnlyMux and
+//     WhiskeyJack at OnlyEncodes+, and DOOBS at DarkPeers. The other names asked for in the
+//     same message (Kitsune at Aither; BiNGUS, Breeze, DarQ, "DarQ HONE", DBMS, edwood,
+//     "Goki TAoE", noxxus, PrimeX, Ralphy, sCOOTER, Vialle) were already on the lines below.
 // They disagree in places and go out of date, which is why every entry is offered as
 // "listed as internal at" and the whole list can be replaced in Internal groups….
 //
@@ -4226,7 +4421,7 @@ CMCT|CMCT CMCTV
 CN|TBH
 CZteamTtracker|CzT
 DanishBits|UNiTY UNiTYSERiER
-DarkPeers|DarkSouls WhiskeyJack
+DarkPeers|DarkSouls WhiskeyJack DOOBS
 Desi-Torrents|DDR DrC ExDR M2Tv TmG TeamTolly TDBB xDM DUS* IcTv*
 DownRev|DownRev lonelywolf
 Elite-pirates|AQOS
@@ -4300,7 +4495,7 @@ MySpleen|449 Atomsk MySpleen
 Norbits|Norbits
 NordicQuality|BANDOLEROS FiSTER PiTBULL UNDERDOGS
 OldToonsWorld|OldT
-OnlyEncodes+|BiNGUS Breeze DarQ "DarQ HONE" DBMS edge2020 edwood "Goki TAoE" Goki GRiMM noxxus OnlyWeb PrimeX Ralphy sCOOTER Vialle
+OnlyEncodes+|BiNGUS Breeze DarQ "DarQ HONE" DBMS edge2020 edwood "Goki TAoE" Goki GRiMM JBENT "JBENT TAoE" noxxus OnlyMux OnlyWeb PrimeX Ralphy sCOOTER Vialle WhiskeyJack
 OpenCD|KHQ LLM OpenCD
 OurBits|FLTTH HosT OurBits OurPad OurTV PbK
 PixelHD|Px3D PxEHD PxHD PxHD-Mobies PS3-TEAM* PxHDA
@@ -4498,23 +4693,59 @@ const DKOKTO_INTERNALS = (seed => {
     }
     let seeded=null;
     const defaults=()=>seeded??=parse(seed||'');
-    function saved() {
-        const s=store();if(!s)return null;
+    const idOf=row=>key(row.group)+' @ '+key(row.tracker);
+    // What is kept is what you CHANGED, not a copy of the whole list.
+    //
+    // It used to keep the list itself, and that quietly pinned you: adding one group saved a
+    // snapshot of the four hundred beside it, and from then on a group added to the shipped
+    // directory in a later version never reached you — the snapshot was all this read. So a
+    // name that ships as internal could still be reported as having no home tracker.
+    //
+    // Now the shipped directory is always the base and this holds your additions and the
+    // rows you took out. New versions bring their new groups with them, and what you did
+    // stays done on top of them.
+    function changes() {
+        const s=store();
+        const none={added:[],removed:[]};
+        if(!s)return none;
         try{
             const raw=s.getItem(KEY);
-            if(!raw)return null;
+            if(!raw)return none;
             const parsed=JSON.parse(raw);
-            return Array.isArray(parsed)?unique(parsed):null;
-        }catch{return null;}
+            // A list saved by an older version: everything in it that the shipped directory
+            // does not have is yours. Nothing is read as a removal — the older version had no
+            // way to say "take this one out", so treating an absence as one would delete
+            // entries you never chose to lose.
+            if(Array.isArray(parsed)) {
+                const shipped=new Set(defaults().map(idOf));
+                return {added:unique(parsed).filter(row=>!shipped.has(idOf(row))),removed:[]};
+            }
+            if(!parsed||typeof parsed!=='object')return none;
+            return {added:unique(parsed.added),
+                removed:(Array.isArray(parsed.removed)?parsed.removed:[]).map(id=>String(id)).slice(0,MAX)};
+        }catch{return none;}
     }
-    // Your list if you have saved one, the shipped directory otherwise.
-    const all=()=>saved()||defaults();
-    const usingDefaults=()=>!saved();
-    function save(list) {
-        const rows=unique(list);
+    // The shipped directory, less what you took out, plus what you added.
+    function all() {
+        const {added,removed}=changes();
+        if(!added.length&&!removed.length)return defaults();
+        const gone=new Set(removed);
+        return unique([...defaults().filter(row=>!gone.has(idOf(row))),...added]);
+    }
+    const usingDefaults=()=>{const {added,removed}=changes();return !added.length&&!removed.length;};
+    function write(added,removed) {
         const s=store();
-        if(s)try{s.setItem(KEY,JSON.stringify(rows));}catch{}
-        return rows;
+        if(s)try{s.setItem(KEY,JSON.stringify({v:2,added:unique(added),removed:[...new Set(removed)].slice(0,MAX)}));}catch{}
+        return all();
+    }
+    // Saving the whole list from the editor: what you typed that the shipped directory does
+    // not have is kept as yours, and what you deleted from it is kept as deleted — by name,
+    // so a group added to the directory later still arrives.
+    function save(list) {
+        const rows=unique(list),have=new Set(rows.map(idOf));
+        const shipped=defaults(),shippedIds=new Set(shipped.map(idOf));
+        return write(rows.filter(row=>!shippedIds.has(idOf(row))),
+            shipped.map(idOf).filter(id=>!have.has(id)));
     }
     const clear=()=>{const s=store();if(s)try{s.removeItem(KEY);}catch{}};
     // Append one group without touching the rest — the whole point being that adding a
@@ -4646,8 +4877,15 @@ const DKOKTO_GROUP_TAG = ((internals,requests,trackers) => {
                 const link=el('a',row.label);link.href=row.href;link.rel='noopener noreferrer';
                 if(/^https?:/i.test(row.href))link.target='_blank';
                 item.append(link);
-            } else item.append(el('span',row.label||''));
-            if(row.note)item.append(el('small',row.note));
+                if(row.note)item.append(el('small',row.note));
+            } else if(row.label) {
+                item.append(el('span',row.label));
+                if(row.note)item.append(el('small',row.note));
+            // A row that is only a note — "no home tracker recorded" — is that note, on the
+            // one line. It used to be an empty span with the note under it, which drew a
+            // bullet against nothing at all.
+            } else if(row.note)item.append(el('span',row.note,'dk-group-note'));
+            else continue;
             list.append(item);
         }
         menu.append(list);
@@ -4667,9 +4905,23 @@ const DKOKTO_GROUP_TAG = ((internals,requests,trackers) => {
     // and taking it over is how two scripts end up fighting over the same text. Only a bare
     // text node ending in the tag is marked.
     function mark(node,tag) {
-        if(!node||!tag||node.querySelector?.('.'+CLASS))return null;
+        if(!node||!tag)return null;
         const needle='-'+String(tag);
         const lower=needle.toLowerCase();
+        // Already marked — unless the page has since written its name back over the text
+        // node in front of our tag, which a live re-render does. The name would then read
+        // "…H.264-DKOKTODKOKTO", and every lookup built from it would carry that. Take ours
+        // out when that has happened and mark the name again as it now stands.
+        // Matched against the tag OURS carries, not the one asked for: with the name written
+        // back, the tag read from it is "DKOKTODKOKTO" and would never match the text.
+        const already=node.querySelector?.('.'+CLASS);
+        if(already) {
+            const mine=(already.textContent||'').trim().toLowerCase();
+            const before=already.previousSibling;
+            if(mine&&before&&before.nodeType===3&&
+               before.nodeValue.replace(/\s+$/,'').toLowerCase().endsWith('-'+mine))already.remove();
+            else return null;
+        }
         for(const child of node.childNodes)
             if(child.nodeType===1&&String(child.textContent||'').trim().toLowerCase().endsWith(String(tag).toLowerCase()))return null;
         const text=[...node.childNodes].reverse().find(child=>child.nodeType===3&&
