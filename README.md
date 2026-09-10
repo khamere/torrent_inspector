@@ -1,8 +1,18 @@
-# Torrent Inspector 1.24.0 — DarkPeers, Zenith and your own
+# Torrent Inspector 1.24.1 — DarkPeers, Zenith and your own
 
 The Torrent Inspector and the automatic listing naming badges from DKOKTO Scene Edition 1.6.1, packaged as a standalone userscript. None of the theme, artwork, game helper, forum reading tools, shortcuts or backup features are included.
 
-Install **Torrent-Inspector.user.js** as a new Tampermonkey script.
+Install **Torrent-inspector.user.js** as a Tampermonkey script. The project website is
+[torrent.dkokto.dev](https://torrent.dkokto.dev/) (note the spelling: **dkokto**).
+
+## Fixed in 1.24.1
+
+- The launcher, styles and previously opened dialogs recover after Livewire replaces the
+  page body. Page observers continue watching subsequent updates, without duplicating the launcher.
+- Detail findings refresh when filenames, MediaInfo text, language flags or the selected
+  rule set change. A warning's text updates even when its issue code stays the same.
+- Eight browser compatibility checks cover these changes using synthetic tracker pages.
+  These checks do not validate authenticated tracker markup or the accuracy of tracker rules.
 
 Read **GUIDE-1.22.md** for the full walkthrough, **CHANGELOG.md** for what changed, and **TRACKER-RULES.md** to add a tracker of your own. (The guide is written for the full edition; the theme, artwork and chat-game sections do not apply here.) Do not double-click the JS file as a Windows script.
 
