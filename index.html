@@ -116,7 +116,7 @@
     </p>
     <ul class="pills">
       <li class="pill"><b>1.24.0</b></li>
-      <li class="pill">44 UNIT3D trackers · <b>your own too</b></li>
+      <li class="pill"><b>44</b> trackers it runs on · <b>62</b> it can search</li>
       <li class="pill">No requests, no posting</li>
       <li class="pill">Nothing judged without that tracker’s rules</li>
       <li class="pill">Everything stays in your browser</li>
@@ -362,9 +362,11 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
       copy one and change the domain to add your own. The list is generated from the tracker catalogue when the script is
       built, so the two cannot drift apart.</p>
     <p class="note">
-      On a tracker whose <em>rules</em> it does not have, <b>nothing is badged</b> until you choose a rule set from the
-      <b>Rules</b> picker in the bar, or add that tracker under <b>Tracker rules…</b>. A red ✕ on LST citing
-      DarkPeers’ banned list would be quoting a rulebook LST never wrote, so it waits to be told. Everything that
+      Rules it has out of the box: <b>DarkPeers</b> and <b>Zenith</b>, built in, and <b>LUME</b> and
+      <b>OnlyEncodes+</b>, one <b>Add</b> away and self-selecting on their own trackers. Anywhere else
+      <b>nothing is badged</b> until you choose a rule set from the <b>Rules</b> picker in the bar, or add
+      that tracker under <b>Tracker rules…</b>. A red ✕ on LST citing DarkPeers’ banned list would be
+      quoting a rulebook LST never wrote, so it waits to be told. Everything that
       needs no rulebook — the Inspector, the <b>vs</b> comparison, the group tags, the cross-check — works there
       straight away.
     </p>
@@ -390,15 +392,20 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
       <h3>1 · Your first five minutes</h3>
       <p class="goal">From installed to badges on the page.</p>
       <ol class="steps">
-        <li><b>Install and reload.</b> On DarkPeers or Zenith the badges appear straight away. On any
-          other tracker nothing is judged yet — that is deliberate.</li>
+        <li><b>Install and reload.</b> On <b>DarkPeers</b> and <b>Zenith</b> the badges appear straight
+          away — those two are built in. On <b>LUME</b> and <b>OnlyEncodes+</b> they appear as soon as you
+          add that rule set (step 3): each profile names its own tracker, so on that tracker it selects
+          itself and you never touch the dropdown. Anywhere else nothing is judged yet — that is
+          deliberate.</li>
         <li><b>Choose whose rules apply here.</b> The listing bar has a <b>Rules</b> dropdown. Pick the
           tracker you are actually on if it is there; otherwise pick the rule set closest to it. The
           choice is remembered <em>per tracker</em>, so choosing DarkPeers on one site does not change
           what applies on another.</li>
         <li><b>Add a ready-made rule set if it fits.</b> <b>Tracker rules… → Added trackers</b> lists
           <b>LUME</b> and <b>OnlyEncodes+</b> under <em>Rule sets that ship with this script</em>. Press
-          <b>Add</b> and they appear in the <em>Rules</em> dropdown.</li>
+          <b>Add</b> once and they join the <em>Rules</em> dropdown — and on luminarr.me or
+          onlyencodes.cc that is the whole setup, because the profile carries that tracker's address and
+          applies itself there.</li>
         <li><b>Tick the trackers you are on.</b> Open <em>Is this already on your trackers?</em> and tick
           them. This list follows you to every tracker the script runs on, so you only do it once.</li>
         <li><b>Hover a badge.</b> One line tells you why. Click it for the corrections and a copyable
@@ -569,10 +576,19 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
         exact.</dd>
 
       <dt>Do the shipped LUME and OnlyEncodes+ rules apply automatically?</dt>
-      <dd>No. They are offered, never applied on their own — adding a rule set changes which rules a
-        badge cites, so it waits for you to press <b>Add</b>. Once added it behaves like any tracker you
-        added yourself: editable, exportable, removable. On the tracker it belongs to it will then select
-        itself, because the profile names that tracker's address.</dd>
+      <dd>Not until you add them. They are offered, never applied on their own — adding a rule set
+        changes which rules a badge cites, so it waits for you to press <b>Add</b>. After that they behave
+        like any tracker you added yourself: editable, exportable, removable. And on luminarr.me or
+        onlyencodes.cc they then apply <em>without being chosen</em>, because each profile carries that
+        tracker's own address. So: four trackers badge with no dropdown work — two built in, two after a
+        single click.</dd>
+
+      <dt>Is it 44 trackers or 62?</dt>
+      <dd>Both, counting different things. <b>44</b> is how many UNIT3D trackers the script <em>runs
+        on</em> — the <code>@match</code> lines, where badges, the Inspector and <b>vs</b> appear.
+        <b>62</b> is how many it can <em>search</em> for the cross-check, which adds the Gazelle-family
+        and other non-UNIT3D sites — PassThePopcorn, HDBits, BroadcasTheNet, AvistaZ and the rest. It
+        never runs on those; it builds a link you click.</dd>
 
       <dt>Where do those rules come from, and what is missing from them?</dt>
       <dd>From each tracker's own published guide, and the script says which parts it does not have.
