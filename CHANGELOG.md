@@ -7,6 +7,16 @@ makes no requests of any kind — every link opens only when you click it.
 Newest first.
 
 ---
+## 1.24.1 — navigation and refreshed page findings
+
+- Restore the launcher and styling after Livewire replaces the page body; keep observers
+  attached to the document root so later page updates are detected too.
+- Recreate detached badge, tracker-rule, group and request dialogs when reopened.
+- Include filenames, raw MediaInfo, language flags, evidence panels and the selected rules
+  in the detail cache inputs. Compare complete findings so changed messages and severity render.
+- Observe language flag `alt` and `title` changes, alongside text and child-node updates.
+- Add eight synthetic browser compatibility checks. Correct stale installation and
+  permission documentation and the landing page's tracker count wording.
 
 ## 1.24.0 — two tracker rule sets that ship with the script, and four addresses
 
