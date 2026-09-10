@@ -7,6 +7,14 @@ makes no requests of any kind — every link opens only when you click it.
 Newest first.
 
 ---
+1.23.0 — the group list stopped ageing, and a pack hands you its file list
+"No home tracker recorded" for a group that ships on the list. Adding one group used to save a copy of the whole directory beside it, and from then on nothing added to the shipped list in a later version ever reached you. What is kept now is what you changed — your additions and the rows you took out — layered over the directory the script ships, so new versions bring their new groups with them and what you did stays done on top of them. A list saved by an older version is read as additions only: nothing is deleted on a guess.
+New on the shipped list, from the user as a DarkPeers moderator (cited in the data file): JBENT, "JBENT TAoE", OnlyMux and WhiskeyJack at OnlyEncodes+, and DOOBS at DarkPeers. Kitsune at Aither, and twelve other names asked for in the same message, were already there.
+The empty first bullet in the group menu. A row that is only a note was drawn as an empty span with the note underneath it, so the bullet pointed at a blank line. It is one line now.
+[ MULTIPLE FILES ], under the release name of any torrent that holds more than one file. Click it and the whole list goes to the clipboard: the folder and its total, then every file with the exact byte count — the form a season pack has to be pasted in when it is checked. Asked for by dreadful.
+The exact byte size on the vs panel. UNIT3D puts the byte count in the title of every size it rounds for display, so "17.56 GiB" now reads "17.56 GiB · 18855538688 B", and the difference between two totals is given in bytes. Two files that both show "5.70 GiB" but differ by a megabyte are now reported as differing — before, the rounded figures matched and the difference was invisible. Where a page carried no byte count, none is invented from the rounded one.
+A page that re-renders its release name in place could write it back over the group tag, leaving the name reading "…H.264-DKOKTODKOKTO" and every lookup built from it carrying that. It is put right on the next pass.
+
 1.22.0 — the settings are the same settings on every tracker
 The trackers you are on, added trackers and their rules, the internal-groups list and the per-tracker rule choice moved to Tampermonkey's per-script store, shared by every site the script runs on. Browser storage is per domain and could not do it. No new permission.
 The audit, the decision log, private notes and seen requests stay per site: they are a record of work on that tracker, not a setting.
