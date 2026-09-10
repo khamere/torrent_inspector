@@ -6,6 +6,27 @@ Install **DarkPeers-Torrent-Inspector.user.js** as a new Tampermonkey script.
 
 Read **GUIDE-1.22.md** (named for the Scene Edition version it was written for, not the version shipped beside it) for the full walkthrough, **CHANGES-1.12.4-to-1.22.3.md** for what changed, and **TRACKER-RULES.md** to add a tracker of your own. (The guide is written for the full edition; the theme, artwork and chat-game sections do not apply here.) Do not double-click the JS file as a Windows script.
 
+New in 1.23.0
+
+[ MULTIPLE FILES ], under the release name. Any torrent holding more than one file says so, and one click copies the whole list to the clipboard: the folder and its total, then every file with its exact byte count —
+
+Bureau.Burgwallen.S01.720p.WEB-DL.AAC.2.0.x264-DDF 9974836899 B
+Bureau.Burgwallen.S01E01.720p.WEB-DL.AAC.2.0.x264-DDF.mkv 1221811248 B
+Bureau.Burgwallen.S01E02.720p.WEB-DL.AAC.2.0.x264-DDF.mkv 1278590592 B
+
+Nothing is copied until you press it.
+
+The exact byte size on the vs panel. UNIT3D writes the byte count into the title of every size it rounds for display, so the comparison now reads 17.56 GiB · 18855538688 B and gives the gap between two totals in bytes as well as a percentage. Two torrents that both show 5.70 GiB and differ by a megabyte are now reported as differing — before, the rounded figures matched and nothing was said. Where the page carried no byte count, none is made up from the rounded figure.
+
+Fixed in 1.23.0
+
+"No home tracker recorded" for a group that ships on the list. Adding a single group used to save a copy of the whole directory beside it, which pinned you to that day's list: every group added to the shipped directory afterwards was invisible to you. What is kept now is what you changed — your additions, and the rows you took out — layered over the shipped list, so new versions bring their groups with them and your own work stays on top. A list saved by an older version is read as additions only; nothing is deleted on a guess. Clear list still brings the shipped directory back whole.
+
+New on the shipped list, from the user as a DarkPeers moderator and cited in the data file: JBENT, "JBENT TAoE", OnlyMux and WhiskeyJack at OnlyEncodes+, and DOOBS at DarkPeers. Kitsune at Aither, and twelve other names asked for at the same time, were already there.
+
+The empty first bullet in the group menu. A row that is only a note ("No home tracker recorded for …") was drawn as an empty span with the note on the line beneath, so the bullet pointed at nothing. It is one line now.
+
+A name written back over the group tag. A page that re-renders its release name in place could leave it reading …H.264-DKOKTODKOKTO, and every lookup built from the name carried that. It is put right on the next pass.
 ## New in 1.22.0
 
 **Your settings are the same settings on every tracker.** The trackers you are on, the
