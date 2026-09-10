@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         DarkPeers - Torrent Inspector
-// @namespace    dkokto.darkpeers.inspector
-// @version      1.24.1
-// @description  Torrent Inspector and automatic listing naming badges, checked against DarkPeers or Zenith rules. Reads the page only; makes no requests.
+// @name         Torrent Inspector
+// @namespace    dkokto.torrent.inspector
+// @version      1.26.0
+// @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       🤖T.R.A.V.I.S (original Chungus Edition); DKOKTO personal customization
 // @match        https://darkpeers.org/*
 // @match        https://www.darkpeers.org/*
@@ -22,7 +22,6 @@
 // @match        https://*.concertos.live/*
 // @match        https://*.eiga.moi/*
 // @match        https://*.f1carreras.xyz/*
-// @match        https://*.fearnopeer.com/*
 // @match        https://*.generation-free.org/*
 // @match        https://*.hawke.uno/*
 // @match        https://*.homiehelpdesk.net/*
@@ -55,8 +54,8 @@
 // @match        https://*.utp.to/*
 // @match        https://*.yu-scene.net/*
 // @run-at       document-idle
-// @updateURL    none
-// @downloadURL  none
+// @updateURL    https://raw.githubusercontent.com/khamere/torrent_inspector/main/Torrent-inspector.user.js
+// @downloadURL  https://raw.githubusercontent.com/khamere/torrent_inspector/main/Torrent-inspector.user.js
 // Storage on this machine, not network: Tampermonkey's own per-script store is the only
 // one shared by every tracker this runs on, and it is where the two comparison slots live.
 // @grant        GM_setValue
@@ -66,7 +65,7 @@
 
 (function () {
     'use strict';
-    const DPTI_CSS = "/* Standalone Torrent Inspector styling. Scoped to this script's own dialog,\n   launcher and listing badges; site theming is left untouched. */\n#dp-inspector-tools { position:fixed; right:14px; bottom:14px; z-index:2147482000; display:flex; gap:8px; }\n#dp-inspector-tools button { font:600 14px/1.2 \"Segoe UI\",system-ui,sans-serif; color:#f4e8ff; background:#3d2551; border:1px solid #a97fc6; border-radius:5px; padding:10px 14px; cursor:pointer; box-shadow:0 2px 10px #0009; }\n#dp-inspector-tools button:hover { background:#643784; }\n#dp-inspector-tools button:focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n\n.dk-hub { box-sizing:border-box; width:min(940px,calc(100vw - 24px)); max-height:88dvh; padding:0; overflow:auto; background:#15101d; color:#f0e9f6; border:1px solid #af83c8; border-radius:6px; font:15px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-hub::backdrop { background:#07040bcc; }\n.dk-hub header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 20px; background:linear-gradient(#392447,#20152b); }\n.dk-hub h2 { margin:0; font:600 22px Consolas,monospace; }\n.dk-hub-content { padding:16px 20px; }\n.dk-hub :is(button,input,select,textarea) { box-sizing:border-box; font:inherit; color:#f4e8ff; background:#24182f; border:1px solid #9873b0; border-radius:3px; padding:8px 10px; min-width:0; }\n.dk-hub button { cursor:pointer; }\n.dk-hub button:hover,.dk-hub button[aria-pressed=true] { background:#643784; }\n.dk-hub button:disabled { opacity:.5; cursor:default; }\n.dk-hub input:not([type=checkbox]),.dk-hub textarea { width:100%; }\n.dk-hub input[type=checkbox] { width:20px; height:20px; accent-color:#ad71d1; }\n.dk-hub label { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin:12px 0; }\n.dk-hub a { color:#e0b6ff; overflow-wrap:anywhere; }\n.dk-hub :is(button,a,input,textarea,select,summary):focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n.dk-hub .dk-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:10px 0; }\n.dk-hub .dk-row a { flex:1; min-width:140px; }\n.dk-hub pre { background:#0c0811; padding:12px; max-height:45dvh; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; font:13px/1.5 Consolas,monospace; }\n.dk-hub table { width:100%; border-collapse:collapse; }\n.dk-hub th,.dk-hub td { text-align:left; padding:6px; border-bottom:1px solid #493357; }\n.dk-hub td label { font-size:0; margin:0; }\n.dk-hub td select { font-size:14px; width:100%; }\n.dk-hub-message { padding:0 20px 16px; color:#e2bcfc; white-space:pre-wrap; }\n.dk-hub details { padding:12px 0; border-top:1px solid #624771; }\n.dk-hub summary { cursor:pointer; }\n\n.dk-inspector-table { overflow-x:auto; max-width:100%; }\n.dk-hub .dk-inspector-table table { min-width:640px; font-size:13px; }\n.dk-hub .dk-inspector-table td { vertical-align:top; overflow-wrap:anywhere; max-width:240px; }\n.dk-inspector-checks { padding:10px 14px; background:#25182f; border-left:3px solid #bd91d9; }\n.dk-naming { border:1px solid #725587; padding:12px; margin:12px 0 20px; background:#1c1425; }\n.dk-naming .dk-naming-status { font-weight:700; color:#ead7ff; }\n.dk-naming .dk-naming-errors { border-left:3px solid #e9ad71; padding-left:24px; }\n.dk-naming li { margin:8px 0; }\n.dk-naming details { margin:12px 0; }\n.dk-naming summary { cursor:pointer; color:#dabcdf; }\n\n.dk-listing-bar { display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; padding:12px; margin:8px 0; background:#21162b; border:1px solid #725587; color:#f0e9f6; font:14px/1.5 'Segoe UI',sans-serif; }\n.dk-listing-bar label { display:flex; gap:8px; align-items:center; cursor:pointer; }\n.dk-listing-bar .dk-listing-rules,.dk-hub .dk-naming-site { display:flex; gap:8px; align-items:center; }\n.dk-listing-bar .dk-listing-rules select,.dk-hub .dk-naming-site select { padding:3px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-hub .dk-naming-site { margin:0 0 10px; font-weight:600; color:#d9c4e8; }\n.dk-listing-bar .dk-listing-rules-edit,.dk-hub .dk-naming-site button { padding:3px 9px; border:1px solid #6d5280; border-radius:3px; background:#2b1d36; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-listing-bar .dk-listing-rules-edit:hover,.dk-hub .dk-naming-site button:hover { background:#3a2748; }\n.dk-profile-dialog { max-width:760px; width:92vw; }\n.dk-profile-tabs { display:flex; gap:8px; margin:0 0 14px; flex-wrap:wrap; }\n.dk-profile-tabs button { padding:6px 12px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-profile-tabs button[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-profile-form { display:flex; flex-direction:column; gap:14px; }\n.dk-profile-field { display:flex; flex-direction:column; gap:5px; font-weight:600; color:#d9c4e8; }\n.dk-profile-field :is(input,textarea,select) { padding:7px 9px; border:1px solid #6d5280; border-radius:3px; background:#1b1222; color:#efe4f7; font:inherit; }\n.dk-profile-field textarea,.dk-profile-json { font:13px/1.5 Consolas,'Courier New',monospace; width:100%; box-sizing:border-box; }\n.dk-profile-json { padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#dcc9ec; }\n.dk-profile-field small,.dk-profile-recipes small,.dk-profile-count { font-weight:400; color:#b9a6c9; font-size:12px; }\n.dk-profile-count { color:#a9e3c0; }\n.dk-profile-recipes { border:1px solid #56406a; border-radius:4px; padding:12px; display:flex; flex-direction:column; gap:7px; }\n.dk-profile-recipes legend { padding:0 6px; color:#d9c4e8; font-weight:600; }\n.dk-profile-recipes label { display:flex; gap:9px; align-items:center; font-size:14px; }\n.dk-profile-installed { border:1px solid #56406a; border-radius:4px; padding:12px; display:flex; flex-direction:column; gap:7px; }\n.dk-profile-installed small { color:#b9a6c9; font-size:12px; }\n.dk-profile-file { display:inline-flex; align-items:center; gap:8px; font-size:13px; color:#d9c4e8; }\n.dk-profile-status:not(:empty) { padding:9px 11px; border-left:3px solid #7d5c96; background:#20152a; color:#e6d6f2; }\n.dk-profile-status[data-tone=bad] { border-color:#e07a7a; }\n.dk-profile-status[data-tone=good] { border-color:#7ad39a; }\n.dk-profile-status[data-tone=warn] { border-color:#e0c07a; }\n.dk-listing-decision { display:inline-flex; gap:6px; align-items:center; margin-left:8px; font-size:12px; }\n.dk-listing-decision select { padding:2px 5px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-listing-decision[data-state=approved] select { border-color:#5fa87a; }\n.dk-listing-decision[data-state=rejected] select { border-color:#c97a7a; }\n.dk-listing-decision[data-state=asked] select { border-color:#c9b07a; }\n.dk-decision-mark { color:#b9a6c9; white-space:nowrap; }\n.dk-listing-badge[data-lead=yes] { margin:0 6px 0 0; }\n.dk-detail-page { display:block; padding:12px 14px; margin:10px 0; border:1px solid #5b406d; border-radius:4px; background:#1c1426; }\n.dk-detail-page ul { margin:8px 0 0; padding-left:20px; }\n.dk-detail-page li { margin:4px 0; color:#e0d2ec; font-size:13px; line-height:1.55; }\n.dk-detail-page li[data-severity=error] { color:#f0b5b5; }\n.dk-detail-page li[data-severity=error]::marker { color:#e07a7a; }\n.dk-detail-page li[data-severity=review]::marker { color:#e0c07a; }\n.dk-detail-page small { display:block; margin-top:9px; color:#a493b4; font-size:11.5px; }\n.dk-reply { margin-top:14px; border:1px solid #56406a; border-radius:4px; padding:10px 12px; }\n.dk-reply summary { cursor:pointer; font-weight:600; color:#d9c4e8; }\n.dk-reply p { color:#b9a6c9; font-size:13px; }\n.dk-reply-choice { padding:5px 11px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-reply-choice[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-reply-text { width:100%; box-sizing:border-box; margin:10px 0; padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#efe4f7; font:13px/1.6 Consolas,'Courier New',monospace; }\n.dk-reply { margin-top:14px; border:1px solid #56406a; border-radius:4px; padding:10px 12px; }\n.dk-reply summary { cursor:pointer; font-weight:600; color:#d9c4e8; }\n.dk-reply p { color:#b9a6c9; font-size:13px; }\n.dk-reply-choice { padding:5px 11px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-reply-choice[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-reply-text { width:100%; box-sizing:border-box; margin:10px 0; padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#efe4f7; font:13px/1.6 Consolas,'Courier New',monospace; }\n.dk-listing-log { display:inline-flex; gap:8px; align-items:center; }\n.dk-compare-sides { display:grid; grid-template-columns:1fr 1fr; gap:12px; }\n.dk-compare-side { display:flex; flex-direction:column; gap:5px; font-weight:600; color:#d9c4e8; }\n.dk-compare-side textarea { font:13px/1.5 Consolas,'Courier New',monospace; padding:8px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#dcc9ec; width:100%; box-sizing:border-box; }\n.dk-compare-table { display:flex; flex-direction:column; border:1px solid #56406a; border-radius:4px; overflow:hidden; margin:10px 0; }\n.dk-compare-row { display:grid; grid-template-columns:minmax(120px,1fr) minmax(0,1.2fr) minmax(0,1.2fr); gap:10px; padding:7px 10px; border-bottom:1px solid #3d2c4c; font-size:13px; }\n.dk-compare-row:last-child { border-bottom:none; }\n.dk-compare-row:nth-child(odd) { background:#1d1426; }\n.dk-compare-row [data-larger=yes] { color:#a9e3c0; }\n@media (max-width:700px){ .dk-compare-sides,.dk-compare-row { grid-template-columns:1fr; } }\n.dk-listing-bar input[type=checkbox] { width:18px; height:18px; accent-color:#ad71d1; }\n.dk-listing-bar small { flex-basis:100%; color:#d2bedf; }\n.dk-listing-bar [role=status] { font-weight:600; }\nbutton.dk-listing-badge { display:inline-flex !important; align-items:center; justify-content:center; vertical-align:middle; flex-shrink:0; width:22px; height:22px; min-width:22px; padding:0 !important; margin:0 0 0 6px !important; border:1px solid currentColor !important; border-radius:4px !important; background:#160f1e !important; font:bold 15px/1 'Segoe UI',sans-serif !important; cursor:pointer; box-shadow:none !important; }\nbutton.dk-listing-badge[data-state=error] { color:#ff666d !important; }\nbutton.dk-listing-badge[data-state=pass] { color:#67df99 !important; }\nbutton.dk-listing-badge[data-state=review] { color:#f1c15b !important; }\nbutton.dk-listing-badge:focus-visible { outline:3px solid #eee !important; outline-offset:2px; }\n.dk-listing-dialog li { margin-block:8px; }\n.dk-listing-dialog h3 { overflow-wrap:anywhere; }\n\n@media(max-width:700px) {\n  #dp-inspector-tools { left:8px; right:8px; bottom:max(8px,env(safe-area-inset-bottom)); justify-content:center; }\n  #dp-inspector-tools button { min-height:44px; width:100%; }\n  .dk-hub { max-height:90dvh; }\n  .dk-hub header,.dk-hub-content { padding:12px; }\n  .dk-hub button { min-height:44px; }\n  .dk-hub input,.dk-hub select,.dk-hub textarea { font-size:16px; }\n  .dk-hub table tr { display:grid; grid-template-columns:1fr 1fr; padding:8px 0; }\n  .dk-hub table tr:first-child { display:none; }\n  .dk-hub table td { border:0; }\n  .dk-hub table td:first-child { grid-column:1/-1; }\n  .dk-hub .dk-inspector-table table tr { display:table-row; }\n  .dk-hub .dk-inspector-table table tr:first-child { display:table-row; }\n  .dk-hub .dk-inspector-table table td { border-bottom:1px solid #493357; }\n  button.dk-listing-badge { width:26px; height:26px; min-width:26px; font-size:17px !important; }\n}\n@media print { .dk-hub,#dp-inspector-tools { display:none !important; } }\n.dk-naming .dk-service-list { max-height:280px; overflow:auto; padding:6px 10px; background:#140e1c; border:1px solid #4b3559; border-radius:3px; }\n.dk-naming .dk-service-list p { margin:5px 0; overflow-wrap:anywhere; }\n.dk-naming .dk-service-list code { display:inline-block; min-width:96px; color:#e2bcfc; font:13px Consolas,monospace; }\n.dk-naming .dk-naming-service { margin:4px 0 8px; color:#cbb0e4; font:13px Consolas,monospace; }\nbutton.dk-listing-badge.dk-detail-badge { width:24px; height:24px; min-width:24px; font-size:16px !important; margin:0 0 0 8px !important; vertical-align:middle; }\n.dk-detail-links { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:10px 0 14px; font:14px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-detail-links .dk-detail-links-label { color:#c0adce; margin-right:2px; }\n.dk-detail-links a { padding:4px 9px; color:#e6cbff !important; background:#22162c; border:1px solid #6d5280; border-radius:3px; text-decoration:none; }\n.dk-detail-links a:hover { background:#3d2451; border-color:#c193e6; }\n.dk-detail-links a[data-exact=yes] { border-color:#9fdcb6; box-shadow:inset 0 0 0 1px #67df9933; }\n.dk-detail-links a:focus-visible,.dk-detail-links button:focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n.dk-detail-links .dk-detail-copy { padding:4px 9px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-detail-links .dk-detail-copy:hover { background:#563173; }\n@media print { .dk-detail-links,.dk-detail-badge { display:none !important; } }\n.dk-detail-links .dk-detail-vs { padding:4px 11px; color:#ffe6b8; background:#3d2a17; border:1px solid #a8813f; border-radius:3px; cursor:pointer; font:inherit; font-weight:600; }\n.dk-detail-links .dk-detail-vs:hover { background:#5a3d1f; border-color:#e0b464; }\n/* [ MULTIPLE FILES ]: a pack says so under its name, and copies its list on click. */\n.dk-detail-files { margin:4px 0 2px; text-align:center; }\n.dk-detail-files-copy { padding:2px 8px; color:#b9a7c6; background:none; border:1px solid transparent; border-radius:4px; cursor:pointer; font:inherit; font-size:13px; letter-spacing:.08em; }\n.dk-detail-files-copy:hover, .dk-detail-files-copy:focus-visible { color:#f0e4ff; border-color:#8a6aa3; background:#2a1b38; }\n.dk-detail-files-copy[data-copied] { color:#9fe0a4; border-color:#4f8a56; }\n.dk-detail-compare { margin:0 0 16px; padding:12px 14px; background:#1a1223; border:1px solid #6d5280; border-radius:4px; font:14px/1.6 \"Segoe UI\",system-ui,sans-serif; color:#e4d5f2; }\n.dk-detail-compare h3 { margin:12px 0 6px; font-size:15px; color:#e6cbff; }\n.dk-detail-compare h3:first-child { margin-top:0; }\n.dk-detail-compare p { margin:4px 0 8px; }\n.dk-detail-compare small { display:block; margin-top:10px; color:#b9a7c7; font-size:12px; }\n.dk-detail-compare .dk-compare-note { color:#ffe6b8; }\n.dk-compare-slot { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:5px 0; }\n.dk-compare-slot > span { flex:1 1 220px; min-width:0; overflow-wrap:anywhere; color:#cdb8e0; }\n.dk-detail-compare button { padding:4px 10px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-detail-compare button:hover { background:#563173; border-color:#c193e6; }\n.dk-detail-compare button:focus-visible { outline:2px solid #e0bdff; outline-offset:2px; }\n.dk-detail-compare .dk-compare-drop { background:#2a1a22; border-color:#8a5a6a; }\n.dk-detail-compare .dk-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }\n.dk-detail-compare .dk-compare-verdict { margin:10px 0 14px; padding:10px 12px; border-radius:4px; border:1px solid #8a6aa3; background:#241730; }\n.dk-detail-compare .dk-compare-verdict strong { display:block; margin-bottom:4px; font-size:15px; }\n.dk-detail-compare .dk-compare-verdict p { margin:0; }\n.dk-detail-compare .dk-compare-verdict[data-state=differs] { border-color:#d08a6a; background:#2c1a18; }\n.dk-detail-compare .dk-compare-verdict[data-state=differs] strong { color:#ffc9a8; }\n.dk-detail-compare .dk-compare-verdict[data-state=matches] { border-color:#6ea87f; background:#16241b; }\n.dk-detail-compare .dk-compare-verdict[data-state=matches] strong { color:#a9e3c0; }\n@media print { .dk-detail-compare { display:none !important; } }\n.dk-listing-bar .dk-listing-audit { padding:5px 11px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-listing-bar .dk-listing-audit:hover { background:#563173; border-color:#c193e6; }\n.dk-hub .dk-listing-copy { margin-top:12px; }\n.dk-listing-dialog pre { max-height:50dvh; }\n.dk-listing-dialog pre { max-height:50dvh; }\n.dk-request-open { margin-left:6px; padding:2px 8px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:12px/1.5 \"Segoe UI\",system-ui,sans-serif; vertical-align:middle; }\n.dk-request-open:hover { background:#563173; border-color:#c193e6; }\n.dk-request-open:focus-visible { outline:2px solid #e0bdff; outline-offset:2px; }\n.dk-hub .dk-tracker-find { display:block; width:100%; box-sizing:border-box; margin:10px 0 4px; padding:7px 10px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:4px; font:inherit; }\n.dk-hub .dk-tracker-find:focus-visible { outline:2px solid #e0bdff; outline-offset:1px; }\n.dk-hub details.dk-tracker-group { padding:0; }\n.dk-hub details.dk-tracker-group > summary { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 12px; color:#d9c4e8; font-weight:600; cursor:pointer; list-style:none; }\n.dk-hub details.dk-tracker-group > summary::-webkit-details-marker { display:none; }\n.dk-hub details.dk-tracker-group > summary::before { content:'▸'; margin-right:6px; color:#a98cc4; }\n.dk-hub details.dk-tracker-group[open] > summary::before { content:'▾'; }\n.dk-hub details.dk-tracker-group > summary:hover { background:#241730; }\n.dk-hub details.dk-tracker-group > summary:focus-visible { outline:2px solid #e0bdff; outline-offset:-2px; }\n.dk-hub .dk-tracker-count { padding:1px 8px; color:#cdb8e0; background:#2c1d3a; border-radius:10px; font:12px/1.6 inherit; font-weight:400; }\n.dk-hub details.dk-tracker-group > .dk-tracker-row { padding:0 12px 0 26px; }\n.dk-hub details.dk-tracker-group > .dk-tracker-row:last-child { padding-bottom:10px; }\n.dk-hub .dk-tracker-tag { margin-left:6px; padding:1px 6px; color:#c9b3dc; background:#2a1c37; border:1px solid #4b3a5c; border-radius:9px; font-size:11px; font-weight:400; }\n.dk-hub .dk-tracker-address-toggle { padding:3px 9px; color:#e6cbff; background:#2a1a38; border:1px solid #6d5280; border-radius:3px; cursor:pointer; font:12px inherit; }\n.dk-hub .dk-tracker-address-toggle:hover { background:#3d2451; }\n.dk-hub .dk-tracker-address-toggle[aria-expanded=true] { background:#482b60; border-color:#c193e6; }\n.dk-hub details.dk-tracker-group .dk-tracker-row label { flex:0 0 auto; min-width:260px; justify-content:flex-start; text-align:left; }\n.dk-hub details.dk-tracker-group .dk-tracker-row label > span.dk-tracker-tag { flex:0 0 auto; }\n.dk-hub .dk-tracker-group { margin:12px 0; padding:8px 12px 10px; border:1px solid #6d5280; border-radius:4px; }\n.dk-hub .dk-tracker-group legend { padding:0 6px; color:#d9c4e8; font-weight:600; }\n.dk-hub .dk-tracker-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:6px 0; }\n.dk-hub .dk-tracker-row label { display:flex; align-items:center; gap:6px; min-width:190px; margin:0; cursor:pointer; }\n.dk-hub .dk-tracker-row input[type=checkbox] { width:16px; height:16px; accent-color:#ad71d1; }\n.dk-hub .dk-tracker-url,.dk-hub .dk-tracker-row input[type=text] { flex:1; min-width:230px; padding:4px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:12px/1.5 ui-monospace,Consolas,monospace; }\n.dk-hub .dk-tracker-row select { padding:4px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n@media print { .dk-request-open,.dk-request-bar,.dk-request-links { display:none !important; } }\n.dk-request-seen { margin-left:6px; color:#9fdcb6; font:12px/1.5 \"Segoe UI\",system-ui,sans-serif; white-space:nowrap; }\n.dk-request-float { position:absolute; z-index:2147483000; box-shadow:0 3px 10px #0009; }\n.dk-hub .dk-request-term { display:flex; flex-direction:column; gap:4px; margin:8px 0 4px; color:#d9c4e8; }\n.dk-hub .dk-request-term input { padding:6px 8px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:14px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-listing-badge[data-state=error][data-banned=yes] { box-shadow:0 0 0 2px #ff6b6b88; }\n@media print { .dk-request-seen,.dk-request-float { display:none !important; } }\n.dk-hub .dk-request-step { min-width:220px; }\n.dk-hub .dk-request-step[disabled] { opacity:.6; cursor:default; }\n\n/* A badge rides beside the title without adding height to the row: in grouped and\n   compact listing views a taller badge overflowed onto the title below it. */\nbutton.dk-listing-badge { line-height:0 !important; max-height:22px; box-sizing:border-box; position:relative; top:-1px; }\nbutton.dk-listing-badge.dk-detail-badge { max-height:24px; top:0; }\n@media(max-width:700px) { button.dk-listing-badge { width:26px; height:26px; min-width:26px; font-size:17px !important; max-height:26px; } }\n.dk-listing-bar .dk-listing-rules,.dk-hub .dk-naming-site { display:flex; gap:8px; align-items:center; }\n.dk-listing-bar .dk-listing-rules select,.dk-hub .dk-naming-site select { padding:3px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-hub .dk-naming-site { margin:0 0 10px; font-weight:600; color:#d9c4e8; }\n\n.dk-group-tag { color:#ffb454 !important; cursor:pointer; border-bottom:1px dotted currentColor; }\n.dk-group-tag:hover, .dk-group-tag:focus-visible { color:#ffd08a !important; outline:none; border-bottom-style:solid; }\n.dk-group-menu { position:absolute; z-index:2147483000; max-width:min(360px,92vw); padding:12px 14px; border:1px solid #7b5792; border-radius:8px; background:#160f1e; color:#eee; box-shadow:0 10px 30px #000a; font:14px/1.5 'Segoe UI',sans-serif; }\n.dk-group-menu strong { display:block; margin-bottom:6px; color:#ffb454; }\n.dk-group-menu ul { margin:0 0 10px; padding-left:18px; }\n.dk-group-menu li { margin-block:6px; }\n.dk-group-menu a { color:#dbc0ef; }\n.dk-group-menu small { display:block; color:#c8b9d2; }\n.dk-group-menu button { padding:5px 10px; border:1px solid #7b5792; border-radius:6px; background:#22162c; color:#eee; cursor:pointer; }\n.dk-listing-bar .dk-listing-groups-edit { padding:3px 9px; border:1px solid #6d5280; border-radius:3px; background:#2b1d36; color:#e6d6f2; cursor:pointer; font:inherit; }\n\n.dk-group-add { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:10px 0 6px; }\n.dk-group-add label { flex-basis:100%; color:#c8b9d2; font-size:12.5px; }\n.dk-group-add input { flex:1 1 130px; min-width:0; padding:5px 8px; border:1px solid #6d5280; border-radius:5px; background:#0f0a15; color:#eee; font:inherit; font-size:13px; }\n.dk-group-add small { flex-basis:100%; color:#f1c15b; font-size:12.5px; }\n";
+    const DPTI_CSS = "/* Standalone Torrent Inspector styling. Scoped to this script's own dialog,\n   launcher and listing badges; site theming is left untouched. */\n#dp-inspector-tools { position:fixed; right:14px; bottom:14px; z-index:2147482000; display:flex; gap:8px; }\n#dp-inspector-tools button { font:600 14px/1.2 \"Segoe UI\",system-ui,sans-serif; color:#f4e8ff; background:#3d2551; border:1px solid #a97fc6; border-radius:5px; padding:10px 14px; cursor:pointer; box-shadow:0 2px 10px #0009; }\n#dp-inspector-tools button:hover { background:#643784; }\n#dp-inspector-tools button:focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n\n.dk-hub { box-sizing:border-box; width:min(940px,calc(100vw - 24px)); max-height:88dvh; padding:0; overflow:auto; background:#15101d; color:#f0e9f6; border:1px solid #af83c8; border-radius:6px; font:15px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-hub::backdrop { background:#07040bcc; }\n.dk-hub header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 20px; background:linear-gradient(#392447,#20152b); }\n.dk-hub h2 { margin:0; font:600 22px Consolas,monospace; }\n.dk-hub-content { padding:16px 20px; }\n.dk-hub :is(button,input,select,textarea) { box-sizing:border-box; font:inherit; color:#f4e8ff; background:#24182f; border:1px solid #9873b0; border-radius:3px; padding:8px 10px; min-width:0; }\n.dk-hub button { cursor:pointer; }\n.dk-hub button:hover,.dk-hub button[aria-pressed=true] { background:#643784; }\n.dk-hub button:disabled { opacity:.5; cursor:default; }\n.dk-hub input:not([type=checkbox]),.dk-hub textarea { width:100%; }\n.dk-hub input[type=checkbox] { width:20px; height:20px; accent-color:#ad71d1; }\n.dk-hub label { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin:12px 0; }\n.dk-hub a { color:#e0b6ff; overflow-wrap:anywhere; }\n.dk-hub :is(button,a,input,textarea,select,summary):focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n.dk-hub .dk-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:10px 0; }\n.dk-hub .dk-row a { flex:1; min-width:140px; }\n.dk-hub pre { background:#0c0811; padding:12px; max-height:45dvh; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; font:13px/1.5 Consolas,monospace; }\n.dk-hub table { width:100%; border-collapse:collapse; }\n.dk-hub th,.dk-hub td { text-align:left; padding:6px; border-bottom:1px solid #493357; }\n.dk-hub td label { font-size:0; margin:0; }\n.dk-hub td select { font-size:14px; width:100%; }\n.dk-hub-message { padding:0 20px 16px; color:#e2bcfc; white-space:pre-wrap; }\n.dk-hub details { padding:12px 0; border-top:1px solid #624771; }\n.dk-hub summary { cursor:pointer; }\n\n.dk-inspector-table { overflow-x:auto; max-width:100%; }\n.dk-hub .dk-inspector-table table { min-width:640px; font-size:13px; }\n.dk-hub .dk-inspector-table td { vertical-align:top; overflow-wrap:anywhere; max-width:240px; }\n.dk-inspector-checks { padding:10px 14px; background:#25182f; border-left:3px solid #bd91d9; }\n.dk-naming { border:1px solid #725587; padding:12px; margin:12px 0 20px; background:#1c1425; }\n.dk-naming .dk-naming-status { font-weight:700; color:#ead7ff; }\n.dk-naming .dk-naming-errors { border-left:3px solid #e9ad71; padding-left:24px; }\n.dk-naming li { margin:8px 0; }\n.dk-naming details { margin:12px 0; }\n.dk-naming summary { cursor:pointer; color:#dabcdf; }\n\n.dk-listing-bar { display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; padding:12px; margin:8px 0; background:#21162b; border:1px solid #725587; color:#f0e9f6; font:14px/1.5 'Segoe UI',sans-serif; }\n.dk-listing-bar label { display:flex; gap:8px; align-items:center; cursor:pointer; }\n.dk-listing-bar .dk-listing-rules,.dk-hub .dk-naming-site { display:flex; gap:8px; align-items:center; }\n.dk-listing-bar .dk-listing-rules select,.dk-hub .dk-naming-site select { padding:3px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-hub .dk-naming-site { margin:0 0 10px; font-weight:600; color:#d9c4e8; }\n.dk-listing-bar .dk-listing-rules-edit,.dk-hub .dk-naming-site button { padding:3px 9px; border:1px solid #6d5280; border-radius:3px; background:#2b1d36; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-listing-bar .dk-listing-rules-edit:hover,.dk-hub .dk-naming-site button:hover { background:#3a2748; }\n.dk-profile-dialog { max-width:760px; width:92vw; }\n.dk-profile-tabs { display:flex; gap:8px; margin:0 0 14px; flex-wrap:wrap; }\n.dk-profile-tabs button { padding:6px 12px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-profile-tabs button[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-profile-form { display:flex; flex-direction:column; gap:14px; }\n.dk-profile-field { display:flex; flex-direction:column; gap:5px; font-weight:600; color:#d9c4e8; }\n.dk-profile-field :is(input,textarea,select) { padding:7px 9px; border:1px solid #6d5280; border-radius:3px; background:#1b1222; color:#efe4f7; font:inherit; }\n.dk-profile-field textarea,.dk-profile-json { font:13px/1.5 Consolas,'Courier New',monospace; width:100%; box-sizing:border-box; }\n.dk-profile-json { padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#dcc9ec; }\n.dk-profile-field small,.dk-profile-recipes small,.dk-profile-count { font-weight:400; color:#b9a6c9; font-size:12px; }\n.dk-profile-count { color:#a9e3c0; }\n.dk-profile-recipes { border:1px solid #56406a; border-radius:4px; padding:12px; display:flex; flex-direction:column; gap:7px; }\n.dk-profile-recipes legend { padding:0 6px; color:#d9c4e8; font-weight:600; }\n.dk-profile-recipes label { display:flex; gap:9px; align-items:center; font-size:14px; }\n.dk-profile-installed { border:1px solid #56406a; border-radius:4px; padding:12px; display:flex; flex-direction:column; gap:7px; }\n.dk-profile-installed small { color:#b9a6c9; font-size:12px; }\n.dk-profile-file { display:inline-flex; align-items:center; gap:8px; font-size:13px; color:#d9c4e8; }\n.dk-profile-status:not(:empty) { padding:9px 11px; border-left:3px solid #7d5c96; background:#20152a; color:#e6d6f2; }\n.dk-profile-status[data-tone=bad] { border-color:#e07a7a; }\n.dk-profile-status[data-tone=good] { border-color:#7ad39a; }\n.dk-profile-status[data-tone=warn] { border-color:#e0c07a; }\n.dk-listing-decision { display:inline-flex; gap:6px; align-items:center; margin-left:8px; font-size:12px; }\n.dk-listing-decision select { padding:2px 5px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-listing-decision[data-state=approved] select { border-color:#5fa87a; }\n.dk-listing-decision[data-state=rejected] select { border-color:#c97a7a; }\n.dk-listing-decision[data-state=asked] select { border-color:#c9b07a; }\n.dk-decision-mark { color:#b9a6c9; white-space:nowrap; }\n.dk-listing-badge[data-lead=yes] { margin:0 6px 0 0; }\n.dk-detail-page { display:block; padding:12px 14px; margin:10px 0; border:1px solid #5b406d; border-radius:4px; background:#1c1426; }\n.dk-detail-page ul { margin:8px 0 0; padding-left:20px; }\n.dk-detail-page li { margin:4px 0; color:#e0d2ec; font-size:13px; line-height:1.55; }\n.dk-detail-page li[data-severity=error] { color:#f0b5b5; }\n.dk-detail-page li[data-severity=error]::marker { color:#e07a7a; }\n.dk-detail-page li[data-severity=review]::marker { color:#e0c07a; }\n.dk-detail-page small { display:block; margin-top:9px; color:#a493b4; font-size:11.5px; }\n.dk-reply { margin-top:14px; border:1px solid #56406a; border-radius:4px; padding:10px 12px; }\n.dk-reply summary { cursor:pointer; font-weight:600; color:#d9c4e8; }\n.dk-reply p { color:#b9a6c9; font-size:13px; }\n.dk-reply-choice { padding:5px 11px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-reply-choice[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-reply-text { width:100%; box-sizing:border-box; margin:10px 0; padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#efe4f7; font:13px/1.6 Consolas,'Courier New',monospace; }\n.dk-reply { margin-top:14px; border:1px solid #56406a; border-radius:4px; padding:10px 12px; }\n.dk-reply summary { cursor:pointer; font-weight:600; color:#d9c4e8; }\n.dk-reply p { color:#b9a6c9; font-size:13px; }\n.dk-reply-choice { padding:5px 11px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-reply-choice[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-reply-text { width:100%; box-sizing:border-box; margin:10px 0; padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#efe4f7; font:13px/1.6 Consolas,'Courier New',monospace; }\n.dk-listing-log { display:inline-flex; gap:8px; align-items:center; }\n.dk-compare-sides { display:grid; grid-template-columns:1fr 1fr; gap:12px; }\n.dk-compare-side { display:flex; flex-direction:column; gap:5px; font-weight:600; color:#d9c4e8; }\n.dk-compare-side textarea { font:13px/1.5 Consolas,'Courier New',monospace; padding:8px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#dcc9ec; width:100%; box-sizing:border-box; }\n.dk-compare-table { display:flex; flex-direction:column; border:1px solid #56406a; border-radius:4px; overflow:hidden; margin:10px 0; }\n.dk-compare-row { display:grid; grid-template-columns:minmax(120px,1fr) minmax(0,1.2fr) minmax(0,1.2fr); gap:10px; padding:7px 10px; border-bottom:1px solid #3d2c4c; font-size:13px; }\n.dk-compare-row:last-child { border-bottom:none; }\n.dk-compare-row:nth-child(odd) { background:#1d1426; }\n.dk-compare-row [data-larger=yes] { color:#a9e3c0; }\n@media (max-width:700px){ .dk-compare-sides,.dk-compare-row { grid-template-columns:1fr; } }\n.dk-listing-bar input[type=checkbox] { width:18px; height:18px; accent-color:#ad71d1; }\n.dk-listing-bar small { flex-basis:100%; color:#d2bedf; }\n.dk-listing-bar [role=status] { font-weight:600; }\nbutton.dk-listing-badge { display:inline-flex !important; align-items:center; justify-content:center; vertical-align:middle; flex-shrink:0; width:22px; height:22px; min-width:22px; padding:0 !important; margin:0 0 0 6px !important; border:1px solid currentColor !important; border-radius:4px !important; background:#160f1e !important; font:bold 15px/1 'Segoe UI',sans-serif !important; cursor:pointer; box-shadow:none !important; }\nbutton.dk-listing-badge[data-state=error] { color:#ff666d !important; }\nbutton.dk-listing-badge[data-state=pass] { color:#67df99 !important; }\nbutton.dk-listing-badge[data-state=review] { color:#f1c15b !important; }\nbutton.dk-listing-badge:focus-visible { outline:3px solid #eee !important; outline-offset:2px; }\n.dk-listing-dialog li { margin-block:8px; }\n.dk-listing-dialog h3 { overflow-wrap:anywhere; }\n\n@media(max-width:700px) {\n  #dp-inspector-tools { left:8px; right:8px; bottom:max(8px,env(safe-area-inset-bottom)); justify-content:center; }\n  #dp-inspector-tools button { min-height:44px; width:100%; }\n  .dk-hub { max-height:90dvh; }\n  .dk-hub header,.dk-hub-content { padding:12px; }\n  .dk-hub button { min-height:44px; }\n  .dk-hub input,.dk-hub select,.dk-hub textarea { font-size:16px; }\n  .dk-hub table tr { display:grid; grid-template-columns:1fr 1fr; padding:8px 0; }\n  .dk-hub table tr:first-child { display:none; }\n  .dk-hub table td { border:0; }\n  .dk-hub table td:first-child { grid-column:1/-1; }\n  .dk-hub .dk-inspector-table table tr { display:table-row; }\n  .dk-hub .dk-inspector-table table tr:first-child { display:table-row; }\n  .dk-hub .dk-inspector-table table td { border-bottom:1px solid #493357; }\n  button.dk-listing-badge { width:26px; height:26px; min-width:26px; font-size:17px !important; }\n}\n@media print { .dk-hub,#dp-inspector-tools { display:none !important; } }\n.dk-naming .dk-service-list { max-height:280px; overflow:auto; padding:6px 10px; background:#140e1c; border:1px solid #4b3559; border-radius:3px; }\n.dk-naming .dk-service-list p { margin:5px 0; overflow-wrap:anywhere; }\n.dk-naming .dk-service-list code { display:inline-block; min-width:96px; color:#e2bcfc; font:13px Consolas,monospace; }\n.dk-naming .dk-naming-service { margin:4px 0 8px; color:#cbb0e4; font:13px Consolas,monospace; }\nbutton.dk-listing-badge.dk-detail-badge { width:24px; height:24px; min-width:24px; font-size:16px !important; margin:0 0 0 8px !important; vertical-align:middle; }\n.dk-detail-links { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:10px 0 14px; font:14px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-detail-links .dk-detail-links-label { color:#c0adce; margin-right:2px; }\n.dk-detail-links a { padding:4px 9px; color:#e6cbff !important; background:#22162c; border:1px solid #6d5280; border-radius:3px; text-decoration:none; }\n.dk-detail-links a:hover { background:#3d2451; border-color:#c193e6; }\n.dk-detail-links a[data-exact=yes] { border-color:#9fdcb6; box-shadow:inset 0 0 0 1px #67df9933; }\n.dk-detail-links a:focus-visible,.dk-detail-links button:focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n.dk-detail-links .dk-detail-copy { padding:4px 9px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-detail-links .dk-detail-copy:hover { background:#563173; }\n@media print { .dk-detail-links,.dk-detail-badge { display:none !important; } }\n.dk-detail-links .dk-detail-vs { padding:4px 11px; color:#ffe6b8; background:#3d2a17; border:1px solid #a8813f; border-radius:3px; cursor:pointer; font:inherit; font-weight:600; }\n.dk-detail-links .dk-detail-vs:hover { background:#5a3d1f; border-color:#e0b464; }\n/* [ MULTIPLE FILES ]: a pack says so under its name, and copies its list on click. */\n.dk-detail-files { margin:4px 0 2px; text-align:center; }\n.dk-detail-files-copy { padding:2px 8px; color:#b9a7c6; background:none; border:1px solid transparent; border-radius:4px; cursor:pointer; font:inherit; font-size:13px; letter-spacing:.08em; }\n.dk-detail-files-copy:hover, .dk-detail-files-copy:focus-visible { color:#f0e4ff; border-color:#8a6aa3; background:#2a1b38; }\n.dk-detail-files-copy[data-copied] { color:#9fe0a4; border-color:#4f8a56; }\n/* Release notes templates: the button beside the comment box, and its editor. */\n.dk-template-insert { display:inline-flex; align-items:center; gap:6px; margin:0 0 0 8px; vertical-align:middle; }\n.dk-template-insert-button { min-width:26px; padding:1px 7px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; font-size:14px; line-height:1.4; }\n.dk-template-insert-button:hover { background:#563173; border-color:#c193e6; }\n.dk-template-insert-button:focus-visible, .dk-template-edit:focus-visible { outline:2px solid #e0bdff; outline-offset:2px; }\n.dk-template-edit { padding:1px 8px; color:#b9a7c6; background:none; border:1px solid transparent; border-radius:3px; cursor:pointer; font:inherit; font-size:12px; }\n.dk-template-edit:hover { color:#f0e4ff; border-color:#8a6aa3; background:#2a1b38; }\n.dk-template-slot { margin:0 0 14px; padding:10px 12px; background:#1a1223; border:1px solid #6d5280; border-radius:4px; }\n.dk-template-slot-head { display:flex; align-items:center; gap:8px; font-weight:600; color:#e6cbff; }\n.dk-template-slot-head label { display:flex; align-items:center; gap:6px; cursor:pointer; }\n.dk-template-caption { display:block; margin:8px 0 4px; color:#b9a7c7; font-size:12px; }\n.dk-template-uses { display:block; margin:6px 0 8px; color:#b9a7c7; font-size:12px; }\n.dk-template-copy { padding:3px 10px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-template-copy:hover { background:#563173; border-color:#c193e6; }\n.dk-template-actions { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 6px; }\n.dk-template-status { min-height:1.2em; margin:4px 0 0; color:#d5c2e6; }\n.dk-detail-compare { margin:0 0 16px; padding:12px 14px; background:#1a1223; border:1px solid #6d5280; border-radius:4px; font:14px/1.6 \"Segoe UI\",system-ui,sans-serif; color:#e4d5f2; }\n.dk-detail-compare h3 { margin:12px 0 6px; font-size:15px; color:#e6cbff; }\n.dk-detail-compare h3:first-child { margin-top:0; }\n.dk-detail-compare p { margin:4px 0 8px; }\n.dk-detail-compare small { display:block; margin-top:10px; color:#b9a7c7; font-size:12px; }\n.dk-detail-compare .dk-compare-note { color:#ffe6b8; }\n.dk-compare-slot { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:5px 0; }\n.dk-compare-slot > span { flex:1 1 220px; min-width:0; overflow-wrap:anywhere; color:#cdb8e0; }\n.dk-detail-compare button { padding:4px 10px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-detail-compare button:hover { background:#563173; border-color:#c193e6; }\n.dk-detail-compare button:focus-visible { outline:2px solid #e0bdff; outline-offset:2px; }\n.dk-detail-compare .dk-compare-drop { background:#2a1a22; border-color:#8a5a6a; }\n.dk-detail-compare .dk-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }\n.dk-detail-compare .dk-compare-verdict { margin:10px 0 14px; padding:10px 12px; border-radius:4px; border:1px solid #8a6aa3; background:#241730; }\n.dk-detail-compare .dk-compare-verdict strong { display:block; margin-bottom:4px; font-size:15px; }\n.dk-detail-compare .dk-compare-verdict p { margin:0; }\n.dk-detail-compare .dk-compare-verdict[data-state=differs] { border-color:#d08a6a; background:#2c1a18; }\n.dk-detail-compare .dk-compare-verdict[data-state=differs] strong { color:#ffc9a8; }\n.dk-detail-compare .dk-compare-verdict[data-state=matches] { border-color:#6ea87f; background:#16241b; }\n.dk-detail-compare .dk-compare-verdict[data-state=matches] strong { color:#a9e3c0; }\n@media print { .dk-detail-compare { display:none !important; } }\n.dk-listing-bar .dk-listing-audit { padding:5px 11px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-listing-bar .dk-listing-audit:hover { background:#563173; border-color:#c193e6; }\n.dk-hub .dk-listing-copy { margin-top:12px; }\n.dk-listing-dialog pre { max-height:50dvh; }\n.dk-listing-dialog pre { max-height:50dvh; }\n.dk-request-open { margin-left:6px; padding:2px 8px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:12px/1.5 \"Segoe UI\",system-ui,sans-serif; vertical-align:middle; }\n.dk-request-open:hover { background:#563173; border-color:#c193e6; }\n.dk-request-open:focus-visible { outline:2px solid #e0bdff; outline-offset:2px; }\n.dk-hub .dk-tracker-find { display:block; width:100%; box-sizing:border-box; margin:10px 0 4px; padding:7px 10px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:4px; font:inherit; }\n.dk-hub .dk-tracker-find:focus-visible { outline:2px solid #e0bdff; outline-offset:1px; }\n.dk-hub details.dk-tracker-group { padding:0; }\n.dk-hub details.dk-tracker-group > summary { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 12px; color:#d9c4e8; font-weight:600; cursor:pointer; list-style:none; }\n.dk-hub details.dk-tracker-group > summary::-webkit-details-marker { display:none; }\n.dk-hub details.dk-tracker-group > summary::before { content:'▸'; margin-right:6px; color:#a98cc4; }\n.dk-hub details.dk-tracker-group[open] > summary::before { content:'▾'; }\n.dk-hub details.dk-tracker-group > summary:hover { background:#241730; }\n.dk-hub details.dk-tracker-group > summary:focus-visible { outline:2px solid #e0bdff; outline-offset:-2px; }\n.dk-hub .dk-tracker-count { padding:1px 8px; color:#cdb8e0; background:#2c1d3a; border-radius:10px; font:12px/1.6 inherit; font-weight:400; }\n.dk-hub details.dk-tracker-group > .dk-tracker-row { padding:0 12px 0 26px; }\n.dk-hub details.dk-tracker-group > .dk-tracker-row:last-child { padding-bottom:10px; }\n.dk-hub .dk-tracker-tag { margin-left:6px; padding:1px 6px; color:#c9b3dc; background:#2a1c37; border:1px solid #4b3a5c; border-radius:9px; font-size:11px; font-weight:400; }\n.dk-hub .dk-tracker-address-toggle { padding:3px 9px; color:#e6cbff; background:#2a1a38; border:1px solid #6d5280; border-radius:3px; cursor:pointer; font:12px inherit; }\n.dk-hub .dk-tracker-address-toggle:hover { background:#3d2451; }\n.dk-hub .dk-tracker-address-toggle[aria-expanded=true] { background:#482b60; border-color:#c193e6; }\n.dk-hub details.dk-tracker-group .dk-tracker-row label { flex:0 0 auto; min-width:260px; justify-content:flex-start; text-align:left; }\n.dk-hub details.dk-tracker-group .dk-tracker-row label > span.dk-tracker-tag { flex:0 0 auto; }\n.dk-hub .dk-tracker-group { margin:12px 0; padding:8px 12px 10px; border:1px solid #6d5280; border-radius:4px; }\n.dk-hub .dk-tracker-group legend { padding:0 6px; color:#d9c4e8; font-weight:600; }\n.dk-hub .dk-tracker-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:6px 0; }\n.dk-hub .dk-tracker-row label { display:flex; align-items:center; gap:6px; min-width:190px; margin:0; cursor:pointer; }\n.dk-hub .dk-tracker-row input[type=checkbox] { width:16px; height:16px; accent-color:#ad71d1; }\n.dk-hub .dk-tracker-url,.dk-hub .dk-tracker-row input[type=text] { flex:1; min-width:230px; padding:4px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:12px/1.5 ui-monospace,Consolas,monospace; }\n.dk-hub .dk-tracker-row select { padding:4px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n@media print { .dk-request-open,.dk-request-bar,.dk-request-links { display:none !important; } }\n.dk-request-seen { margin-left:6px; color:#9fdcb6; font:12px/1.5 \"Segoe UI\",system-ui,sans-serif; white-space:nowrap; }\n.dk-request-float { position:absolute; z-index:2147483000; box-shadow:0 3px 10px #0009; }\n.dk-hub .dk-request-term { display:flex; flex-direction:column; gap:4px; margin:8px 0 4px; color:#d9c4e8; }\n.dk-hub .dk-request-term input { padding:6px 8px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:14px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-listing-badge[data-state=error][data-banned=yes] { box-shadow:0 0 0 2px #ff6b6b88; }\n@media print { .dk-request-seen,.dk-request-float { display:none !important; } }\n.dk-hub .dk-request-step { min-width:220px; }\n.dk-hub .dk-request-step[disabled] { opacity:.6; cursor:default; }\n\n/* A badge rides beside the title without adding height to the row: in grouped and\n   compact listing views a taller badge overflowed onto the title below it. */\nbutton.dk-listing-badge { line-height:0 !important; max-height:22px; box-sizing:border-box; position:relative; top:-1px; }\nbutton.dk-listing-badge.dk-detail-badge { max-height:24px; top:0; }\n@media(max-width:700px) { button.dk-listing-badge { width:26px; height:26px; min-width:26px; font-size:17px !important; max-height:26px; } }\n.dk-listing-bar .dk-listing-rules,.dk-hub .dk-naming-site { display:flex; gap:8px; align-items:center; }\n.dk-listing-bar .dk-listing-rules select,.dk-hub .dk-naming-site select { padding:3px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-hub .dk-naming-site { margin:0 0 10px; font-weight:600; color:#d9c4e8; }\n\n.dk-group-tag { color:#ffb454 !important; cursor:pointer; border-bottom:1px dotted currentColor; }\n.dk-group-tag:hover, .dk-group-tag:focus-visible { color:#ffd08a !important; outline:none; border-bottom-style:solid; }\n.dk-group-menu { position:absolute; z-index:2147483000; max-width:min(360px,92vw); padding:12px 14px; border:1px solid #7b5792; border-radius:8px; background:#160f1e; color:#eee; box-shadow:0 10px 30px #000a; font:14px/1.5 'Segoe UI',sans-serif; }\n.dk-group-menu strong { display:block; margin-bottom:6px; color:#ffb454; }\n.dk-group-menu ul { margin:0 0 10px; padding-left:18px; }\n.dk-group-menu li { margin-block:6px; }\n.dk-group-menu a { color:#dbc0ef; }\n.dk-group-menu small { display:block; color:#c8b9d2; }\n.dk-group-menu button { padding:5px 10px; border:1px solid #7b5792; border-radius:6px; background:#22162c; color:#eee; cursor:pointer; }\n.dk-listing-bar .dk-listing-groups-edit { padding:3px 9px; border:1px solid #6d5280; border-radius:3px; background:#2b1d36; color:#e6d6f2; cursor:pointer; font:inherit; }\n\n.dk-group-add { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:10px 0 6px; }\n.dk-group-add label { flex-basis:100%; color:#c8b9d2; font-size:12.5px; }\n.dk-group-add input { flex:1 1 130px; min-width:0; padding:5px 8px; border:1px solid #6d5280; border-radius:5px; background:#0f0a15; color:#eee; font:inherit; font-size:13px; }\n.dk-group-add small { flex-basis:100%; color:#f1c15b; font-size:12.5px; }\n";
 
 // Where the settings live, so that they are the same settings on every tracker.
 //
@@ -517,10 +516,20 @@ const DKOKTO_CAPTURE = (() => {
         return Number(match[1])*scale||0;};
     // The file list and the total size — the part of a trump decision a MediaInfo report
     // does not carry. The media itself is compared by compare-core.js.
+    // A page that has not rendered its file list yet gives no files at all, and NO FILES IS
+    // NOT ZERO FILES. Reported as "0" it became a difference — "1 file against 0" — on two
+    // torrents whose lists had simply never been opened, and then fed the same-name verdict
+    // as though the files had been compared. A row marked unread is shown for what it is and
+    // is kept out of that verdict.
+    const listed=capture=>clean(capture).files.length>0;
     function differences(left,right) {
         const a=clean(left),b=clean(right),rows=[];
         const add=(label,one_,two,extra={})=>{if(one_!==two)rows.push({label,a:one_,b:two,...extra});};
-        add('Files in the torrent',String(a.files.length),String(b.files.length));
+        const unread='no file list on that page — open “Show files” there, then capture again';
+        if(listed(a)&&listed(b))add('Files in the torrent',String(a.files.length),String(b.files.length));
+        else if(listed(a)||listed(b))
+            rows.push({label:'Files in the torrent',unread:true,
+                a:listed(a)?String(a.files.length):unread,b:listed(b)?String(b.files.length):unread});
         // The exact counts where the pages carried them, and the rounded figures otherwise.
         // Two files can both show "5.7 GiB" and still differ by a hundred megabytes, so an
         // exact count on both sides decides whether the sizes differ at all.
@@ -538,12 +547,15 @@ const DKOKTO_CAPTURE = (() => {
             }
             rows.push(row);
         }
+        // The same applies to the flags: "none" is a claim about a file list, so it is only
+        // made where there was one to read.
         const mark=(capture,code)=>flags(capture).find(flag=>flag.code===code);
-        for(const [code,label] of [['extra','Extraneous files'],['folder','Top folder']]) {
-            const one_=mark(a,code),two=mark(b,code);
-            if(!one_===!two)continue;
-            rows.push({label,a:one_?'yes — '+one_.detail:'none',b:two?'yes — '+two.detail:'none'});
-        }
+        if(listed(a)&&listed(b))
+            for(const [code,label] of [['extra','Extraneous files'],['folder','Top folder']]) {
+                const one_=mark(a,code),two=mark(b,code);
+                if(!one_===!two)continue;
+                rows.push({label,a:one_?'yes — '+one_.detail:'none',b:two?'yes — '+two.detail:'none'});
+            }
         add('Report posted',a.report?a.kind:'none',b.report?b.kind:'none');
         return rows;
     }
@@ -580,17 +592,22 @@ const DKOKTO_CAPTURE = (() => {
     function verdict(left,right,extra=[]) {
         const a=clean(left),b=clean(right);
         if(!sameRelease(a,b))return null;
-        const labels=[...differences(a,b).map(row=>row.label),
+        const labels=[...differences(a,b).filter(row=>!row.unread).map(row=>row.label),
             ...(Array.isArray(extra)?extra:[]).map(label=>String(label))].filter(Boolean);
         const reported=!!a.report&&!!b.report;
-        return {name:a.title,differences:labels,matched:!labels.length,reported};
+        // Whether the files were actually compared at all. Claiming everything matches when
+        // one page never rendered its list would be the same overclaim in reverse.
+        const files=listed(a)&&listed(b);
+        return {name:a.title,differences:labels,matched:!labels.length,reported,files};
     }
     function verdictText(result) {
         if(!result)return '';
         if(result.matched)
-            return 'Both torrents are named “'+result.name+'”, and everything compared matches: the files, '+
-                'the size, the tracks, the encode and the tags.'+
+            return 'Both torrents are named “'+result.name+'”, and everything compared matches: '+
+                (result.files?'the files, the size':'the size')+', the tracks, the encode and the tags.'+
                 (result.reported?'':' Neither page posted a report, so only the file list and the size were compared.')+
+                (result.files?'':' One of the pages had not rendered its file list, so the files were not compared at all '+
+                    '— open “Show files” there and capture it again if that matters.')+
                 ' That is what two copies of one release look like. It is not a checksum — only what the two pages '+
                 'say is compared — but nothing in them disagrees.';
         return 'Both torrents are named “'+result.name+'”, and they are not the same file. A release is one file, so '+
@@ -884,7 +901,7 @@ const DKOKTO_RELEASE_TITLE = (() => {
     // panel of ours that shows release names — the comparison, the group menu, the
     // findings row — would otherwise be searched for the page's release name and win,
     // and then the badge and the lookup row would be built inside our own output.
-    const SKIP='.dk-detail-links,.dk-detail-compare,.dk-detail-page,.dk-detail-files,.dk-group-menu,.dk-listing-decision,'
+    const SKIP='.dk-detail-links,.dk-detail-compare,.dk-detail-page,.dk-detail-files,.dk-template-insert,.dk-group-menu,.dk-listing-decision,'
         +'.dk-request-links,.dk-request-bar,.dk-request-page,.dk-listing-dialog,.dk-listing-bar,.dk-hub,'
         +'#dkokto-hub,#dkokto-tools,#dkokto-game-dialog,#dkokto-nav-dialog,#dkokto-banner,#dkokto-request-dialog,'
         +'#dp-inspector-hub,#dp-inspector-tools,.torrent-mediainfo-dump,textarea,input,pre,code,nav,footer';
@@ -2240,14 +2257,13 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
 // user supplied it, and the module says plainly which parts of a guide it does NOT have.
 //
 // Sources, cited rather than inferred:
-//   · LUME (luminarr.me) — "Naming Guide", the two title templates and the explanation of
-//     every title element, supplied by the user 10 Sep 2026. Its streaming/HDTV SOURCE list
-//     (luminarr.me/wikis/7) and its banned-group list are NOT in hand, and nothing here
-//     pretends otherwise.
-//   · OnlyEncodes+ (onlyencodes.cc) — "Upload Guide + Rules" (wikis/2), supplied by the user
-//     10 Sep 2026. Its naming guidelines (wikis/18) and banned-group list (wikis/1) are NOT
-//     in hand: the title itself is checked against the shared templates only, and the notes
-//     say so rather than inventing a naming rule.
+//   · LUME (luminarr.me) — "Naming Guide": the two title templates and the explanation of
+//     every title element, supplied by the user 10 Sep 2026. Its provider list (wikis/7) is
+//     in hand as well and went into services.js. No LUME banned-group list has been
+//     supplied, so this carries none and says so rather than pretending otherwise.
+//   · OnlyEncodes+ (onlyencodes.cc) — "Upload Guide + Rules" (wikis/2), the naming standard
+//     (wikis/18) and the banned release groups (wikis/1), all supplied by the user 10 Sep
+//     2026. Two groups that page marks as removed are deliberately absent; see below.
 //
 // Adding one of these is your choice, not this script's: it changes which rules a badge
 // cites, so nothing is added until you press Add. A profile added from here is an ordinary
@@ -2771,6 +2787,9 @@ const DKOKTO_PROFILES_UI = ((profiles,rules) => {
     }
     function open(refresh) {
         onChange=typeof refresh==='function'?refresh:()=>{};
+        // A site that redraws its own page can take our dialog out of the document with it.
+        // A detached one would open onto nothing, so a dialog is reused only while it is
+        // still in the page.
         if(!dialog?.isConnected) {
             dialog=el('dialog',undefined,'dk-hub dk-profile-dialog');
             dialog.setAttribute('aria-labelledby','dk-profile-title');
@@ -3215,8 +3234,23 @@ const DKOKTO_AUDIT_STORE = (() => {
         }
         if(!incoming.length)return count();
         const state=read(),kept=new Map();
+        const keyOf=row=>row.id||('title:'+row.title);
+        // Everything about a reading except WHEN it was taken. A page re-records its badges
+        // on every pass, and each pass stamps a fresh Date.now(); comparing the whole row
+        // meant the millisecond alone counted as a change, so the guard below never held and
+        // the entire audit was re-serialised and re-stored several times a second.
+        const unchanged=(before,now)=>!!before&&before.url===now.url&&before.title===now.title&&
+            before.category===now.category&&before.state===now.state&&before.reason===now.reason&&
+            before.page===now.page&&(before.faults||[]).length===(now.faults||[]).length&&
+            (now.faults||[]).every((fault,at)=>fault===(before.faults||[])[at]);
         // Newer readings of the same torrent replace older ones; untracked rows key on title.
-        for(const row of [...state.rows,...incoming])kept.set(row.id||('title:'+row.title),row);
+        // A reading identical to the one already held keeps the row that is already there,
+        // timestamp included, so seeing the same page again is not a change.
+        for(const row of state.rows)kept.set(keyOf(row),row);
+        for(const row of incoming) {
+            const before=kept.get(keyOf(row));
+            kept.set(keyOf(row),unchanged(before,row)?before:row);
+        }
         // The pages visited are remembered separately, so re-reading a row keeps the list.
         const seenPages=[...new Set([...state.pages,...(page?[text(page,300)]:[])])];
         write({rows:[...kept.values()],pages:seenPages});
@@ -3312,7 +3346,7 @@ const DKOKTO_LISTING = (() => {
     // torrent whose text reads as a release name is checked as well.
     const loose='a[href*="/torrents/"]';
     // This script's own additions, on any page: watching them would wake the scan again.
-    const own='.dk-group-menu,.dk-listing-badge,.dk-listing-decision,.dk-listing-bar,.dk-listing-dialog,.dk-detail-badge,.dk-detail-links,.dk-detail-compare,.dk-request-bar,.dk-request-links,.dk-request-open,#dkokto-request-dialog';
+    const own='.dk-template-insert,.dk-group-menu,.dk-listing-badge,.dk-listing-decision,.dk-listing-bar,.dk-listing-dialog,.dk-detail-badge,.dk-detail-links,.dk-detail-compare,.dk-request-bar,.dk-request-links,.dk-request-open,#dkokto-request-dialog';
     // The chatbox and the ticker change constantly and never hold a listing, so their
     // churn is not a reason to look at the page again (a giveaway or chat script can
     // otherwise keep this awake).
@@ -3761,7 +3795,7 @@ const DKOKTO_LISTING = (() => {
             return [...r.removedNodes].some(n=>n.nodeType===1)||[...r.addedNodes].some(n=>n.nodeType===1&&!n.matches(own))||node.matches(selector);
             // Our own badge being carried off by a re-render, rather than an ordinary change.
             });const lost=records.some(r=>[...r.removedNodes].some(n=>n.nodeType===1&&(n.matches?.(own)||n.querySelector?.(own))));
-            if(relevant)schedule(lost);});observer.observe(document.documentElement,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['href','data-category-id','alt']});
+            if(relevant)schedule(lost);});observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['href','data-category-id','alt']});
         window.addEventListener('popstate',schedule);document.addEventListener('livewire:navigated',schedule);
     }
     return {mount};
@@ -3875,6 +3909,22 @@ const DKOKTO_FILES_CORE = (() => {
         const count=Number(match[1].replace(/[ ,]/g,''));
         return Number.isFinite(count)&&count>0&&count<=Number.MAX_SAFE_INTEGER?Math.round(count):0;
     }
+    // A page can also print the byte count as plain text beside the rounded size, which is
+    // what DarkPeers does ("2.28 GiB" with 2449415267 under it). A bare number on a page is
+    // not evidence of anything on its own, so one is only believed when converting it back
+    // gives the very figure the page displays, to the same number of decimals.
+    const UNITS={b:1,byte:1,bytes:1,kb:1e3,mb:1e6,gb:1e9,tb:1e12,kib:1024,mib:1024**2,gib:1024**3,tib:1024**4};
+    function sameSize(count,human) {
+        const number=Number(count);
+        if(!Number.isFinite(number)||number<=0)return false;
+        const match=String(human||'').replace(/[\u00a0\u2007\u2009\u202f]/g,' ').trim()
+            .match(/^([\d]+(?:\.[\d]+)?)\s*([KMGT]i?B|bytes?|B)$/i);
+        if(!match)return false;
+        const scale=UNITS[match[2].toLowerCase()];
+        if(!scale)return false;
+        const decimals=(match[1].split('.')[1]||'').length;
+        return (number/scale).toFixed(decimals)===Number(match[1]).toFixed(decimals);
+    }
     const digits=value=>String(Math.round(Number(value)||0));
     const grouped=value=>digits(value).replace(/\B(?=(\d{3})+(?!\d))/g,',');
     const rows=files=>(Array.isArray(files)?files:[]).slice(0,MAX)
@@ -3919,7 +3969,7 @@ const DKOKTO_FILES_CORE = (() => {
             out.push(line(cut?file.path.slice(cut.length+1):file.path,file.bytes,file.size));
         return out.join('\n');
     }
-    return {bytesFromTitle,topFolder,isPack,total,listing,rows,grouped,digits,MAX};
+    return {bytesFromTitle,sameSize,topFolder,isPack,total,listing,rows,grouped,digits,MAX};
 })();
 
 // The file list on a torrent page: read once, used by everything that needs it.
@@ -3984,16 +4034,43 @@ const DKOKTO_FILES_UI = (() => {
             }
         return rows.slice(0,core?core.MAX:2000);
     }
+    // A byte count printed as plain text beside the rounded size, which is what DarkPeers
+    // does. Believed only when it converts back to the figure the page displays, so a stray
+    // number elsewhere on the page can never be mistaken for the size. Read once per size.
+    const plain=node=>(node&&node.textContent||'').replace(/[\s,\u00a0\u202f]/g,'');
+    let counted={size:'',bytes:0,node:null};
+    const forget=()=>{counted={size:'',bytes:0,node:null};};
+    function textBytes(human) {
+        if(!human)return 0;
+        // What was read before is reused only while the very element it came from is still on
+        // the page and still says it. A page that redraws with a different number is read
+        // again, so a count can never outlive the thing it was read from. Where no count was
+        // found the answer is remembered as none and the rounded figure is what gets shown —
+        // less than the page might hold, but never a number that is not the size.
+        if(counted.size===human&&(!counted.bytes||
+            (counted.node&&counted.node.isConnected&&plain(counted.node)===String(counted.bytes))))
+            return counted.bytes;
+        let read=0,found=0,from=null;
+        for(const node of document.querySelectorAll('.torrent__meta *,.meta__details *,.torrent-meta *,main span,main li,main p,main div')) {
+            if(++read>600)break;
+            if(node.firstElementChild)continue;
+            const value=plain(node);
+            if(!/^\d{6,16}$/.test(value))continue;
+            if(core.sameSize(Number(value),human)){found=Number(value);from=node;break;}
+        }
+        counted={size:human,bytes:found,node:from};
+        return found;
+    }
     // The total the page states, wherever the theme puts it: named first, then by shape.
     function stated() {
         for(const selector of ['li.torrent__size','.torrent__size','.meta__size','[class*="torrent__size"]']) {
             const node=document.querySelector(selector);
             const value=textOf(node);
-            if(value&&SIZE.test(value))return {size:value,bytes:titleBytes(node)};
+            if(value&&SIZE.test(value))return {size:value,bytes:titleBytes(node)||textBytes(value)};
         }
         for(const node of document.querySelectorAll('.torrent__meta *,.meta__details *,.torrent-meta *')) {
             const value=textOf(node);
-            if(value&&SIZE.test(value)&&!node.querySelector('*'))return {size:value,bytes:titleBytes(node)};
+            if(value&&SIZE.test(value)&&!node.querySelector('*'))return {size:value,bytes:titleBytes(node)||textBytes(value)};
         }
         return {size:'',bytes:0};
     }
@@ -4002,42 +4079,395 @@ const DKOKTO_FILES_UI = (() => {
 
     // --- The marker ---------------------------------------------------------------------
     const CLASS='dk-detail-files';
-    let holder=null;
+    let holder=null,seen='';
     function copy(button,value) {
         const done=()=>{button.dataset.copied='yes';button.textContent='[ COPIED ]';
             setTimeout(()=>{if(button.isConnected){delete button.dataset.copied;button.textContent=button.dataset.label;}},1400);};
         try{navigator.clipboard.writeText(value).then(done,()=>window.prompt('Copy the file list:',value));}
         catch{window.prompt('Copy the file list:',value);}
     }
-    // Under the release name, and only for a torrent that holds more than one file.
+    // Under the release name: what this torrent holds, and one click to copy it.
+    //
+    // A pack lists its files; a single file is named with its size, which is the thing you
+    // actually want off a one-file page. Where the page has not rendered its file list at
+    // all there is nothing to say, and nothing is said — a marker reading "1 file" on a page
+    // that never told us would be an invention.
     function mark(node,title) {
         if(!core||!node)return;
         const rows=list();
-        if(!core.isPack(rows)){clear();return;}
+        if(!rows.length){clear();return;}
+        // A page that has redrawn its file list has redrawn everything around it, so the
+        // exact count is looked for again rather than carried over from the last shape.
+        const shape=rows.length+'\u0001'+rows.map(row=>row.path).join('\u0001');
+        if(shape!==seen){seen=shape;forget();}
         const size=stated();
-        const value=clipboardText(title,rows,size);
-        const label='[ MULTIPLE FILES ]';
-        const signature=rows.length+''+value;
+        const pack=core.isPack(rows);
+        // For one file the torrent's total size IS that file's size, so the page's own total
+        // fills in where the row itself carried none.
+        const only=pack?null:{...rows[0],bytes:rows[0].bytes||size.bytes,size:rows[0].size||size.size};
+        const value=pack?clipboardText(title,rows,size):core.listing([only],{name:''});
+        // The count itself, not the rounded figure: bytes are the thing you want off a
+        // one-file page. Where the page carries no exact count, its own rounded wording is
+        // shown instead — never a number that was not on the page.
+        const exact=pack?core.total(rows,size.bytes):(only.bytes||0);
+        const shown=pack?'':(exact?core.digits(exact)+' B':(only.size||size.size||''));
+        const label=pack?'[ MULTIPLE FILES ]':'[ SINGLE FILE'+(shown?' · '+shown:'')+' ]';
+        const signature=rows.length+''+label+''+value;
         const parent=node.parentElement||node;
         if(holder&&holder.isConnected) {
             if(holder.dataset.signature===signature)return;
         } else {
             holder=el('div',undefined,CLASS);
             const button=el('button',label,'dk-detail-files-copy');
-            button.type='button';button.dataset.label=label;
+            button.type='button';
             button.onclick=()=>copy(button,button.dataset.value||'');
             holder.append(button);
         }
         holder.dataset.signature=signature;
         const button=holder.querySelector('button');
         button.dataset.value=value;
-        button.title=rows.length+' files in this torrent'+(size.size?' · '+size.size:'')+
-            ' — click to copy the list with the sizes the page states';
-        button.setAttribute('aria-label','Copy the list of '+rows.length+' files with their sizes');
+        // A page that redraws can turn a pack into one file and back, so the wording follows
+        // what the page says now rather than what it said when the marker was first put there.
+        // A button in the middle of showing "[ COPIED ]" is left to finish saying it.
+        button.dataset.label=label;
+        if(!button.dataset.copied&&button.textContent!==label)button.textContent=label;
+        button.title=(pack?rows.length+' files in this torrent':'One file in this torrent')+
+            (size.size?' · '+size.size:'')+(exact?' · '+core.digits(exact)+' B':'')+
+            ' — click to copy '+(pack?'the list with the sizes the page states':'the file name and its size');
+        button.setAttribute('aria-label',pack?'Copy the list of '+rows.length+' files with their sizes'
+            :'Copy this file’s name and size');
         if(!holder.isConnected)parent.insertBefore(holder,node.nextSibling);
     }
-    const clear=()=>{holder?.remove();holder=null;};
+    const clear=()=>{holder?.remove();holder=null;seen='';forget();};
     return {list,stated,clipboardText,mark,clear,CLASS};
+})();
+
+// Release-notes templates: the text you paste over and over, kept once and filled in from
+// the page you are standing on.
+//
+// This half is data and text only — no DOM, no storage, no requests. It holds what a
+// template is, what a token means, and what filling one in is allowed to do. The other half
+// (templates.js) is the editor and the button beside the comment box.
+//
+// Nothing here is executed. A template is text; a token is a name in braces and nothing
+// more, and anything that is not a token this knows is left exactly as it was typed.
+const DKOKTO_TEMPLATES_CORE = (() => {
+    const KEY='dkokto_templates_v1';
+    const MAX_TEXT=8000;      // one template
+    const MAX_FILES=300;      // lines {files} will write before it says it stopped
+    const SLOTS=['description','comment'];
+
+    // The two shown in the request, kept as they were written — the X's included. They are
+    // a starting point to type over, not a claim about what any tracker wants said.
+    const SHIPPED={
+        description:['[center]','[quote][spoiler=Release Notes][code]','XXXXXXXXXXXXXXXXXXXX',
+            '[/code][/spoiler][/quote]','[/center]'].join('\n'),
+        comment:['[list]','[*]Release info added','[/list]'].join('\n')};
+
+    // Every token this fills, and what each one is. A token whose value is not on the page
+    // is emptied and named in `missing` rather than left in the text as a brace word — a
+    // comment that reads "{bytes}" is worse than one that does not mention the count.
+    const TOKENS=[
+        {name:'title',   about:'the release name as the page prints it'},
+        {name:'size',    about:'the size the page displays, its own wording (2.28 GiB)'},
+        {name:'bytes',   about:'the exact byte count, where the page carries one'},
+        {name:'files',   about:'the file list: the folder and its total, then every file with its size'},
+        {name:'count',   about:'how many files the torrent holds'},
+        {name:'url',     about:'the address of this torrent page'},
+        {name:'id',      about:'the torrent number'},
+        {name:'date',    about:'today, as YYYY-MM-DD'}];
+    const KNOWN=new Set(TOKENS.map(token=>token.name));
+
+    const text=value=>String(value==null?'':value).replace(/\r\n?/g,'\n').slice(0,MAX_TEXT);
+    const slot=(saved,name)=>({
+        on:saved&&typeof saved==='object'?saved.on!==false:true,
+        text:saved&&typeof saved==='object'&&typeof saved.text==='string'?text(saved.text):SHIPPED[name]});
+
+    // What was stored, made safe to use. Junk, an older shape or nothing at all all end up
+    // as the shipped pair rather than as an error.
+    function read(raw) {
+        let saved=null;
+        if(raw&&typeof raw==='object')saved=raw;
+        else if(typeof raw==='string'&&raw.trim())try{saved=JSON.parse(raw);}catch{saved=null;}
+        const out={version:1};
+        for(const name of SLOTS)out[name]=slot(saved?saved[name]:null,name);
+        return out;
+    }
+    const write=state=>JSON.stringify(read(state));
+    // Nothing has been changed from what ships, so nothing needs storing.
+    const isShipped=state=>{const now=read(state);
+        return SLOTS.every(name=>now[name].on===true&&now[name].text===SHIPPED[name]);};
+
+    // The listing {files} writes. The same shape the copy button already puts on the
+    // clipboard, cut off with a line saying so rather than running to thousands.
+    function listing(files,name,total) {
+        const rows=(files||[]).filter(row=>row&&row.path);
+        if(!rows.length)return '';
+        const cut=rows.slice(0,MAX_FILES);
+        const folder=(()=>{const first=cut[0].path.split('/');
+            if(first.length<2)return name||'';
+            const top=first[0];
+            return cut.every(row=>row.path.startsWith(top+'/'))?top:(name||'');})();
+        const line=row=>{const path=row.path.includes('/')?row.path.slice(row.path.lastIndexOf('/')+1):row.path;
+            return path+(row.bytes>0?' '+Math.round(row.bytes)+' B':row.size?' '+row.size:'');};
+        const head=folder?[folder+(total>0?' '+Math.round(total)+' B':'')]:[];
+        const tail=rows.length>cut.length?['… and '+(rows.length-cut.length)+' more files, not listed here']:[];
+        return [...head,...cut.map(line),...tail].join('\n');
+    }
+
+    // Fill a template in from what the page carried. Known tokens only; anything else in
+    // braces is text like any other text and is left where it is.
+    function fill(template,facts={}) {
+        const source=text(template);
+        const values={
+            title:facts.title||'',
+            size:facts.size||'',
+            bytes:facts.bytes>0?String(Math.round(facts.bytes)):'',
+            count:(facts.files||[]).length?String((facts.files||[]).length):'',
+            files:listing(facts.files,facts.title,facts.bytes),
+            url:facts.url||'',
+            id:facts.id?String(facts.id):'',
+            date:facts.date||''};
+        const missing=[];
+        const out=source.replace(/\{([a-z]{2,12})\}/g,(whole,name)=>{
+            if(!KNOWN.has(name))return whole;
+            const value=values[name];
+            if(value)return value;
+            if(!missing.includes(name))missing.push(name);
+            return '';
+        });
+        return {text:out,missing};
+    }
+    // Which known tokens a template actually uses, so the editor can say what it will fill.
+    const used=template=>[...new Set([...text(template).matchAll(/\{([a-z]{2,12})\}/g)]
+        .map(match=>match[1]).filter(name=>KNOWN.has(name)))];
+
+    const api={KEY,SLOTS,TOKENS,SHIPPED,MAX_TEXT,MAX_FILES,read,write,isShipped,fill,used,listing};
+    if(typeof module!=='undefined'&&module.exports)module.exports=api;
+    return api;
+})();
+
+// The release-notes templates, where you use them: an editor for the two of them, and a
+// button beside the comment box that fills it in.
+//
+// The button writes into the comment box and stops there. It never posts, never submits and
+// never touches a form's own buttons — what goes up is what you press post on yourself. An
+// existing draft is not thrown away: the template is added below what you have already
+// typed, at the cursor if you left one there.
+const DKOKTO_TEMPLATES = (() => {
+    const core=typeof DKOKTO_TEMPLATES_CORE!=='undefined'?DKOKTO_TEMPLATES_CORE:null;
+    const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
+    const button=(label,onClick,cls)=>{const b=el('button',label,cls);b.type='button';b.onclick=onClick;return b;};
+    const store=()=>{try{return DKOKTO_STORE.open();}catch{return null;}};
+    const CLASS='dk-template-insert';
+
+    // --- What is saved -------------------------------------------------------------------
+    let state=null;
+    function all() {
+        if(state)return state;
+        let raw=null;
+        try{raw=store()?.getItem(core.KEY)??null;}catch{}
+        state=core.read(raw);
+        return state;
+    }
+    function save(next) {
+        state=core.read(next);
+        try{
+            const at=store();
+            // Untouched is untouched: nothing is written for a setup that is what ships.
+            if(core.isShipped(state))at?.removeItem(core.KEY);
+            else at?.setItem(core.KEY,core.write(state));
+        }catch{}
+        return state;
+    }
+    const reset=()=>save(null);
+
+    // --- What the page can answer --------------------------------------------------------
+    // Read from the page in front of you and nowhere else. Where the page does not carry
+    // something, it is not carried — see core.fill, which names what it left out.
+    function facts() {
+        const out={title:'',size:'',bytes:0,files:[],url:'',id:'',date:''};
+        try{out.url=location.origin+location.pathname;}catch{}
+        try{out.id=(location.pathname.match(/\/torrents\/(\d+)/)||[])[1]||'';}catch{}
+        try{out.date=new Date().toISOString().slice(0,10);}catch{}
+        try{out.title=DKOKTO_RELEASE_TITLE.find(document)?.title||'';}catch{}
+        try{
+            out.files=DKOKTO_FILES_UI.list()||[];
+            const stated=DKOKTO_FILES_UI.stated()||{};
+            out.size=stated.size||'';out.bytes=stated.bytes||0;
+        }catch{}
+        return out;
+    }
+
+    // --- The editor ----------------------------------------------------------------------
+    let dialog=null,onChange=()=>{};
+    const LABELS={description:'Description',comment:'Comment'};
+    const WHERE={
+        comment:'Inserted by the button beside the comment box on a torrent page.',
+        description:'No insert point: the description is written where you upload, and this '+
+            'script stays out of the upload form. Copy it from here and paste it yourself.'};
+    function editor(after) {
+        onChange=typeof after==='function'?after:()=>{};
+        // A site that redraws its own page can carry the dialog out of the document with it.
+        if(!dialog?.isConnected) {
+            dialog=el('dialog',undefined,'dk-listing-dialog dk-hub');
+            dialog.setAttribute('aria-labelledby','dk-template-heading');
+            document.body.append(dialog);
+        }
+        draw();
+        if(!dialog.open)dialog.showModal();
+    }
+    function draw() {
+        if(!dialog?.isConnected)return;
+        dialog.replaceChildren();
+        const now=all();
+        const head=el('header'),heading=el('h2','Release notes templates');heading.id='dk-template-heading';
+        head.append(heading,button('Close',()=>dialog.close()));
+        dialog.append(head);
+        const body=el('section',undefined,'dk-hub-content');
+        const status=el('p','','dk-template-status');status.setAttribute('role','status');
+        const boxes={};
+        for(const name of core.SLOTS) {
+            const block=el('section',undefined,'dk-template-slot');
+            const title=el('div',undefined,'dk-template-slot-head');
+            const label=el('label'),tick=el('input');
+            tick.type='checkbox';tick.checked=now[name].on;
+            tick.setAttribute('aria-label',LABELS[name]+' template enabled');
+            label.append(tick,document.createTextNode(' '+LABELS[name]));
+            title.append(label);
+            const area=el('textarea');area.rows=8;area.className='dk-reply-text';
+            area.value=now[name].text;area.setAttribute('aria-label',LABELS[name]+' template');
+            area.maxLength=core.MAX_TEXT;
+            const uses=el('small',undefined,'dk-template-uses');
+            const say=()=>{const list=core.used(area.value);
+                uses.textContent=WHERE[name]+(list.length?' Fills in: '+list.map(n=>'{'+n+'}').join(' ')+'.':'');};
+            area.oninput=say;say();
+            block.append(title,el('small','Template','dk-template-caption'),area,uses);
+            block.append(button('Copy this one',async()=>{
+                const filled=core.fill(area.value,facts());
+                try{await navigator.clipboard.writeText(filled.text);status.textContent='Copied.'+missingSays(filled);}
+                catch{window.prompt('Copy the template:',filled.text);}
+            },'dk-template-copy'));
+            boxes[name]={tick,area};
+            body.append(block);
+        }
+        const help=el('details');help.append(el('summary','What a token fills in'));
+        const list=el('ul');
+        for(const token of core.TOKENS)list.append(el('li','{'+token.name+'} — '+token.about));
+        help.append(list,el('p','Anything else in braces is left exactly as you typed it. A token '+
+            'the page cannot answer is left blank and named when you insert, rather than posted as '+
+            '{bytes}. Nothing is read but the page you are on.'));
+        body.append(help);
+        const actions=el('div',undefined,'dk-template-actions');
+        actions.append(button('Save',()=>{
+            const next={};
+            for(const name of core.SLOTS)next[name]={on:boxes[name].tick.checked,text:boxes[name].area.value};
+            save(next);status.textContent='Saved.';onChange();attach();
+        }),button('Put both back to what ships',()=>{
+            if(!window.confirm('Replace both templates with the ones this script ships with?'))return;
+            reset();draw();onChange();attach();
+        }));
+        body.append(actions,status);
+        body.append(el('small','Kept on this machine, in this script’s own storage, so it is the same '+
+            'template on every tracker it runs on. Nothing is sent anywhere, and inserting one never '+
+            'posts anything — you press post yourself.'));
+        dialog.append(body);
+    }
+    const missingSays=filled=>filled.missing.length
+        ? ' The page carries no '+filled.missing.map(name=>'{'+name+'}').join(', ')+', so that was left blank.'
+        : '';
+
+    // --- The button beside the comment box -----------------------------------------------
+    // Found by what the page says it is, not by a route this guessed at: a visible, editable
+    // textarea in a POST form on this site, which the page itself calls a comment. Where
+    // nothing on the page says "comment", no button appears and nothing is claimed.
+    function box() {
+        for(const area of document.querySelectorAll('form textarea')) {
+            if(area.disabled||area.readOnly||area.closest('.dk-listing-dialog,.dk-hub,#dkokto-hub,#dkokto-tools,#dp-inspector-hub'))continue;
+            if(!area.getClientRects().length)continue;
+            const form=area.form;
+            if(!form||(form.method||'').toLowerCase()!=='post')continue;
+            try{
+                const action=new URL(form.getAttribute('action')||location.href,location.href);
+                if(action.origin!==location.origin)continue;
+                const says=[area.name,area.id,area.placeholder,area.getAttribute('aria-label')||'',
+                    action.pathname].join(' ').toLowerCase();
+                if(!/comment/.test(says))continue;
+            }catch{continue;}
+            return area;
+        }
+        return null;
+    }
+    // The row of tabs the page puts above the box (Write · Preview), where there is one.
+    // Each tab is read as its own element rather than as one run of text: markup with no
+    // whitespace between the tags reads as "writepreview", which no word boundary can find.
+    function tabs(area) {
+        const said=row=>[...row.querySelectorAll('a,button,li,span')]
+            .map(child=>(child.textContent||'').replace(/\s+/g,' ').trim().toLowerCase());
+        let at=area;
+        for(let up=0;up<4&&at;up++) {
+            at=at.parentElement;if(!at)break;
+            for(const row of at.querySelectorAll('ul,nav,div')) {
+                if(row.contains(area)||row.querySelector('textarea'))continue;
+                if((row.textContent||'').trim().length>80)continue;
+                const words=said(row);
+                if(words.includes('write')&&words.includes('preview'))return row;
+            }
+        }
+        return null;
+    }
+    let holder=null;
+    function attach() {
+        if(!core)return;
+        const now=all();
+        const area=now.comment.on?box():null;
+        if(!area){holder?.remove();holder=null;return;}
+        const row=tabs(area);
+        const where=row||area.parentElement||area;
+        if(holder&&holder.isConnected&&holder.parentElement===where)return;
+        holder?.remove();
+        holder=el('span',undefined,CLASS);
+        const insert=button('⤵',()=>put(area,insert),'dk-template-insert-button');
+        insert.title='Insert comment template';
+        insert.setAttribute('aria-label','Insert the comment template into the comment box');
+        const edit=button('Templates…',()=>editor(),'dk-template-edit');
+        edit.title='Edit the release notes templates';
+        edit.setAttribute('aria-haspopup','dialog');
+        holder.append(insert,edit);
+        if(row)row.append(holder);else where.insertBefore(holder,area);
+    }
+    // Added to what is there, never over it. A draft you have already typed keeps its place;
+    // the template goes in at the cursor, or at the end where there is no cursor.
+    function put(area,pressed) {
+        const filled=core.fill(all().comment.text,facts());
+        if(!filled.text){say(pressed,'Nothing to insert');return;}
+        const before=area.value;
+        const start=typeof area.selectionStart==='number'?area.selectionStart:before.length;
+        const end=typeof area.selectionEnd==='number'?area.selectionEnd:before.length;
+        const gap=before.slice(0,start).trim()&&!/\n$/.test(before.slice(0,start))?'\n':'';
+        const text=gap+filled.text;
+        area.focus();
+        // Let the page's own editor see this as typing, so a preview tab or a character
+        // count keeps up with it. Where that is not available, it is written plainly.
+        let done=false;
+        try{done=document.execCommand&&document.execCommand('insertText',false,text);}catch{done=false;}
+        if(!done) {
+            area.value=before.slice(0,start)+text+before.slice(end);
+            const at=start+text.length;
+            try{area.setSelectionRange(at,at);}catch{}
+            area.dispatchEvent(new Event('input',{bubbles:true}));
+            area.dispatchEvent(new Event('change',{bubbles:true}));
+        }
+        say(pressed,filled.missing.length?'Inserted, without '+filled.missing.map(n=>'{'+n+'}').join(', '):'Inserted');
+    }
+    function say(pressed,text) {
+        if(!pressed)return;
+        const was=pressed.textContent;
+        pressed.textContent='✓';pressed.title=text;
+        setTimeout(()=>{if(pressed.isConnected){pressed.textContent=was;pressed.title='Insert comment template';}},1400);
+    }
+    const clear=()=>{holder?.remove();holder=null;};
+    return {editor,attach,clear,all,save,reset,facts,CLASS};
 })();
 
 // The "vs" button on a torrent page: capture this release, capture another, compare.
@@ -4371,15 +4801,14 @@ const DKOKTO_DETAIL = (() => {
     // read with a handful of selectors, so an unchanged page costs almost nothing.
     let pageStamp='',pageDrew=false;
     function pageInputs(name,profile) {
-        return JSON.stringify([name,profile,DKOKTO_RULES.current(),DKOKTO_RULES.baseOf(DKOKTO_RULES.current()),
-            filesOf(),DKOKTO_INSPECTOR.readPage(document),
-            !!panelWith('MediaInfo'),!!panelWith('BDInfo'),
-            languagesFrom('.mediainfo__audio img'),languagesFrom('.mediainfo__subtitles img'),
+        return [name,profile,
+            document.querySelectorAll('.dialog__form[data-tab="list"] table tbody tr').length,
+            document.querySelectorAll('.torrent-mediainfo-dump code,.torrent-mediainfo-dump pre,code[x-ref="mediainfo"]').length,
             fieldOf('h1.meta__title','.meta__title','.torrent__meta-title'),
             fieldOf('li.torrent__type a','.torrent__type a','.torrent__type'),
             fieldOf('li.torrent__resolution a','.torrent__resolution a','.torrent__resolution'),
             fieldOf('li.torrent__category a','.torrent__category a','.torrent__category'),
-            fieldOf('.work__language-link','.meta__language')]);
+            fieldOf('.work__language-link','.meta__language')].join('\u0001');
     }
     function pageRow(node,name,profile) {
         // These findings quote a tracker's rules where it has them, so they wait for one.
@@ -4390,7 +4819,7 @@ const DKOKTO_DETAIL = (() => {
         const facts=pageFacts(name,profile);
         const issues=DKOKTO_PAGE.check(facts);
         const existing=document.querySelector('.dk-detail-page');
-        const signature=JSON.stringify(issues);
+        const signature=issues.map(issue=>issue.code).join('|')+'#'+facts.files.length;
         if(existing&&existing.dataset.signature===signature)return;
         existing?.remove();
         if(!issues.length){pageDrew=false;return;}
@@ -4410,6 +4839,7 @@ const DKOKTO_DETAIL = (() => {
     }
     const clear=()=>{try{DKOKTO_CAPTURE_UI.close();}catch{}
         try{DKOKTO_FILES_UI.clear();}catch{}
+        try{DKOKTO_TEMPLATES.clear();}catch{}
         document.querySelectorAll('.dk-detail-links:not(.dk-request-links),.dk-detail-page,.dk-detail-compare,.dk-detail-files').forEach(n=>n.remove());};
     function draw() {
         if(!onPage()){dialog?.close();clear();return;}
@@ -4418,6 +4848,8 @@ const DKOKTO_DETAIL = (() => {
         badge(hit.node,hit.title);
         // A torrent of more than one file says so under its name, and hands you the list.
         try{DKOKTO_FILES_UI.mark(hit.node,hit.title);}catch{}
+        // And the comment box gets the button that fills your template in.
+        try{DKOKTO_TEMPLATES.attach();}catch{}
         linksRow(hit.node,hit.title);
         try{pageRow(hit.node,hit.title,DKOKTO_LISTING_CORE.category(document.querySelector('li.torrent__category a')?.textContent||''));}catch{}
     }
@@ -4429,13 +4861,13 @@ const DKOKTO_DETAIL = (() => {
     // churn is not a reason to look at the page again (a giveaway or chat script can
     // otherwise keep this awake).
     const NOISE='.chatbox,#chatbox,[class*="chatbox"],.ticker,[class*="ticker"],[class*="chat-"],#chat';
-    const OURS='.dk-group-menu,.dk-detail-page,.dk-detail-compare,.dk-detail-links,.dk-detail-badge,.dk-listing-badge,.dk-listing-bar,.dk-listing-dialog,.dk-request-bar,.dk-request-links,.dk-detail-files,.dk-request-open,#dkokto-request-dialog,#dkokto-hub,#dkokto-tools,#dkokto-game-dialog,#dkokto-nav-dialog,#dp-inspector-hub,#dp-inspector-tools';
+    const OURS='.dk-template-insert,.dk-group-menu,.dk-detail-page,.dk-detail-compare,.dk-detail-links,.dk-detail-badge,.dk-listing-badge,.dk-listing-bar,.dk-listing-dialog,.dk-request-bar,.dk-request-links,.dk-detail-files,.dk-request-open,#dkokto-request-dialog,#dkokto-hub,#dkokto-tools,#dkokto-game-dialog,#dkokto-nav-dialog,#dp-inspector-hub,#dp-inspector-tools';
     function mount() {
         draw();
         if(mounted)return;mounted=true;
         new MutationObserver(records=>{
             if(records.some(r=>{const n=r.target.nodeType===1?r.target:r.target.parentElement;return n&&!n.closest(OURS)&&!n.closest(NOISE);}))schedule();
-        }).observe(document.documentElement,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['alt','title']});
+        }).observe(document.body,{subtree:true,childList:true,characterData:true});
         window.addEventListener('popstate',schedule);document.addEventListener('livewire:navigated',schedule);
     }
     return {mount,draw};
@@ -4469,7 +4901,6 @@ const DKOKTO_TRACKERS = (() => {
         unit('zenith','Zenith','znth.cx'),
         unit('aither','Aither','aither.cc'),
         unit('blu','Blutopia','blutopia.cc'),
-        unit('fnp','FearNoPeer','fearnopeer.com'),
         unit('lst','LST','lst.gg','general'),
         unit('ulcx','Upload.cx','upload.cx'),
         unit('oe','OnlyEncodes+','onlyencodes.cc'),
@@ -4520,7 +4951,6 @@ const DKOKTO_TRACKERS = (() => {
         site('btn','BroadcasTheNet','tv','https://broadcasthe.net/torrents.php?searchstr={q}'),
         site('hdb','HDBits','video','https://hdbits.org/browse.php?search={q}'),
         site('bhd','Beyond-HD','video','https://beyond-hd.me/torrents?search={q}'),
-        site('mtv','MoreThanTV','tv','https://www.morethantv.me/torrents.php?searchstr={q}'),
         site('ant','Anthelion','movie','https://anthelion.me/torrents.php?searchstr={q}'),
         site('nbl','Nebulance','tv','https://nebulance.io/torrents.php?searchstr={q}'),
         site('ar','AlphaRatio','general','https://alpharatio.cc/torrents.php?searchstr={q}'),
@@ -4770,6 +5200,15 @@ const DKOKTO_REQUESTS_CORE = ((links,trackers) => {
 //     WhiskeyJack at OnlyEncodes+, and DOOBS at DarkPeers. The other names asked for in the
 //     same message (Kitsune at Aither; BiNGUS, Breeze, DarQ, "DarQ HONE", DBMS, edwood,
 //     "Goki TAoE", noxxus, PrimeX, Ralphy, sCOOTER, Vialle) were already on the lines below.
+//   · the user, as a DarkPeers moderator, 10 Sep 2026 — ZoroSenpai at HDBits, TorrentBD and
+//     Blutopia ("HDB, TBD, BLU"); and SiGLA and SMURF taken off HUNO, where the community
+//     lists above had carried them.
+//   · 10 Sep 2026, same source: MoreThanTV and FearNoPeer are closed, and both lines are
+//     off this list entirely, as asked. The community directories above still carry them.
+//     What that costs, said rather than hidden: SMURF, WDYM, TEPES, Dracula, GBL, MOLY,
+//     SOIL, VLAD, EiNSTEIN_SiR23, onlyfaffs and HiFiWiFi are now listed nowhere (HUNO was
+//     SMURF's other line and came off in the same version). E.N.D keeps HD-Torrents and
+//     SM737 keeps AlphaRatio and ReelFliX.
 // They disagree in places and go out of date, which is why every entry is offered as
 // "listed as internal at" and the whole list can be replaced in Internal groups….
 //
@@ -4801,7 +5240,7 @@ Blu-bits|3DNORD aZA BluHD JohnGalt LoNeWolf PriMeHD RealHD SWEMUX SYNERGY
 Blu-Evolution|BluEvo Jack Jem Ruxi
 Bluebird-HD|BLUEBIRD CMEGRoup
 BlueTigers|ASPHiXiAS TeamSuW
-Blutopia|BLURANiUM BLUTONiUM CultFilms JKP LEGi0N PmP ReCult WiLDCAT BaggerInc* YInMn* CONSORTiUM DAMN TeMPo Tux ISA
+Blutopia|BLURANiUM BLUTONiUM CultFilms JKP LEGi0N PmP ReCult WiLDCAT BaggerInc* YInMn* CONSORTiUM DAMN TeMPo Tux ISA ZoroSenpai
 Broadcity|BdC
 BTN|BTW HiSD iT00NZ KiNGS LAZY NTb TOMMY TVSmash CBM* dbR* ESPNtb* HiSQ* HPN* HRiP* iPRiP* JJ* kpbong* LoTV* PreBS* TOPKEK* TTVa* CMRG herkz TrollHD NTG
 BwTracker|DUSIcTv DUS IcTv
@@ -4819,7 +5258,6 @@ DownRev|DownRev lonelywolf
 Elite-pirates|AQOS
 EliteHD|HDClub
 ExtraTorrent|ETHD ETRG ettv
-FearNoPeer|EiNSTEIN_SiR23 onlyfaffs HiFiWiFi SM737
 Feedurneed|ACAB FooKaS
 Filelist|playBD playHD playMUSIC playSD playTV playWEB playON playMB
 FT3|FTX
@@ -4840,7 +5278,7 @@ HD4Free|GF44 LEGi0N MarGe
 HDAccess|HDAccess
 HDAhoy|YoHo
 HDArea|EPiC HDApad HDArea HDATV
-HDBits|AE AJ8 AJP Arucard AtZLIT AW Azul BBW BG BoK Cache Chotab CJ CRiSC Cristi Crow CtrlHD CyCR0 D4 DChighdef DeblocKING DiGG DiR DiRTY disc DBO DON DoNOLi EA EbP Eby ESiR ETH EucHD FANDANGO fLAMEhd FSK Ft4U fty Funner Geek GMoRK GoLDSToNE Green greenHD H2 h264iRMU HALYNA HDB HDC HDBiRD HDL HDxT hymen HZ iCO iLL IMDTHS iNFLiKTED iNK iOZO J4F JAVLiU JCH jTV k2 KolHD Krispy KTN KweeK Lesnick LiNG LolHD lulz M794 madoff MAGiC martic McFly MCR MdM MDR MeDDlER MMI Mondo Moshy Mojo NaRB NiP NiX nmd NorTV NTb NWO OAS ONYX pB PerfectionHD PHiN PiNG PiMP PiPicK Positive Prestige Prime PTer PXE QDP quaz QXE RDK123 REPTiLE RightSiZE RuDE RZF S26 SbR SG sJR SK Skazhutin SLO SMoKeR somedouches SbY SPEED SrS SSG SuBHD TayTO tBit ThD THORA tK TM toho Tree tRuAVC tRuEHD TSE TsH UioP UxO VanRay VietHD ViNYL WESTSiDE WiHD XSHD yadong1985 YanY Z (C)Z ExY H@M IDE KASHMiR MiBr Redux TOMMY TrollHD V Zim'D ZQ
+HDBits|AE AJ8 AJP Arucard AtZLIT AW Azul BBW BG BoK Cache Chotab CJ CRiSC Cristi Crow CtrlHD CyCR0 D4 DChighdef DeblocKING DiGG DiR DiRTY disc DBO DON DoNOLi EA EbP Eby ESiR ETH EucHD FANDANGO fLAMEhd FSK Ft4U fty Funner Geek GMoRK GoLDSToNE Green greenHD H2 h264iRMU HALYNA HDB HDC HDBiRD HDL HDxT hymen HZ iCO iLL IMDTHS iNFLiKTED iNK iOZO J4F JAVLiU JCH jTV k2 KolHD Krispy KTN KweeK Lesnick LiNG LolHD lulz M794 madoff MAGiC martic McFly MCR MdM MDR MeDDlER MMI Mondo Moshy Mojo NaRB NiP NiX nmd NorTV NTb NWO OAS ONYX pB PerfectionHD PHiN PiNG PiMP PiPicK Positive Prestige Prime PTer PXE QDP quaz QXE RDK123 REPTiLE RightSiZE RuDE RZF S26 SbR SG sJR SK Skazhutin SLO SMoKeR somedouches SbY SPEED SrS SSG SuBHD TayTO tBit ThD THORA tK TM toho Tree tRuAVC tRuEHD TSE TsH UioP UxO VanRay VietHD ViNYL WESTSiDE WiHD XSHD yadong1985 YanY Z (C)Z ExY H@M IDE KASHMiR MiBr Redux TOMMY TrollHD V Zim'D ZQ ZoroSenpai
 HDCenter|HDC jTV NERDS pmHD Tvr
 HDChina|beAst CMCT CrsS DIY HDC HDChina HDCTV HDWinG HDWTV iHD JOMA KiSHD LU9998 NGB OpenMV TAiCHi KHQ
 HDCity|0DAY HDCITY NoPA NoVA TLF
@@ -4864,7 +5302,7 @@ Hebits|HebHD HebTV iSrael ZionHD ZionSD
 Hon3yHD|Hon3y
 HQMusic|HQM MRHQ OwL
 HQSource|ELiTE
-HUNO|HONE LSt PRPL QxR SEV SiGLA SMURF TAoE Vyndros
+HUNO|HONE LSt PRPL QxR SEV TAoE Vyndros
 HypeRay|Geek HyPad Hyper Neon Original PureTV Tron TronTV iMusic
 IceTorrents|SubZero
 InfinityHD|flower fraktl NhanNguyen
@@ -4881,7 +5319,6 @@ LeechTurk|LTRG
 LegacyHD|LEGi0N
 LST|L0ST KIMJI coffee SQS Yuki hallowed
 M-Team|BMDru HDStar HDTime KiSHD MPAD M-Team MTeamTV OneHD Pack StBOX CNHK* R2HD* TnP* MTeam3D MTeamPAD
-MoreThanTV|E.N.D TEPES Dracula* GBL* MOLY* SOIL* VLAD* SMURF WDYM
 Movie-Torrentz|m2g ViP3R
 MySpleen|449 Atomsk MySpleen
 Norbits|Norbits
@@ -4914,7 +5351,7 @@ TeamTPTB|TPTB
 TehConnection|BaH HaB MKu schwoom TCO TSDC
 Telly|mkvCinemas Telly
 TNTracker|DEFUSED LoC POE
-TorrentBD|MRN KamiKaze ALiEN Grimmjaw NaNoMyTe GunGravE NG AP XZVN Galahal IHK DeathSs12 KISS ParVej PROPHET pyromancer TarTacular NyX JNH RUN MeGaTroN ANIMOUS ElPro ExCaLiBuR WiNT3R
+TorrentBD|MRN KamiKaze ALiEN Grimmjaw NaNoMyTe GunGravE NG AP XZVN Galahal IHK DeathSs12 KISS ParVej PROPHET pyromancer TarTacular NyX JNH RUN MeGaTroN ANIMOUS ElPro ExCaLiBuR WiNT3R ZoroSenpai
 TorrentLand|Castellano "Eml Team" EmlHDTeam
 TorrentLeech|OFT 4K4U EPSiLON FLIGHTS RU4HD UnKn0wn TAoE
 TorViet|EbP EPiK HDvB L2Bits LolHD KiD VietHD
@@ -5343,6 +5780,7 @@ const DKOKTO_GROUP_TAG = ((internals,requests,trackers) => {
     // not something this script can know, and inventing one would be worse than blank.
     let dialog=null;
     function editor(after) {
+        // Reused only while it is still in the document: a site redraw can take it away.
         if(!dialog?.isConnected) {
             dialog=el('dialog',undefined,'dk-listing-dialog dk-hub');
             dialog.setAttribute('aria-labelledby','dk-internals-heading');
@@ -5539,7 +5977,7 @@ const DKOKTO_REQUESTS = (() => {
         return button;
     }
     function ensureDialog(labelId) {
-        if(!dialog?.isConnected){dialog=el('dialog',undefined,'dk-listing-dialog dk-hub');dialog.id='dkokto-request-dialog';document.body.append(dialog);
+        if(!dialog){dialog=el('dialog',undefined,'dk-listing-dialog dk-hub');dialog.id='dkokto-request-dialog';document.body.append(dialog);
             dialog.addEventListener('close',()=>returnFocus?.isConnected&&returnFocus.focus());}
         dialog.setAttribute('aria-labelledby',labelId);dialog.replaceChildren();
         openedOn=location.pathname;
@@ -5843,7 +6281,7 @@ const DKOKTO_REQUESTS = (() => {
         new MutationObserver(records=>{
             if(records.some(record=>{const node=record.target.nodeType===1?record.target:record.target.parentElement;
                 return node&&!node.closest(own)&&!node.closest(noise);}))schedule();
-        }).observe(document.documentElement,{subtree:true,childList:true,characterData:true});
+        }).observe(document.body,{subtree:true,childList:true,characterData:true});
         for(const event of ['popstate','livewire:navigated'])
             (event==='popstate'?window:document).addEventListener(event,()=>{closeOnNavigation();schedule();});
         window.addEventListener('keydown',event=>{
@@ -5893,8 +6331,6 @@ const DPTI_HOST = (() => {
             const head=el('header'),title=el('h2','Torrent Inspector');title.id='dp-inspector-title';head.append(title,button('Close',()=>dialog.close()));
             content=el('section',undefined,'dk-hub-content');const status=el('p','','dk-hub-message');status.setAttribute('role','status');
             dialog.append(head,content,status);document.body.append(dialog);}
-        // Livewire can replace the body while this closure still holds the old dialog.
-        if(!dialog.isConnected){dialog.close();document.body.append(dialog);}
         settings=load();content.replaceChildren();message('');
         DKOKTO_INSPECTOR_UI.render({content,settings,save,message,guard,el,field,button,link,download});
         if(!dialog.open)dialog.showModal();
@@ -5905,14 +6341,12 @@ const DPTI_HOST = (() => {
     const fullEditionPresent=()=>!!document.querySelector('#dkokto-tools,.dk-toolkit-launch,.dk-listing-bar,.dk-listing-badge');
 
     function mount(){
-        if(!mounted&&fullEditionPresent()){console.info('Torrent Inspector: the full DKOKTO edition is active on this page, so the standalone copy stayed inactive.');return;}
-        if(!document.getElementById('dp-inspector-tools')) {
-            const tools=el('div',undefined,undefined);tools.id='dp-inspector-tools';
-            const launch=button('Inspect torrent',()=>open());launch.className='dk-inspector-launch';launch.title='MediaInfo review and naming check · Alt+Shift+I';
-            tools.append(launch);document.body.append(tools);
-        }
         if(mounted)return;
+        if(fullEditionPresent()){console.info('Torrent Inspector: the full DKOKTO edition is active on this page, so the standalone copy stayed inactive.');return;}
         mounted=true;settings=load();
+        const tools=el('div',undefined,undefined);tools.id='dp-inspector-tools';
+        const launch=button('Inspect torrent',()=>open());launch.className='dk-inspector-launch';launch.title='MediaInfo review and DP naming check · Alt+Shift+I';
+        tools.append(launch);document.body.append(tools);
         window.addEventListener('keydown',e=>{if(e.altKey&&e.shiftKey&&e.code==='KeyI'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();open();}});
         DKOKTO_LISTING.mount();
         DKOKTO_DETAIL.mount();
@@ -5923,15 +6357,12 @@ const DPTI_HOST = (() => {
 
     // --- INIT ---
     function start() {
-        if(!document.getElementById('dp-inspector-style')) {
-            const style = document.createElement('style');
-            style.id = 'dp-inspector-style';
-            style.textContent = DPTI_CSS;
-            document.head.append(style);
-        }
+        const style = document.createElement('style');
+        style.id = 'dp-inspector-style';
+        style.textContent = DPTI_CSS;
+        document.head.append(style);
         DPTI_HOST.mount();
     }
-    document.addEventListener('livewire:navigated', start);
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once: true});
     else start();
 })();
