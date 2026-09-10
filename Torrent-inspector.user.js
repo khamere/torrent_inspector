@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DarkPeers - Torrent Inspector
 // @namespace    dkokto.darkpeers.inspector
-// @version      1.24.0
+// @version      1.24.1
 // @description  Torrent Inspector and automatic listing naming badges, checked against DarkPeers or Zenith rules. Reads the page only; makes no requests.
 // @author       🤖T.R.A.V.I.S (original Chungus Edition); DKOKTO personal customization
 // @match        https://darkpeers.org/*
@@ -2771,7 +2771,7 @@ const DKOKTO_PROFILES_UI = ((profiles,rules) => {
     }
     function open(refresh) {
         onChange=typeof refresh==='function'?refresh:()=>{};
-        if(!dialog) {
+        if(!dialog?.isConnected) {
             dialog=el('dialog',undefined,'dk-hub dk-profile-dialog');
             dialog.setAttribute('aria-labelledby','dk-profile-title');
             const head=el('header'),title=el('h2','Tracker rules');title.id='dk-profile-title';
@@ -3439,7 +3439,7 @@ const DKOKTO_LISTING = (() => {
             catch{window.prompt('Copy this text:',value);}};
         return button;
     }
-    function explain(entry){if(!dialog){dialog=el('dialog',undefined,'dk-listing-dialog dk-hub');dialog.setAttribute('aria-labelledby','dk-listing-heading');document.body.append(dialog);dialog.addEventListener('close',()=>returnFocus?.isConnected&&returnFocus.focus());}
+    function explain(entry){if(!dialog?.isConnected){dialog=el('dialog',undefined,'dk-listing-dialog dk-hub');dialog.setAttribute('aria-labelledby','dk-listing-heading');document.body.append(dialog);dialog.addEventListener('close',()=>returnFocus?.isConnected&&returnFocus.focus());}
         returnFocus=entry.badge;dialog.replaceChildren();const head=el('header'),heading=el('h2','Torrent naming check');heading.id='dk-listing-heading';const close=el('button','Close');close.type='button';close.onclick=()=>dialog.close();head.append(heading,close);dialog.append(head);
         const body=el('section',undefined,'dk-hub-content'),r=entry.result;body.append(el('h3',entry.title),el('p',r.label),
             ...(entry.composed?[el('p','This page lists the release without the media title, so “'+entry.composed+'” was taken from the page heading and checked with it.')]:[]),el('p','Loaded title only · '+(entry.category||'category inferred from title')+'. Green means supported title checks passed, not verified media or tracker approval.'));
@@ -3508,7 +3508,7 @@ const DKOKTO_LISTING = (() => {
     function showAudit() {
         const rows=auditRows(),here=location.origin+location.pathname+location.search;
         const text=DKOKTO_REPORT.audit(rows,{page:here});
-        if(!dialog){dialog=el('dialog',undefined,'dk-listing-dialog dk-hub');dialog.setAttribute('aria-labelledby','dk-listing-heading');document.body.append(dialog);
+        if(!dialog?.isConnected){dialog=el('dialog',undefined,'dk-listing-dialog dk-hub');dialog.setAttribute('aria-labelledby','dk-listing-heading');document.body.append(dialog);
             dialog.addEventListener('close',()=>returnFocus?.isConnected&&returnFocus.focus());}
         returnFocus=bar?.querySelector('.dk-listing-audit')||null;dialog.replaceChildren();
         const head=el('header'),heading=el('h2','Naming audit · loaded titles');heading.id='dk-listing-heading';
@@ -3761,7 +3761,7 @@ const DKOKTO_LISTING = (() => {
             return [...r.removedNodes].some(n=>n.nodeType===1)||[...r.addedNodes].some(n=>n.nodeType===1&&!n.matches(own))||node.matches(selector);
             // Our own badge being carried off by a re-render, rather than an ordinary change.
             });const lost=records.some(r=>[...r.removedNodes].some(n=>n.nodeType===1&&(n.matches?.(own)||n.querySelector?.(own))));
-            if(relevant)schedule(lost);});observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['href','data-category-id','alt']});
+            if(relevant)schedule(lost);});observer.observe(document.documentElement,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['href','data-category-id','alt']});
         window.addEventListener('popstate',schedule);document.addEventListener('livewire:navigated',schedule);
     }
     return {mount};
@@ -4217,7 +4217,7 @@ const DKOKTO_DETAIL = (() => {
         return node?.textContent?.trim()||document.querySelector('.torrent__meta-item img[alt]')?.getAttribute('alt')||'';
     }
     function explain(entry) {
-        if(!dialog){dialog=el('dialog',undefined,'dk-listing-dialog dk-hub');dialog.setAttribute('aria-labelledby','dk-detail-heading');document.body.append(dialog);
+        if(!dialog?.isConnected){dialog=el('dialog',undefined,'dk-listing-dialog dk-hub');dialog.setAttribute('aria-labelledby','dk-detail-heading');document.body.append(dialog);
             dialog.addEventListener('close',()=>returnFocus?.isConnected&&returnFocus.focus());}
         returnFocus=entry.badge;dialog.replaceChildren();
         const head=el('header'),heading=el('h2','Torrent naming check');heading.id='dk-detail-heading';
@@ -4371,14 +4371,15 @@ const DKOKTO_DETAIL = (() => {
     // read with a handful of selectors, so an unchanged page costs almost nothing.
     let pageStamp='',pageDrew=false;
     function pageInputs(name,profile) {
-        return [name,profile,
-            document.querySelectorAll('.dialog__form[data-tab="list"] table tbody tr').length,
-            document.querySelectorAll('.torrent-mediainfo-dump code,.torrent-mediainfo-dump pre,code[x-ref="mediainfo"]').length,
+        return JSON.stringify([name,profile,DKOKTO_RULES.current(),DKOKTO_RULES.baseOf(DKOKTO_RULES.current()),
+            filesOf(),DKOKTO_INSPECTOR.readPage(document),
+            !!panelWith('MediaInfo'),!!panelWith('BDInfo'),
+            languagesFrom('.mediainfo__audio img'),languagesFrom('.mediainfo__subtitles img'),
             fieldOf('h1.meta__title','.meta__title','.torrent__meta-title'),
             fieldOf('li.torrent__type a','.torrent__type a','.torrent__type'),
             fieldOf('li.torrent__resolution a','.torrent__resolution a','.torrent__resolution'),
             fieldOf('li.torrent__category a','.torrent__category a','.torrent__category'),
-            fieldOf('.work__language-link','.meta__language')].join('\u0001');
+            fieldOf('.work__language-link','.meta__language')]);
     }
     function pageRow(node,name,profile) {
         // These findings quote a tracker's rules where it has them, so they wait for one.
@@ -4389,7 +4390,7 @@ const DKOKTO_DETAIL = (() => {
         const facts=pageFacts(name,profile);
         const issues=DKOKTO_PAGE.check(facts);
         const existing=document.querySelector('.dk-detail-page');
-        const signature=issues.map(issue=>issue.code).join('|')+'#'+facts.files.length;
+        const signature=JSON.stringify(issues);
         if(existing&&existing.dataset.signature===signature)return;
         existing?.remove();
         if(!issues.length){pageDrew=false;return;}
@@ -4434,7 +4435,7 @@ const DKOKTO_DETAIL = (() => {
         if(mounted)return;mounted=true;
         new MutationObserver(records=>{
             if(records.some(r=>{const n=r.target.nodeType===1?r.target:r.target.parentElement;return n&&!n.closest(OURS)&&!n.closest(NOISE);}))schedule();
-        }).observe(document.body,{subtree:true,childList:true,characterData:true});
+        }).observe(document.documentElement,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['alt','title']});
         window.addEventListener('popstate',schedule);document.addEventListener('livewire:navigated',schedule);
     }
     return {mount,draw};
@@ -5342,7 +5343,7 @@ const DKOKTO_GROUP_TAG = ((internals,requests,trackers) => {
     // not something this script can know, and inventing one would be worse than blank.
     let dialog=null;
     function editor(after) {
-        if(!dialog) {
+        if(!dialog?.isConnected) {
             dialog=el('dialog',undefined,'dk-listing-dialog dk-hub');
             dialog.setAttribute('aria-labelledby','dk-internals-heading');
             document.body.append(dialog);
@@ -5538,7 +5539,7 @@ const DKOKTO_REQUESTS = (() => {
         return button;
     }
     function ensureDialog(labelId) {
-        if(!dialog){dialog=el('dialog',undefined,'dk-listing-dialog dk-hub');dialog.id='dkokto-request-dialog';document.body.append(dialog);
+        if(!dialog?.isConnected){dialog=el('dialog',undefined,'dk-listing-dialog dk-hub');dialog.id='dkokto-request-dialog';document.body.append(dialog);
             dialog.addEventListener('close',()=>returnFocus?.isConnected&&returnFocus.focus());}
         dialog.setAttribute('aria-labelledby',labelId);dialog.replaceChildren();
         openedOn=location.pathname;
@@ -5842,7 +5843,7 @@ const DKOKTO_REQUESTS = (() => {
         new MutationObserver(records=>{
             if(records.some(record=>{const node=record.target.nodeType===1?record.target:record.target.parentElement;
                 return node&&!node.closest(own)&&!node.closest(noise);}))schedule();
-        }).observe(document.body,{subtree:true,childList:true,characterData:true});
+        }).observe(document.documentElement,{subtree:true,childList:true,characterData:true});
         for(const event of ['popstate','livewire:navigated'])
             (event==='popstate'?window:document).addEventListener(event,()=>{closeOnNavigation();schedule();});
         window.addEventListener('keydown',event=>{
@@ -5892,6 +5893,8 @@ const DPTI_HOST = (() => {
             const head=el('header'),title=el('h2','Torrent Inspector');title.id='dp-inspector-title';head.append(title,button('Close',()=>dialog.close()));
             content=el('section',undefined,'dk-hub-content');const status=el('p','','dk-hub-message');status.setAttribute('role','status');
             dialog.append(head,content,status);document.body.append(dialog);}
+        // Livewire can replace the body while this closure still holds the old dialog.
+        if(!dialog.isConnected){dialog.close();document.body.append(dialog);}
         settings=load();content.replaceChildren();message('');
         DKOKTO_INSPECTOR_UI.render({content,settings,save,message,guard,el,field,button,link,download});
         if(!dialog.open)dialog.showModal();
@@ -5902,12 +5905,14 @@ const DPTI_HOST = (() => {
     const fullEditionPresent=()=>!!document.querySelector('#dkokto-tools,.dk-toolkit-launch,.dk-listing-bar,.dk-listing-badge');
 
     function mount(){
+        if(!mounted&&fullEditionPresent()){console.info('Torrent Inspector: the full DKOKTO edition is active on this page, so the standalone copy stayed inactive.');return;}
+        if(!document.getElementById('dp-inspector-tools')) {
+            const tools=el('div',undefined,undefined);tools.id='dp-inspector-tools';
+            const launch=button('Inspect torrent',()=>open());launch.className='dk-inspector-launch';launch.title='MediaInfo review and naming check · Alt+Shift+I';
+            tools.append(launch);document.body.append(tools);
+        }
         if(mounted)return;
-        if(fullEditionPresent()){console.info('Torrent Inspector: the full DKOKTO edition is active on this page, so the standalone copy stayed inactive.');return;}
         mounted=true;settings=load();
-        const tools=el('div',undefined,undefined);tools.id='dp-inspector-tools';
-        const launch=button('Inspect torrent',()=>open());launch.className='dk-inspector-launch';launch.title='MediaInfo review and DP naming check · Alt+Shift+I';
-        tools.append(launch);document.body.append(tools);
         window.addEventListener('keydown',e=>{if(e.altKey&&e.shiftKey&&e.code==='KeyI'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();open();}});
         DKOKTO_LISTING.mount();
         DKOKTO_DETAIL.mount();
@@ -5918,12 +5923,15 @@ const DPTI_HOST = (() => {
 
     // --- INIT ---
     function start() {
-        const style = document.createElement('style');
-        style.id = 'dp-inspector-style';
-        style.textContent = DPTI_CSS;
-        document.head.append(style);
+        if(!document.getElementById('dp-inspector-style')) {
+            const style = document.createElement('style');
+            style.id = 'dp-inspector-style';
+            style.textContent = DPTI_CSS;
+            document.head.append(style);
+        }
         DPTI_HOST.mount();
     }
+    document.addEventListener('livewire:navigated', start);
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once: true});
     else start();
 })();
