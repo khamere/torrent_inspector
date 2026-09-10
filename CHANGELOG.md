@@ -1,29 +1,133 @@
 # Torrent Inspector · changelog
 
-A standalone Tampermonkey script: the MediaInfo Inspector and the automatic naming
-badges, with no theme, artwork, games or forum tools. It reads the page you are on and
-makes no requests of any kind — every link opens only when you click it.
+A Tampermonkey userscript for release naming: the badges, the MediaInfo Inspector, the
+cross-tracker lookup and the release-notes templates. It reads the page you are on and makes
+no request of any kind — every link opens only when you click it.
 
-Newest first.
+Newest first. Older entries call the script *DarkPeers — Torrent Inspector*, which is what it
+was named until 1.25.0.
 
 ---
-## 1.24.1 — navigation and refreshed page findings
 
-- Restore the launcher and styling after Livewire replaces the page body; keep observers
-  attached to the document root so later page updates are detected too.
-- Recreate detached badge, tracker-rule, group and request dialogs when reopened.
-- Include filenames, raw MediaInfo, language flags, evidence panels and the selected rules
-  in the detail cache inputs. Compare complete findings so changed messages and severity render.
-- Observe language flag `alt` and `title` changes, alongside text and child-node updates.
-- Add eight synthetic browser compatibility checks. Correct stale installation and
-  permission documentation and the landing page's tracker count wording.
+## 1.26.0 — just Torrent Inspector
+
+- **Renamed.** `@name` is now **Torrent Inspector** and `@namespace` is
+  `dkokto.torrent.inspector`. It was *DarkPeers - Torrent Inspector*, which was never right —
+  it runs on 44 trackers and carries rule sets for four. The file it builds is
+  `Torrent-inspector.user.js`, the same name it is published under, so what `@downloadURL`
+  fetches and what you hand someone are the same thing. There is a check that neither the name
+  nor the namespace carries a tracker's name, and one that it still runs on DarkPeers, where
+  that belongs.
+- **Upgrading:** Tampermonkey identifies an installed script by its header, so this can land as
+  a second entry in your script list rather than as an update. If you see two, delete the old
+  one — two copies means two of every badge. Your settings should survive: everything this
+  script saves is written both to Tampermonkey's per-script store and to ordinary browser
+  storage on the tracker you were using, and a fresh install adopts the second, per site.
+  Export your added trackers first if you have set up a lot.
+- **The README was rewritten at both ends.** A real front page — what it is, how to install it,
+  what to read — and the module list, the suite list and the check reports brought up to date.
+- **A correction.** The README claimed the script "matches only HTTPS darkpeers.org and
+  www.darkpeers.org". That stopped being true when it started running on the UNIT3D catalogue:
+  it is 44 hosts, written into the header from the catalogue itself at build time. It also
+  claimed no `@grant` permissions, while it asks for three storage ones. Both now say what is
+  actually in the file.
+- `TRACKER-RULES.md` now names all four shipped rule sets rather than two.
+
+---
+
+## 1.25.0 — release notes templates, and update checks
+
+- **MoreThanTV and FearNoPeer are gone from both lists.** Both trackers closed. They are out of
+  the cross-check catalogue — 62 searchable trackers to 60 — so no click opens a site that is not
+  there, and `fearnopeer.com` is off the `@match` list, 45 lines to 44. They are out of the
+  internal-groups directory too, which is what was asked for rather than marking them closed. That
+  costs something and it is worth knowing: SMURF, WDYM, TEPES, Dracula, GBL, MOLY, SOIL, VLAD,
+  EiNSTEIN_SiR23, onlyfaffs and HiFiWiFi are now listed nowhere. E.N.D keeps HD-Torrents; SM737
+  keeps AlphaRatio and ReelFliX. (This bullet was missing from the 1.25.0 entry when it shipped
+  and was added in 1.26.0 — the change itself was in 1.25.0.)
+- **Release notes templates.** A button beside the comment box on a torrent page — the ⤵ next
+  to *Write · Preview* — fills your comment template into the box, and *Templates…* opens the
+  editor: a Description and a Comment template, each with a tick to turn it on.
+- **Tokens filled from the page you are on**: `{title}`, `{size}`, `{bytes}`, `{files}`,
+  `{count}`, `{url}`, `{id}`, `{date}`. `{files}` writes the listing the `[ MULTIPLE FILES ]`
+  copy already builds — the folder and the torrent's own total, then every file with its exact
+  byte count. Anything else in braces is left exactly as typed, and a token the page cannot
+  answer is left blank and named when you insert rather than posted as `{bytes}`.
+- **It never posts.** The button writes into the box and stops: no submit, no touching the
+  form's own buttons, and an existing draft is added to rather than written over. Kept in this
+  script's own storage, so it is the same template on every tracker it runs on.
+- **The description template has no insert point** — the description is written where you
+  upload, and this script stays out of the upload form. The editor says so, and offers a copy
+  button instead of pretending otherwise.
+- **`@updateURL` and `@downloadURL`** now carry
+  `https://raw.githubusercontent.com/khamere/torrent_inspector/main/Torrent-inspector.user.js`,
+  so Tampermonkey can check for updates and offer the new version. There is a check that it is
+  the raw file rather than the GitHub page, and that the header version matches the build's.
+- Checks: 12 release-notes template checks (new suite), 26 inspector, 128 torrent-page browser
+  checks. Everything else unchanged and green.
+
+---
+
+## 1.24.3 — the directory, and bytes on the single-file marker
+
+- **SiGLA and SMURF are off HUNO.** The community directories this ships carried them there;
+  you say they are not HUNO's, so they are gone from that line. SMURF is still listed at
+  MoreThanTV, which is where those directories also put it — taking a group off one tracker
+  is not deleting it, and there is a check for exactly that. SiGLA was listed nowhere else,
+  so nothing claims it now.
+- **ZoroSenpai is added at HDBits, TorrentBD and Blutopia.** That is how "HDB, TBD, BLU" was
+  read; TorrentBD is the only tracker on the list whose abbreviation is TBD.
+- **The single-file marker shows the count**, not the rounded figure:
+  `[ SINGLE FILE · 2449415267 B ]`. Where the page carries no exact count — no `title` on the
+  size and no plain number that converts back to what is displayed — it falls back to the
+  page's own rounded wording rather than showing a number that was never there.
+- Checks: 21 internal-group and 107 torrent-page browser checks, each new one confirmed to
+  fail with its change taken back out. Everything else unchanged and green.
+
+---
+
+## 1.24.2 — the size of a single file, and two things that read the page wrongly
+
+- **A one-file torrent now says so, with its size.** The marker under the release name reads
+  `[ SINGLE FILE · 2.28 GiB ]` where it reads `[ MULTIPLE FILES ]` on a pack, and clicking it
+  copies one line: the file name and the exact byte count. That count is only ever the one
+  the page itself carries — either in the `title` of the size it rounded for display, or, as
+  DarkPeers prints it, as plain text under the rounded figure. A bare number on a page proves
+  nothing on its own, so one is believed only when converting it back gives the very figure
+  shown, to the same number of decimals; a seeder count, a torrent id or a year can never be
+  mistaken for the size. Where no exact count is on the page, the rounded size is what gets
+  shown and nothing is invented.
+- **The marker's wording follows the page.** It was written once, when the marker was first
+  put there, and then left alone — so a page that redrew a pack into one file kept saying
+  `[ MULTIPLE FILES ]`. It is now re-read on every redraw, and what was read for the old
+  shape of the page is dropped rather than carried over.
+- **"Files in the torrent: 1 / 0" on the comparison panel.** A page whose file list had never
+  been rendered was being read as a torrent with no files, which then counted as a difference
+  and fed the same-name verdict. A list that was not read now says so — *no file list on that
+  page — open "Show files" there, then capture again* — is not flagged as a difference, and
+  the verdict no longer claims everything matches when the files were never compared.
+- **A dialog the site took away with it.** Where a tracker redraws its own page, this
+  script's dialog can go out of the document with it; reusing that detached one would open
+  the explanation onto nothing. A dialog is now reused only while it is still in the page.
+  (Adopted from your 1.24.1 — see the note at the end of this entry.)
+- Checks: 12 file-list, 17 capture and 106 torrent-page browser checks, each new one
+  confirmed to fail with its fix taken back out. Everything else unchanged and green.
+- **On 1.24.1:** it carries the detached-dialog guard above, which is now in here. Three
+  things in it are worth knowing: the audit timestamp fix is missing, so the moderation log
+  rewrites `seen` on every redraw; the host list in `rules.js` has markdown link syntax in
+  it (`'[www.darkpeers.org](https://www.darkpeers.org)'`) — survivable only because the bare
+  `darkpeers.org` entry still matches; and `pageInputs` was changed to re-read the file list
+  and the whole page on every call, which is the exact work its own comment says it exists to
+  avoid. All three are right in this build.
+
+---
 
 ## 1.24.0 — two tracker rule sets that ship with the script, and four addresses
 
 - **LUME** (luminarr.me) and **OnlyEncodes+** (onlyencodes.cc), built from the guides as they
   were supplied, offered under *Added trackers* → *Rule sets that ship with this script*.
   Press Add and the profile becomes an ordinary added tracker: editable, exportable,
-  removable, and pick-able in the Rules list. Nothing is added until you press it, because
+  removable, and pickable in the Rules list. Nothing is added until you press it, because
   adding one changes which rules a badge cites.
 - **LUME** carries its resolution list and the vocabulary its Naming Guide sets for each
   title element: DD+ rather than DDP or E-AC-3, DD rather than AC3, H.264/H.265 with the dot,
@@ -38,7 +142,7 @@ Newest first.
   eac3to log being trumpable (1.1). The rest of that guide is about the upload rather than
   the title — screenshots, MediaInfo, piece sizes, seeding — and is carried as standing
   notes.
-- **OnlyEncodes' naming standard and banned list** are in the profile
+- **OnlyEncodes' naming standard and banned list** (wikis/18 and wikis/1) are in the profile
   too: 16 rules and 136 banned groups. The naming rules are the ones its standard is specific
   about — a WEB-DL names the format (H.264/H.265/VP9/MPEG-2), a WEBRip names the encoder
   (x264/x265), a remux names the format again (AVC/HEVC/MPEG-2/VC-1); DD+ not DDP; Resolution
@@ -55,7 +159,7 @@ Newest first.
   (luminarr.me, UNIT3D — the script now runs there and picks the LUME rules by itself), and
   AvistaZ, CinemaZ and PrivateHD, kept exactly as they were tested. 58 entries to 62.
 - **Luminarr's provider list** is in hand: all 195 general abbreviations were already known;
-  its Japanese broadcasters and anime services were added (290 services). MX, TBS and ABC
+  its Japanese broadcasters and anime services were added (288 services). MX, TBS and ABC
   mean something else on the existing list and were deliberately left alone.
 - Adding them found a real gap: the service token before WEB-DL was matched as letters and
   digits only, so AT-X, B-Global, NHK-BSP and the BS channels read as no service at all. A
