@@ -13,7 +13,7 @@ Newest first.
 - **LUME** (luminarr.me) and **OnlyEncodes+** (onlyencodes.cc), built from the guides as they
   were supplied, offered under *Added trackers* → *Rule sets that ship with this script*.
   Press Add and the profile becomes an ordinary added tracker: editable, exportable,
-  removable, and pickable in the Rules list. Nothing is added until you press it, because
+  removable, and pick-able in the Rules list. Nothing is added until you press it, because
   adding one changes which rules a badge cites.
 - **LUME** carries its resolution list and the vocabulary its Naming Guide sets for each
   title element: DD+ rather than DDP or E-AC-3, DD rather than AC3, H.264/H.265 with the dot,
@@ -28,7 +28,7 @@ Newest first.
   eac3to log being trumpable (1.1). The rest of that guide is about the upload rather than
   the title — screenshots, MediaInfo, piece sizes, seeding — and is carried as standing
   notes.
-- **OnlyEncodes' naming standard and banned list** (wikis/18 and wikis/1) are in the profile
+- **OnlyEncodes' naming standard and banned list** are in the profile
   too: 16 rules and 136 banned groups. The naming rules are the ones its standard is specific
   about — a WEB-DL names the format (H.264/H.265/VP9/MPEG-2), a WEBRip names the encoder
   (x264/x265), a remux names the format again (AVC/HEVC/MPEG-2/VC-1); DD+ not DDP; Resolution
