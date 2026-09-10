@@ -4,8 +4,6 @@ The Torrent Inspector and the automatic listing naming badges from DKOKTO Scene 
 
 Install **DarkPeers-Torrent-Inspector.user.js** as a new Tampermonkey script.
 
-Read **GUIDE-1.22.md** (named for the Scene Edition version it was written for, not the version shipped beside it) for the full walkthrough, **CHANGES-1.12.4-to-1.22.3.md** for what changed, and **TRACKER-RULES.md** to add a tracker of your own. (The guide is written for the full edition; the theme, artwork and chat-game sections do not apply here.) Do not double-click the JS file as a Windows script.
-
 New in 1.23.0
 
 [ MULTIPLE FILES ], under the release name. Any torrent holding more than one file says so, and one click copies the whole list to the clipboard: the folder and its total, then every file with its exact byte count —
