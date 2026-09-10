@@ -26,9 +26,8 @@ checks for a new version on its own schedule and offers it.
 
 ### If you had it installed before 1.26.0
 
-It was called *DarkPeers - Torrent Inspector* and its file was
-`DarkPeers-Torrent-Inspector.user.js`. From 1.26.0 it is just **Torrent Inspector**, because it
-is not DarkPeers' script and never was — it runs on 44 trackers.
+It was called *DarkPeers - Torrent Inspector*. From 1.26.0 it is just **Torrent Inspector**,
+it runs on 44 trackers.
 
 Tampermonkey identifies an installed script by what is in its header, so the rename can land
 as a **second entry in your script list** rather than as an update to the first. If you see
@@ -50,8 +49,6 @@ JSON somewhere before you update.
 - **GUIDE-1.22.md** — the older walkthrough, written for the fuller DKOKTO Scene Edition. Kept
   for reference; its theme, artwork and chat-game sections do not apply to this script.
 - **TRACKER-RULES.md** — how to add a tracker of your own, as a rules profile.
-- **CHANGES-1.12.4-to-1.22.3.md** — what changed across the older versions, grouped by what
-  it does.
 - **CHANGELOG.md** — every version, newest first.
 
 ## New in 1.26.0
