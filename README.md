@@ -14,7 +14,7 @@ and they sit under *Rule sets that ship with this script*:
 | Rule set | Built from | What it does not have |
 | --- | --- | --- |
 | **LUME** (luminarr.me) | its Naming Guide — both title templates and the vocabulary for every element | no banned-group list: none was supplied |
-| **OnlyEncodes+** (onlyencodes.cc) | its Upload Guide + Rules (wikis/2), its naming standard (wikis/18) and its banned list (wikis/1) — 16 rules, 136 groups | — |
+| **OnlyEncodes+** (onlyencodes.cc) | its Upload Guide + Rules, its naming standard and its banned list — 16 rules, 136 groups | — |
 
 Press **Add** and the profile becomes an ordinary added tracker — editable, exportable,
 removable, and pickable in the Rules list. Nothing is added until you press it: adding one
@@ -56,7 +56,7 @@ Bureau.Burgwallen.S01E01.720p.WEB-DL.AAC.2.0.x264-DDF.mkv 1221811248 B
 Bureau.Burgwallen.S01E02.720p.WEB-DL.AAC.2.0.x264-DDF.mkv 1278590592 B
 ```
 
-Nothing is copied until you press it. (Asked for by dreadful.)
+Nothing is copied until you press it.
 
 **The exact byte size on the vs panel.** UNIT3D writes the byte count into the title of every
 size it rounds for display, so the comparison now reads `17.56 GiB · 18855538688 B` and gives
