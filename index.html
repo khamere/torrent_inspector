@@ -115,8 +115,8 @@
       group linked to where it is internal. Nothing is ever fetched, posted or changed.
     </p>
     <ul class="pills">
-      <li class="pill"><b>1.24.1</b></li>
-      <li class="pill"><b>44</b> trackers it runs on · <b>62</b> it can search</li>
+      <li class="pill"><b>1.26.0</b></li>
+      <li class="pill"><b>43</b> trackers it runs on · <b>60</b> it can search</li>
       <li class="pill">No requests, no posting</li>
       <li class="pill">Nothing judged without that tracker’s rules</li>
       <li class="pill">Everything stays in your browser</li>
@@ -222,7 +222,7 @@
       </div>
       <div class="card">
         <h3>Where the list comes from</h3>
-        <p>It ships with a community directory of internal groups — <b>974 groups across 153 trackers</b> — dated and cited in the source. Because a directory can go stale, every line reads <em>“listed as internal at”</em>, and a group that is not on it is reported as not on it rather than guessed at.</p>
+        <p>It ships with a community directory of internal groups — <b>853 groups across 151 trackers</b> — dated and cited in the source. Because a directory can go stale, every line reads <em>“listed as internal at”</em>, and a group that is not on it is reported as not on it rather than guessed at.</p>
         <p>What you add sits <em>on top of</em> that directory rather than replacing it, so a group added to the shipped list in a later version still reaches you.</p>
       </div>
       <div class="card">
@@ -311,10 +311,17 @@ BeyondHD|BHDStudio FraMeSToR FLUX|https://beyond-hd.me</code></pre>
       <div class="card">
         <h3><b>[ MULTIPLE FILES ]</b> — a pack, in one click</h3>
         <p>Any torrent holding more than one file says so under its name. Click the marker and the whole list goes to your clipboard: the folder and its total, then every file with its exact size.</p>
+        <p>One file gets the same treatment with the thing you actually want off a one-file page — its size to the byte: <code>[ SINGLE FILE · 2449415267 B ]</code>, and one click copies the name and that count. Where the page carries no exact figure the marker shows the page’s own rounded wording instead, rather than a number nobody printed.</p>
         <pre><code>Bureau.Burgwallen.S01.720p.WEB-DL.AAC.2.0.x264-DDF 9974836899 B
 Bureau.Burgwallen.S01E01.…-DDF.mkv 1221811248 B
 Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
         <p style="margin-top:10px">Nothing is copied until you press it.</p>
+      </div>
+      <div class="card">
+        <h3>The comment you type every day, once</h3>
+        <p>Beside the comment box, next to <em>Write · Preview</em>, a <b>⤵</b> button fills your template into it. Write <code>{title}</code>, <code>{size}</code>, <code>{bytes}</code>, <code>{files}</code>, <code>{count}</code>, <code>{url}</code>, <code>{id}</code> or <code>{date}</code> and it fills them in from the page you are on — <code>{files}</code> writing the same listing the marker above copies.</p>
+        <p>Anything else in braces is left exactly as you typed it, so your BBCode is safe, and a token the page cannot answer is left blank and named back to you rather than posted as the word <code>{bytes}</code>.</p>
+        <p class="note">It writes into the box and stops. It does not post, does not submit, and does not overwrite a draft you have started — you press post yourself.</p>
       </div>
       <div class="card">
         <h3>Private notes</h3>
@@ -330,7 +337,7 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
     <p class="sub">Links, built on the page and opened only when you click them.</p>
     <ul class="plain">
       <li><b>Already uploaded?</b> — the <em>exact</em> release name searched on every tracker you have chosen, so you find out before you spend the effort. Exact means exact: a different edition or group will not match, and it says so.</li>
-      <li><b>On a request</b> — every row on <code>/requests</code> gets a search button, and a request's own page shows the links under its title. 62 trackers are built in — 44 of them UNIT3D — each with an editable search address; anything missing can be added.</li>
+      <li><b>On a request</b> — every row on <code>/requests</code> gets a search button, and a request's own page shows the links under its title. 60 trackers are built in — 43 of them UNIT3D — each with an editable search address; anything missing can be added.</li>
       <li><b>Other versions</b> — what else exists here, beside IMDb, TMDB, Trakt, Letterboxd, JustWatch, Blu-ray.com, srrDB, and MyAnimeList / MusicBrainz / Open Library / IGDB as the category warrants.</li>
       <li><b>Ticked once, ticked everywhere.</b> The trackers you are on follow you between every site the script runs on, rather than being an empty list again on each one. So do the trackers you have added, their rules, and your internal-groups list.</li>
       <li><b>Search all</b> opens them in tabs. Browsers allow one tab per click and silently block the rest, so if yours refuses a burst they are offered one at a time, with <em>Copy every link</em> as the fallback.</li>
@@ -352,7 +359,7 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
       <li>Reload the tracker. The bar appears above the listing.</li>
     </ol>
     <h3 style="margin-top:22px">Which trackers it runs on</h3>
-    <p><b>44 UNIT3D trackers</b>, including DarkPeers and Zenith. Which sites run UNIT3D comes from
+    <p><b>43 UNIT3D trackers</b>, DarkPeers and Zenith among them. Which sites run UNIT3D comes from
       <a href="https://hdvinnie.github.io/Private-Trackers-Spreadsheet/" rel="noreferrer noopener">HDVinnie's Private Trackers
       Spreadsheet</a>; the addresses come from each tracker's own Jackett or Prowlarr indexer definition, because that
       spreadsheet carries none. A few UNIT3D sites have no definition to read and are left out rather than guessed at —
@@ -371,9 +378,20 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
       straight away.
     </p>
     <p style="margin-top:16px; color:var(--dim)">
-      Updating later is the same click: Tampermonkey replaces the script rather than adding a second copy.
-      Prefer to do it by hand? Open <a href="https://github.com/khamere/torrent_inspector/blob/main/Torrent-inspector.user.js" rel="noreferrer noopener">the file on GitHub</a>,
+      Updates come to you. From 1.25.0 the script carries the address it is published at, so Tampermonkey
+      checks on its own schedule and offers the new version. Prefer to do it by hand? Open
+      <a href="https://github.com/khamere/torrent_inspector/blob/main/Torrent-inspector.user.js" rel="noreferrer noopener">the file on GitHub</a>,
       copy it, and paste it over the contents of a new Tampermonkey script.
+    </p>
+    <p class="note" style="margin-top:16px">
+      <b>Upgrading from before 1.26.0?</b> It was called <em>DarkPeers - Torrent Inspector</em> then. It is not
+      DarkPeers’ script and never was — it runs on 43 trackers — so it is now just <b>Torrent Inspector</b>.
+      Tampermonkey identifies an installed script by what is in its header, so the rename can arrive as a
+      <em>second entry</em> in your script list rather than as an update to the first. If you see two, keep the
+      new one and delete the old, or you get two of every badge.
+      Your setup should come with you: everything the script saves is written both to Tampermonkey’s own store
+      and to ordinary browser storage on the tracker you were using, and a fresh install picks the second one
+      up. If you have a lot set up, press <b>Export</b> under <b>Tracker rules… → Added trackers</b> first.
     </p>
     <p class="note" style="margin-top:16px">
       If you download the file instead, do not double-click it — Windows tries to <em>run</em> a <code>.js</code> file rather than install it.
@@ -516,6 +534,27 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
       <p class="note">Already using <b>Upload Assistant</b>? Nothing here touches the upload form. It
         checks the name and the report, and leaves the uploading to the tool you already use.</p>
     </div>
+
+    <div class="tut">
+      <h3>7 · The comment you leave on every upload</h3>
+      <p class="goal">Write it once; fill it in from the page after that.</p>
+      <ol class="steps">
+        <li><b>Open <em>Templates…</em></b>, beside the comment box on any torrent page. Two templates:
+          one for a comment, one for a description, each with a tick to turn it on.</li>
+        <li><b>Write yours in the Comment box.</b> Plain text and BBCode, plus any of the tokens —
+          <code>{title}</code>, <code>{size}</code>, <code>{bytes}</code>, <code>{files}</code>,
+          <code>{count}</code>, <code>{url}</code>, <code>{id}</code>, <code>{date}</code>. The editor
+          tells you which ones it found as you type.</li>
+        <li><b>Save, and close it.</b> It is kept in the script's own storage, so it is the same template
+          on every tracker the script runs on, not one per site.</li>
+        <li><b>Press <b>⤵</b> beside the comment box.</b> The template goes in with the tokens filled from
+          the page you are on. Anything a page cannot answer is left blank, and the button tells you which.</li>
+        <li><b>Read it, edit it, post it.</b> The button never posts — it fills the box and stops.</li>
+      </ol>
+      <p class="note">Doing release notes rather than a comment? The description template has no insert
+        button, because descriptions are written on the upload form and this script stays off it. Copy it
+        from the editor instead — the tokens are filled the same way.</p>
+    </div>
   </div>
 </section>
 
@@ -583,12 +622,15 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
         tracker's own address. So: four trackers badge with no dropdown work — two built in, two after a
         single click.</dd>
 
-      <dt>Is it 44 trackers or 62?</dt>
-      <dd>Both, counting different things. <b>44</b> is how many UNIT3D trackers the script <em>runs
+      <dt>Is it 43 trackers or 60?</dt>
+      <dd>Both, counting different things. <b>43</b> is how many UNIT3D trackers the script <em>runs
         on</em> — the <code>@match</code> lines, where badges, the Inspector and <b>vs</b> appear.
-        <b>62</b> is how many it can <em>search</em> for the cross-check, which adds the Gazelle-family
+        <b>60</b> is how many it can <em>search</em> for the cross-check, which adds the Gazelle-family
         and other non-UNIT3D sites — PassThePopcorn, HDBits, BroadcasTheNet, AvistaZ and the rest. It
-        never runs on those; it builds a link you click.</dd>
+        never runs on those; it builds a link you click. (<b>43</b> trackers is <b>44</b>
+        <code>@match</code> lines, because DarkPeers gets one with <code>www.</code> and one without.)
+        Both numbers went down by two in 1.25.0: MoreThanTV and FearNoPeer closed, and a link to a site
+        that is gone is a wasted click.</dd>
 
       <dt>Where do those rules come from, and what is missing from them?</dt>
       <dd>From each tracker's own published guide, and the script says which parts it does not have.
@@ -629,12 +671,15 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
       <div class="card">
         <h3>No writing to the tracker</h3>
         <p>Nothing is posted, submitted, approved, rejected or edited on your behalf. It reads the page you are on and tells you what it found.</p>
+        <p>One button types, and only into your own comment box: <b>⤵</b> puts your template in it. It touches
+          no submit button, adds to a draft rather than replacing it, and stops there — what goes up is what you
+          press post on.</p>
       </div>
       <div class="card">
         <h3>Local, bounded, yours</h3>
         <p>Every list it keeps lives on your machine with a fixed cap, and is never sent anywhere. Your <em>setup</em> — the trackers
-          you are on, the rules you have added, your internal-groups list — is kept in Tampermonkey's own per-script store, so it is
-          the same on every tracker. What you <em>did</em> on a particular tracker — the audit, the decision log, private notes —
+          you are on, the rules you have added, your internal-groups list, your comment templates — is kept in Tampermonkey's own
+          per-script store, so it is the same on every tracker. What you <em>did</em> on a particular tracker — the audit, the decision log, private notes —
           stays on that tracker. Both are storage on this machine, not a request.</p>
       </div>
     </div>
@@ -647,7 +692,7 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
 
 <footer>
   <div class="wrap">
-    <p><b>Torrent Inspector 1.24.1</b> — a personal fork, offered as-is.</p>
+    <p><b>Torrent Inspector 1.26.0</b> — a personal fork, offered as-is.</p>
     <p>Found something wrong? A screenshot with the badge's tooltip visible is the fastest fix — several bugs in this line were found exactly that way, and each one now has a test built from the row that showed it up.</p>
   </div>
 </footer>
