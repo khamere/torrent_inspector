@@ -1,20 +1,155 @@
-# Torrent Inspector 1.24.1 — DarkPeers, Zenith and your own
+# Torrent Inspector 1.26.0
 
-The Torrent Inspector and the automatic listing naming badges from DKOKTO Scene Edition 1.6.1, packaged as a standalone userscript. None of the theme, artwork, game helper, forum reading tools, shortcuts or backup features are included.
+A Tampermonkey userscript for release naming. It reads the page you are on and tells you
+whether a release name is written the way the tracker you are on says it should be — on the
+listing, on the torrent page, and in a MediaInfo panel you can paste a report into. It also
+looks a release up on the other trackers you are a member of, compares two releases side by
+side, and keeps the templates you paste over and over.
 
-Install **Torrent-inspector.user.js** as a Tampermonkey script. The project website is
-[torrent.dkokto.dev](https://torrent.dkokto.dev/) (note the spelling: **dkokto**).
+**It reads. It does not act.** No network request of any kind, no account, no cookie, no API
+key, nothing posted, submitted, uploaded or downloaded. Every link opens when you click it and
+not before. What it stores, it stores on your own machine.
 
-## Fixed in 1.24.1
+It runs on **44 UNIT3D trackers** and can search **60**. Naming rules for DarkPeers, Zenith,
+LUME and OnlyEncodes+ ship with it; any other tracker is added by pasting its rules, as data,
+never as code.
 
-- The launcher, styles and previously opened dialogs recover after Livewire replaces the
-  page body. Page observers continue watching subsequent updates, without duplicating the launcher.
-- Detail findings refresh when filenames, MediaInfo text, language flags or the selected
-  rule set change. A warning's text updates even when its issue code stays the same.
-- Eight browser compatibility checks cover these changes using synthetic tracker pages.
-  These checks do not validate authenticated tracker markup or the accuracy of tracker rules.
+## Install
 
-Read **GUIDE-1.22.md** for the full walkthrough, **CHANGELOG.md** for what changed, and **TRACKER-RULES.md** to add a tracker of your own. (The guide is written for the full edition; the theme, artwork and chat-game sections do not apply here.) Do not double-click the JS file as a Windows script.
+1. Install Tampermonkey, if you have not.
+2. Open **`Torrent-inspector.user.js`** and let Tampermonkey install it. Do not double-click
+   the file as a Windows script.
+3. That is all. Nothing to sign in to, nothing to configure before it works.
+
+Updates come to you: the script carries `@updateURL` and `@downloadURL`, so Tampermonkey
+checks for a new version on its own schedule and offers it.
+
+### If you had it installed before 1.26.0
+
+It was called *DarkPeers - Torrent Inspector* and its file was
+`DarkPeers-Torrent-Inspector.user.js`. From 1.26.0 it is just **Torrent Inspector**, because it
+is not DarkPeers' script and never was — it runs on 44 trackers.
+
+Tampermonkey identifies an installed script by what is in its header, so the rename can land
+as a **second entry in your script list** rather than as an update to the first. If you see
+two, keep the new one and delete the old — running both at once means two copies of every
+badge.
+
+Your settings should survive that. Everything this script saves — added trackers, rule sets,
+the internal-groups list, your templates — is written to two places at once: Tampermonkey's
+own per-script store, and ordinary browser storage on the tracker you were using at the time.
+A fresh install reads the second one and adopts it, per site. If you have set up a lot and
+want to be certain, open **Tracker rules… → Added trackers**, press **Export**, and keep the
+JSON somewhere before you update.
+
+## What you need to read
+
+- **This file** — what it does, and what changed in each version.
+- **GUIDE.md** — the walkthrough, written for this script: the badges, the rules, the torrent
+  page, the templates, the Inspector, and what it will never do. Start people here.
+- **GUIDE-1.22.md** — the older walkthrough, written for the fuller DKOKTO Scene Edition. Kept
+  for reference; its theme, artwork and chat-game sections do not apply to this script.
+- **TRACKER-RULES.md** — how to add a tracker of your own, as a rules profile.
+- **CHANGES-1.12.4-to-1.22.3.md** — what changed across the older versions, grouped by what
+  it does.
+- **CHANGELOG.md** — every version, newest first.
+
+## New in 1.26.0
+
+**Renamed to just Torrent Inspector.** `@name` is **Torrent Inspector**, `@namespace` is
+`dkokto.torrent.inspector`, and the file is `Torrent-inspector.user.js` — the same name it is
+published under. It was never DarkPeers' script: it runs on 44 trackers and ships rule sets for
+four. A check now fails if either the name or the namespace picks up a tracker's name again.
+
+**A guide of its own.** `GUIDE.md` is written for this script — the badges, the rules, the
+torrent page, the templates, the Inspector, what it stores and what it will never do.
+`GUIDE-1.22.md` stays for reference and says at the top that it was written for the fuller
+Scene Edition.
+
+**Two corrections in this file.** It claimed the script "matches only HTTPS darkpeers.org and
+www.darkpeers.org" — untrue since it started running on the UNIT3D catalogue, which is 44 hosts
+written into the header from the catalogue itself at build time. And it claimed no `@grant`
+permissions, while it asks for three storage ones. The module list, the suite list and the
+check reports were also years out of date and are now generated from what is actually there.
+
+---
+
+## New in 1.25.0
+
+- **Release notes templates.** A button beside the comment box on a torrent page — the ⤵ next
+  to *Write · Preview* — fills your comment template into the box, and *Templates…* opens the
+  editor: a Description and a Comment template, each with a tick to turn it on.
+- **Tokens filled from the page you are on**: `{title}`, `{size}`, `{bytes}`, `{files}`,
+  `{count}`, `{url}`, `{id}`, `{date}`. `{files}` writes the listing the `[ MULTIPLE FILES ]`
+  copy already builds — the folder and the torrent's own total, then every file with its exact
+  byte count. Anything else in braces is left exactly as typed, and a token the page cannot
+  answer is left blank and named when you insert rather than posted as `{bytes}`.
+- **It never posts.** The button writes into the box and stops: no submit, no touching the
+  form's own buttons, and an existing draft is added to rather than written over. Kept in this
+  script's own storage, so it is the same template on every tracker it runs on.
+- **The description template has no insert point** — the description is written where you
+  upload, and this script stays out of the upload form. The editor says so, and offers a copy
+  button instead of pretending otherwise.
+- **`@updateURL` and `@downloadURL`** now carry
+  `https://raw.githubusercontent.com/khamere/torrent_inspector/main/Torrent-inspector.user.js`,
+  so Tampermonkey can check for updates and offer the new version. There is a check that it is
+  the raw file rather than the GitHub page, and that the header version matches the build's.
+- Checks: 12 release-notes template checks (new suite), 26 inspector, 128 torrent-page browser
+  checks. Everything else unchanged and green.
+
+---
+
+## New in 1.24.3
+
+**Internal groups.** SiGLA and SMURF are off HUNO — the community directories this ships
+carried them there and you say they are not HUNO's, so they are gone from that line.
+SMURF is still listed at MoreThanTV, which is where those directories also put it: taking a
+group off one tracker is not deleting it, and there is a check for exactly that. SiGLA was
+listed nowhere else, so nothing claims it now. **ZoroSenpai** is added at HDBits, TorrentBD
+and Blutopia — I read your "HDB, TBD, BLU" as those three; TorrentBD is the only tracker on
+the list whose abbreviation is TBD, so say the word if you meant another and I will move it.
+
+**The single-file marker shows the count.** It reads `[ SINGLE FILE · 2449415267 B ]` rather
+than the rounded figure. Where the page carries no exact count — no `title` on the size and
+no plain number that converts back to what is displayed — the marker falls back to the
+page's own rounded wording rather than showing a number that was never there. Both are
+checks in the suite.
+
+---
+
+## New in 1.24.2
+
+**1.24.2 — the size of a single file, and two things that read the page wrongly.**
+
+**A one-file torrent now says so, with its size.** Where a pack is marked
+`[ MULTIPLE FILES ]` under its release name, a single file is marked
+`[ SINGLE FILE · 2.28 GiB ]`, and clicking it copies one line — the file name and the exact
+byte count. The count is only ever the one the page itself carries: the `title` on the size
+it rounded for display, or, as DarkPeers prints it, the plain number under the rounded
+figure. A bare number proves nothing by itself, so one is believed only when converting it
+back gives the very figure shown, to the same number of decimals — a seeder count, a torrent
+id or a year is never mistaken for a size. Where the page carries no exact count, the rounded
+size is what you get, and nothing is made up.
+
+**The marker's wording now follows the page.** It was written once, when the marker was first
+put there, so a page that redrew a pack into one file went on saying `[ MULTIPLE FILES ]`.
+It is re-read on every redraw now, and what was read for the page's old shape is dropped
+rather than carried across.
+
+**"Files in the torrent: 1 / 0" on the comparison panel.** A page whose file list had never
+been rendered was read as a torrent with no files — which then counted as a difference and
+fed the same-name verdict. A list that was not read says so now (*no file list on that page
+— open "Show files" there, then capture again*), is not flagged as a difference, and the
+verdict no longer claims everything matches when the files were never compared at all.
+
+**A dialog the site took away with it.** Where a tracker redraws its own page it can carry
+this script's dialog out of the document with it; reusing that detached one opens the
+explanation onto nothing. A dialog is reused only while it is still in the page.
+
+Every new check was confirmed to fail with its fix taken back out. Everything else is
+unchanged and green.
+
+---
 
 ## New in 1.24.0
 
@@ -24,7 +159,7 @@ and they sit under *Rule sets that ship with this script*:
 | Rule set | Built from | What it does not have |
 | --- | --- | --- |
 | **LUME** (luminarr.me) | its Naming Guide — both title templates and the vocabulary for every element | no banned-group list: none was supplied |
-| **OnlyEncodes+** (onlyencodes.cc) | its Upload Guide + Rules, its naming standard and its banned list — 16 rules, 136 groups | — |
+| **OnlyEncodes+** (onlyencodes.cc) | its Upload Guide + Rules (wikis/2), its naming standard (wikis/18) and its banned list (wikis/1) — 16 rules, 136 groups | — |
 
 Press **Add** and the profile becomes an ordinary added tracker — editable, exportable,
 removable, and pickable in the Rules list. Nothing is added until you press it: adding one
@@ -51,7 +186,7 @@ nothing else is; BRrip is matched anywhere in a title rather than as a tag.
 
 **Also in this version:** LUME, AvistaZ, CinemaZ and PrivateHD in the tracker catalogue (58
 entries to 62), Luminarr's Japanese and anime broadcasters added to the streaming-service
-list (290 services), and a fix for the service token before WEB-DL, which was matched as
+list (288 services), and a fix for the service token before WEB-DL, which was matched as
 letters and digits only — so `AT-X`, `B-Global` and `NHK-BSP` read as no service at all.
 
 ## New in 1.23.0
@@ -66,7 +201,7 @@ Bureau.Burgwallen.S01E01.720p.WEB-DL.AAC.2.0.x264-DDF.mkv 1221811248 B
 Bureau.Burgwallen.S01E02.720p.WEB-DL.AAC.2.0.x264-DDF.mkv 1278590592 B
 ```
 
-Nothing is copied until you press it.
+Nothing is copied until you press it. (Asked for by dreadful.)
 
 **The exact byte size on the vs panel.** UNIT3D writes the byte count into the title of every
 size it rounds for display, so the comparison now reads `17.56 GiB · 18855538688 B` and gives
@@ -529,41 +664,83 @@ The naming rules are a snapshot of the supplied guide (`NAMING-GUIDE-REFERENCE.t
 
 Private notes are per torrent ID in browser storage, not account-wide or public.
 
-The userscript matches only HTTPS darkpeers.org and www.darkpeers.org, requests no `@grant` permissions and no `@connect` hosts. It performs no network requests, posts, uploads or downloads of any kind; the srrDB link navigates only when clicked. No authenticated DarkPeers account was used for testing, so site markup changes may require selector adjustments.
+The userscript matches HTTPS only, and only the 44 trackers whose addresses are in its own
+catalogue — that list is written into the header at build time from the catalogue itself, so
+the two cannot drift apart, and there is a check for it. It asks for `GM_setValue`,
+`GM_getValue` and `GM_deleteValue`, which are storage on your machine rather than network, and
+for no `@connect` host at all. It performs no network request, post, upload or download of any
+kind; every lookup link, the srrDB link included, navigates only when you click it. No
+authenticated account on any tracker was used to build or test it, so a site changing its
+markup may need selectors adjusted.
 
 ## Source and checks
 
-- `source/inspector.js` — pure text/JSON MediaInfo parser, summaries, terminology, name-vs-report checks.
-- `source/naming.js` — guide-based display-title checks (channel layout, service abbreviations).
-- `source/services.js` — the supplied streaming-service abbreviation list (data only).
-- `source/naming-ui.js`, `source/inspector-ui.js` — inspector panel, reference controls, review export, private notes.
-- `source/listing-core.js`, `source/listing.js` — title-only badge classification and batched DOM updates.
-- `source/report-core.js` — paste-ready report and audit text.
-- `source/audit-store.js` — the bounded record of results collected while browsing.
-- `source/links-core.js`, `source/release-title.js`, `source/detail.js` — lookup addresses, release-name detection, and the torrent-page badge and lookup row.
-- `source/trackers.js`, `source/requests-core.js`, `source/requests-seen.js`, `source/requests.js` — the trackers you are on, the search each one gets, which requests you have checked, and the page additions.
-- `source/groups.js` — the tracker's banned and low-quality group list (data only).
-- `source/host.js` — standalone shell: dialog, launcher, note storage, duplicate-instance guard.
-- `source/inspector.css` — styling for this script's own dialog, launcher and badges only.
-- `source/build.mjs` — deterministic builder; concatenation only, nothing fetched or minified.
+Every module is plain JavaScript, concatenated at build time. Nothing is fetched, nothing is
+minified, and the build is deterministic — the same source gives the same file, byte for byte.
+
+- `source/inspector.js` — the MediaInfo parser: text or JSON, summaries, terminology, and the
+  name-against-report checks.
+- `source/naming.js`, `source/services.js` — the display-title checks, and the streaming-service
+  abbreviation list they use (data only, 288 entries).
+- `source/rules.js`, `source/profiles.js`, `source/tracker-guides.js` — which tracker's rules
+  are being applied, the profile format a tracker is added in, and the rule sets that ship
+  (DarkPeers, Zenith, LUME, OnlyEncodes+).
+- `source/groups.js`, `source/internals-data.js`, `source/internals.js`, `source/group-tag.js` —
+  banned and low-quality groups, and the directory of which tracker a group is internal to.
+- `source/listing-core.js`, `source/listing.js` — badge classification and batched DOM updates
+  on a listing page.
+- `source/detail.js`, `source/release-title.js`, `source/links-core.js` — the torrent page: the
+  badge, the lookup row, and finding the release name in the first place.
+- `source/files-core.js`, `source/files.js` — the file list, its exact byte counts, and the
+  marker under the release name.
+- `source/templates-core.js`, `source/templates.js` — the release-notes templates and the
+  button beside the comment box.
+- `source/capture-core.js`, `source/capture.js`, `source/compare-core.js` — capturing two
+  releases and comparing them.
+- `source/trackers.js`, `source/requests-core.js`, `source/requests-seen.js`,
+  `source/requests.js` — the trackers you are on, the search each one gets, and the request-page
+  cross-check.
+- `source/report-core.js`, `source/reply-core.js`, `source/audit-store.js`,
+  `source/decisions.js` — paste-ready report text, and the bounded record of what you have
+  looked at.
+- `source/store.js` — where settings live, and why they are the same on every tracker.
+- `source/naming-ui.js`, `source/inspector-ui.js`, `source/profiles-ui.js`, `source/host.js`,
+  `source/inspector.css` — the panels, the launcher and the styling, which touches only this
+  script's own elements.
+- `source/build.mjs` — the builder.
 
 Run:
 
 ```text
 node source/build.mjs
-node --check DarkPeers-Torrent-Inspector.user.js
-node source/inspector-check.cjs
-node source/naming-check.cjs
-node source/listing-check.cjs
-node source/services-check.cjs
-node source/links-check.cjs
-node source/report-check.cjs
+node --check Torrent-inspector.user.js
 node source/audit-check.cjs
-node source/requests-check.cjs
+node source/capture-check.cjs
+node source/files-check.cjs
 node source/groups-check.cjs
-python -m http.server 8793 --bind 127.0.0.1
+node source/guides-check.cjs
+node source/inspector-check.cjs
+node source/internals-check.cjs
+node source/links-check.cjs
+node source/listing-check.cjs
+node source/moderation-check.cjs
+node source/naming-check.cjs
+node source/page-check.cjs
+node source/profiles-check.cjs
+node source/report-check.cjs
+node source/requests-check.cjs
+node source/rules-check.cjs
+node source/services-check.cjs
+node source/store-check.cjs
+node source/templates-check.cjs
+python3 -m http.server 8804 --bind 127.0.0.1
 ```
 
-Then open `inspector-preview.html`, `listing-preview.html` and `requests-preview.html` from that server. The fixtures use synthetic data, block network access and are not live-account validation. Reports from the last run are included: `INSPECTOR-CHECKS.txt`, `NAMING-CHECKS.txt`, `LISTING-CHECKS.txt`, `SERVICE-CHECKS.txt`, `LINK-CHECKS.txt`, `REPORT-CHECKS.txt`, `AUDIT-CHECKS.txt`, `REQUEST-CHECKS.txt`, `GROUP-CHECKS.txt`, `REQUEST-BROWSER-CHECKS.txt`, `INSPECTOR-BROWSER-CHECKS.txt`, `LISTING-BROWSER-CHECKS.txt`.
+Then open `inspector-preview.html`, `listing-preview.html` and `requests-preview.html` from
+that server. The fixtures use synthetic data, block network access, and are not live-account
+validation. The reports from the last run ship beside this file: `AUDIT-CHECKS.txt`, `CAPTURE-CHECKS.txt`, `FILES-CHECKS.txt`, `GROUP-CHECKS.txt`, `GUIDES-CHECKS.txt`, `INSPECTOR-BROWSER-CHECKS.txt`, `INSPECTOR-CHECKS.txt`, `INTERNALS-CHECKS.txt`, `LINK-CHECKS.txt`, `LISTING-BROWSER-CHECKS.txt`, `LISTING-CHECKS.txt`, `MODERATION-CHECKS.txt`, `NAMING-CHECKS.txt`, `PAGE-CHECKS.txt`, `PROFILE-CHECKS.txt`, `REPORT-CHECKS.txt`, `REQUEST-BROWSER-CHECKS.txt`, `REQUEST-CHECKS.txt`, `RULES-CHECKS.txt`, `SERVICE-CHECKS.txt`, `STORE-CHECKS.txt`, `TEMPLATE-CHECKS.txt`.
+
+The validation record for each version — what was built, what was checked, and what was
+confirmed to fail when the fix was taken back out — is in `VALIDATION-<version>.txt`.
 
 Original credits: Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S; DKOKTO Scene Edition personal customization.
