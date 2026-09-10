@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DarkPeers - Torrent Inspector
 // @namespace    dkokto.darkpeers.inspector
-// @version      1.23.0
+// @version      1.24.0
 // @description  Torrent Inspector and automatic listing naming badges, checked against DarkPeers or Zenith rules. Reads the page only; makes no requests.
 // @author       🤖T.R.A.V.I.S (original Chungus Edition); DKOKTO personal customization
 // @match        https://darkpeers.org/*
@@ -31,6 +31,7 @@
 // @match        https://*.jme-reunit3d.de/*
 // @match        https://*.lat-team.com/*
 // @match        https://*.lst.gg/*
+// @match        https://*.luminarr.me/*
 // @match        https://*.malayabits.cc/*
 // @match        https://*.nordicq.org/*
 // @match        https://*.oldtoons.world/*
@@ -1050,7 +1051,7 @@ GPLAY|Google Play
 HBO|HBO
 HGM|Hungama OTT
 HGTV|HGTV
-HIDI|HIDIVE
+HIDI / HIDIVE|HIDIVE
 HIST|History Channel
 HLMK|Hallmark
 HMAX / MAX|HBO Max (Max)
@@ -1175,7 +1176,7 @@ TVNZ|TVNZ
 UFC|UFC
 UKTV|UKTV
 UNIV|Univision
-UNXT|U-NEXT
+UNXT / U-NEXT|U-NEXT
 USAN|USA Network
 VDO|Vidio
 VH1|VH1
@@ -1202,9 +1203,48 @@ YHOO|Yahoo
 YOUKU|YoukuTV
 ZDF|ZDF
 ZEE5|ZEE5`;
+    // The Japanese broadcasters and anime services from Luminarr's Streaming Provider
+    // Abbreviations list (luminarr.me/wikis/7), supplied 10 Sep 2026. Every one of the 195
+    // general abbreviations on that page was already on the list above; these were not.
+    //
+    // Three of its abbreviations collide with one already in use, and are deliberately NOT
+    // added: MX (Tokyo MX there, MONOMAX here), TBS (TBS Television there, TBS here) and
+    // ABC (Asahi Broadcasting Corporation there, American Broadcasting Company here). The
+    // first spelling wins, and quietly changing what MX means in every existing title check
+    // would be worse than leaving one broadcaster unlisted.
+    //
+    // Two more are on the page but not here: "CS-Fuji ONE" and "M-ON!" cannot appear as a
+    // token in a title, and inventing a token-safe spelling for them would be inventing.
+    const JAPAN = `ABMA|Abema
+ANIMAX|Animax
+AO|Anime Onegai
+AT-X|Anime Theatre X
+Baha|Bahamut Animation Madness
+B-Global / Bstation|Bilibili
+BSP / NHK-BSP|NHK BS Premium
+BS4|BS Nippon TV
+BS5 / EX-BS / BS-EX|BS TV Asahi
+BS6|BS-TBS
+BS7 / BSJ / BS-TX|BS TV TOKYO
+BS8 / BS-Fuji|BS Fuji
+BS11|Nippon BS Broadcasting
+BS12|BS12
+CX|Fuji TV
+CS3 / EX-CS1 / CS-EX1 / CSA|TV Asahi Channel 1
+DMM|DMM
+EX|TV Asahi
+FOD|Fuji TV On Demand
+KBC|Kyushu Asahi Broadcasting
+NHKG|NHK General TV
+NHKE|NHK Education TV
+NTV|Nippon TV
+TX|TV TOKYO
+WAKA|Wakanim
+WOWOW|Wowow
+YTV|Yomiuri TV`;
 
     const entries=[],index=new Map();
-    for(const line of DATA.split('\n')) {
+    for(const line of (DATA+'\n'+JAPAN).split('\n')) {
         const [left,name]=line.split('|');
         if(!left||!name)continue;
         const spellings=left.split('/').map(part=>part.trim()).filter(Boolean);
@@ -2138,7 +2178,7 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
         if(audioIndex>=0&&channels&&pos(channels)<audioIndex)add('error','channel-order','Channels follow the audio codec.');
         if(type&&resolution&&pos(type)+start<pos(resolution))add('error','type-order','Resolution belongs before the source/type.');
         if(/WEB/i.test(type?.[1]||'')){
-            const prefix=tail.slice(0,pos(type)).trim().replace(/[._]+$/,''),service=prefix.match(/(?:^|[ ._])([A-Z][A-Z0-9+]{1,11})$/i)?.[1];
+            const prefix=tail.slice(0,pos(type)).trim().replace(/[._]+$/,''),service=prefix.match(/(?:^|[ ._])([A-Z](?:[A-Z0-9+]{1,11}|[A-Z0-9+]{0,11}-[A-Z0-9+]{1,11}))$/i)?.[1];
             if(!service||/^(?:DS4K|HDR|REMUX|MULTI)$/i.test(service))add('review','web-service','Include and verify the streaming-service abbreviation immediately before WEB-DL / WEBRip. The service cannot be inferred from media tracks.');
             else if(/^PMT$/i.test(service))add('error','paramount','Use PMTP for Paramount (your configured convention).');
             else {
@@ -2194,6 +2234,323 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
    typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./services.js'):DKOKTO_SERVICES,
    typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./groups.js'):DKOKTO_GROUPS,
    typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./rules.js'):DKOKTO_RULES);
+
+// Rule sets for trackers whose guides are in hand, in the same profile format you would
+// paste in yourself — data, not code. Nothing here is fetched: each one is the guide as the
+// user supplied it, and the module says plainly which parts of a guide it does NOT have.
+//
+// Sources, cited rather than inferred:
+//   · LUME (luminarr.me) — "Naming Guide", the two title templates and the explanation of
+//     every title element, supplied by the user 10 Sep 2026. Its streaming/HDTV SOURCE list
+//     (luminarr.me/wikis/7) and its banned-group list are NOT in hand, and nothing here
+//     pretends otherwise.
+//   · OnlyEncodes+ (onlyencodes.cc) — "Upload Guide + Rules" (wikis/2), supplied by the user
+//     10 Sep 2026. Its naming guidelines (wikis/18) and banned-group list (wikis/1) are NOT
+//     in hand: the title itself is checked against the shared templates only, and the notes
+//     say so rather than inventing a naming rule.
+//
+// Adding one of these is your choice, not this script's: it changes which rules a badge
+// cites, so nothing is added until you press Add. A profile added from here is an ordinary
+// added tracker afterwards — editable, exportable and removable like any other.
+const DKOKTO_TRACKER_GUIDES = (() => {
+    const FORMAT='dkokto-tracker-rules';
+
+    // --- LUME ---------------------------------------------------------------------------
+    // Both of LUME's templates are the scene-style order the shared templates already check
+    // (Name … Resolution SOURCE TYPE … ACodec Channels … VCodec-Tag), which is why base is
+    // "dp": all seven of the guide's own examples pass those checks unchanged, and the rules
+    // below are only where LUME's vocabulary differs from what a title commonly carries.
+    const LUME={
+        format:FORMAT,version:1,key:'lume',label:'LUME',base:'dp',hosts:['luminarr.me'],
+        groups:{banned:[],conditional:[],sources:[]},
+        resolutions:['480i','480p','576i','576p','720p','1080i','1080p','2160p','4320p'],
+        rules:[
+            {code:'vcodec-dot',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])H26[45](?=$|[ .-])',
+             message:'LUME’s VCodec list writes it H.264 or H.265, with the dot. (x264 and x265 are also on the list — they name the encoder rather than the format.)'},
+            {code:'acodec-ddp',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])(?:DDP\\d?(?:\\.\\d)?|E-?AC-?3)(?=$|[ .-])',
+             message:'LUME names the audio codec by its commercial name: DD+ (or DD+ EX). DDP and E-AC-3 are not on its ACodec list.'},
+            {code:'acodec-ac3',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])AC-?3(?=$|[ .-])',
+             message:'LUME’s ACodec list writes Dolby Digital as DD (or DD EX), not AC3.'},
+            {code:'acodec-dolby',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])Dolby[ .](?:Digital|TrueHD)',
+             message:'LUME’s ACodec list uses the short commercial names: DD, DD+, TrueHD, DTS-HD MA, and so on.'},
+            {code:'object-atmos',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])Dolby[ .]Atmos(?=$|[ .-])',
+             message:'The Object element is Atmos on its own (the only other value is Auro3D).'},
+            {code:'type-webdl',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])WEBDL(?=$|[ .-])',
+             message:'LUME’s TYPE element is written WEB-DL, with the dash.'},
+            {code:'type-webrip',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])WEB-Rip(?=$|[ .-])',
+             message:'LUME’s TYPE element is written WEBRip, as one word.'},
+            {code:'remux-source',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:Blu-ray.*REMUX|REMUX.*Blu-ray)',
+             message:'For a remux, LUME’s SOURCE list is BluRay or UHD BluRay, one word. Blu-ray and UHD Blu-ray with the hyphen are the Full Disc spellings.'},
+            {code:'dvd-resolution',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])\\d{3,4}[pi][ .](?:(?:NTSC|PAL)[ .])?DVD(?:5|9|Rip)?(?=$|[ .-])',
+             message:'LUME omits the Resolution element for DVDs: the SOURCE element already says what the resolution is.'},
+            {code:'dub-dual-audio',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])Dual[ .]Audio(?=$|[ .-])',
+             message:'The Dub element is written Dual-Audio, hyphenated. The other two values are Multi (as in German Multi) and Dubbed.'},
+            {code:'cut-apostrophe',severity:'error',profiles:['movie','disc'],
+             forbid:'(?:^|[ .])(?:Directors|Producers|Collectors)[ .](?:Cut|Edition)(?=$|[ .-])',
+             message:'On LUME’s lists these carry the apostrophe: Director’s Cut, Producer’s Cut, Collector’s Edition.'},
+            {code:'cut-extended',severity:'error',profiles:['movie','disc'],
+             forbid:'(?:^|[ .])Extended[ .]Version(?=$|[ .-])',
+             message:'The Cut element offers Extended, Extended Cut or Extended Edition; Extended Version is not one of them.'},
+            {code:'edition-disc-only',severity:'review',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])(?:Anniversary[ .]Edition|4K[ .]Remaster|Remastered|Criterion[ .]Collection|Collector’?s[ .]Edition|Deluxe[ .]Edition|Restored)(?=$|[ .-])',
+             message:'LUME includes the Edition element only for Full Discs. If this is an encode, remux or WEB release, the edition word does not belong in the title — check the category before removing it.'},
+            {code:'nogroup',severity:'review',profiles:['movie','tv','disc'],
+             forbid:'-\\s?NOGRP\\s*$',
+             message:'Where a release has no group, LUME recommends the tag NOGROUP, or omitting the tag along with its dash.'}
+        ],
+        notes:[
+            {code:'elements',profiles:['movie','tv','disc'],
+             message:'LUME’s Name element is the internationally recognised name — TMDB’s, except in rare cases — with all its punctuation. A foreign title is written English Name AKA Original Name. LOCALE is only included where a release is genuinely region-specific. A TV year is only included where two shows share a name.'},
+            {code:'full-disc',profiles:['disc'],
+             message:'Edition, Region and 3D are Full Disc elements on LUME. Region is the disc’s release country as a three-letter code. A Full Disc SOURCE is written Blu-ray, UHD Blu-ray, HD DVD, NTSC DVD5/DVD9 or PAL DVD5/DVD9; a remux uses BluRay, UHD BluRay, HDDVD, NTSC DVD or PAL DVD.'},
+            {code:'web-sources',profiles:['movie','tv'],
+             message:'LUME’s Streaming Provider Abbreviations list is in hand and every one of its 195 general abbreviations was already recognised here; its Japanese broadcasters and anime services were added to that list in 1.30.0. Three of them collide with a spelling already in use — MX, TBS and ABC mean something else on the list this ships with — and were left as they were rather than quietly changed.'}
+        ]
+    };
+
+    // --- OnlyEncodes+ -------------------------------------------------------------------
+    // Three pages, all supplied: the Upload Guide + Rules (wikis/2), the naming standard
+    // (wikis/18) and the banned release groups (wikis/1). Both of its templates are the
+    // element order the shared templates already check — Resolution … SOURCE TYPE … Acodec
+    // Channels … Vcodec-Tag — which is why base is "dp"; the rules below are where its
+    // vocabulary and its element rules are its own.
+    //
+    // The banned list as the page publishes it: the name, the reason where it gives one,
+    // and the date where it gives one. Two groups the page marks as removed are NOT here —
+    // BHDStudio (removed 1-20-24) and Trix (removed 4-30-24) — because they are no longer
+    // banned there, and a list that keeps refusing a group the tracker has un-banned is
+    // worse than no list. EVO is not here either: the page allows its WEB-DLs, which is a
+    // conditional group and is written as one. BRrip is a source marker rather than a tag,
+    // so it goes in groups.sources where it can be matched anywhere in a title.
+    const OE_BANNED=`0neshot
+3LT0N
+4K4U|Quality
+4yEo
+$andra
+[Oj]
+Alcaide_Kira|Retagger|7-22-25
+AFG
+AkihitoSubs
+AniHLS
+Anime Time
+AnimeRG
+AniURL
+AOC
+AR
+AROMA|Re-Tagging
+ASW
+aXXo
+BakedFish
+BiTOR
+bonkai
+Cleo
+CM8
+C4K
+CrEwSaDe
+core
+d3g|Quality
+DDR
+DE3PM|Fake WEB-DL and hides encode settings|10-12-24
+DeadFish
+DeeJayAhmed
+DNL
+ELiTE
+EMBER|Re-Encodes
+eSc
+EZTV
+FaNGDiNG0
+FGT|Re-Tagging
+fenix
+FUM
+FRDS
+FROZEN
+GalaxyTV
+GalaxyRG
+GalaxyRG265
+GERMini
+Grym
+GrymLegacy
+HAiKU
+HD2DVD
+HDTime
+Hi10|Re-Encodes
+HiQVE|Watermark on screen|1-20-24
+ION10|Quality
+iPlanet
+iVy|Only where no other encode is on site, and trumped by any approved encode|9-19-25
+INFINITY|RARBG clone
+JacobSwaggedUp
+JIVE
+Judas|Re-Encodes
+KiNGDOM
+KONTRAST|Hidden encoding settings|1-18-26
+LAMA|Re-Tagging
+Leffe
+LiGaS
+LOAD
+Lootera|Hidden encoding settings|2-10-26
+LycanHD
+MeGusta|Quality
+MezRips
+mHD
+Mr.Deadpool
+mSD
+NemDiggers
+neoHEVC
+NeXus|Quality
+NhaNc3
+nHD
+nikt0
+nSD
+NOIVTC
+pahe.in|Quality
+PlaySD
+playXD
+PRODJi
+ProRes
+project-gxs
+PSA|Quality
+QaS
+Ranger
+RAPiDCOWS
+RARBG|Quality
+Raze
+RCDiVX
+RDN
+Reaktor
+REsuRRecTioN
+RMTeam
+ROBOTS
+rubix
+SANTi
+SHUTTERSHIT|Quality
+SM737|Must include source info: old encode sources may have faked DV|5-9-2026
+SpaceFish
+SPASM
+SSA
+TBS
+Telly
+Tenrai-Sensei
+TERMiNAL
+TGx|Quality|1-20-24
+TM
+topaz
+ToVaR|Hides encoding settings in MediaInfo|12-15-24
+TSP|Quality (software encodes)
+TSPxL|Quality (software encodes)
+UnKn0wn|Remux typically has encoded lossy audio|5-28-24
+URANiME
+UTOPIA||3-18-26
+UTR
+VipapkSudios
+ViSION
+WAF
+Wardevil
+x0r
+xRed
+XS
+YAWNTiC|Hides encoding settings in MediaInfo|4-19-25
+YAWNiX|Hides encoding settings in MediaInfo|4-19-25
+YakuboEncodes
+YIFY|Quality
+YTS|Quality
+YuiSubs
+ZKBL
+ZmN
+ZMNT|Quality`.split('\n').map(line=>line.split('|').map(cell=>cell.trim()));
+
+    const ONLYENCODES={
+        format:FORMAT,version:1,key:'oe',label:'OnlyEncodes+',base:'dp',hosts:['onlyencodes.cc'],
+        groups:{
+            banned:OE_BANNED,
+            conditional:[{name:'EVO',allowIf:'(?:^|[ ._])WEB-?DL(?=$|[ ._-])',allowed:'WEB-DLs',
+                otherwise:'this title does not say WEB-DL'}],
+            sources:[{name:'BRrip',pattern:'(?:^|[ ._])BR-?rip(?=$|[ ._-])'}]
+        },
+        resolutions:['480i','480p','576i','576p','720p','1080i','1080p','2160p','4320p'],
+        rules:[
+            {code:'tracker-tag',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'@\\s?[A-Za-z0-9]{2,}',
+             message:'Rule 6.3.1: tags must not include references to other private trackers, such as @OE or @OnlyEncodes.'},
+            {code:'nogrp',severity:'review',profiles:['movie','tv','disc'],
+             forbid:'-\\s?NOGRP\\s*$',
+             message:'Rules 6.3.2 and 9: NOGRP is only allowed with staff approval. Every encode must carry a group or a personal tag.'},
+            {code:'group-tag',severity:'review',profiles:['movie','tv','disc'],
+             require:'-\\s?[A-Za-z0-9][A-Za-z0-9._+-]{0,29}\\s*$',
+             message:'Rule 6.3.2: all encodes must have a group or personal tag, and no tag closes this title. Confirm the release is genuinely untagged.'},
+            {code:'season-pack',severity:'review',profiles:['tv'],
+             forbid:'(?:^|[ .])S\\d{2}(?![ .]?E\\d)',
+             message:'Rule 9: only upload full season packs after the season has finished airing in your country.'},
+            {code:'multi-season',severity:'error',profiles:['tv'],
+             forbid:'(?:^|[ .])S\\d{2}[ .]?-[ .]?S?\\d{2}(?![ .]*COMPLETE)',
+             message:'A multi-season pack is written S01-S03 COMPLETE — the range, then the word COMPLETE.'},
+            {code:'remux-log',severity:'review',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])REMUX(?=$|[ .-])',
+             message:'Rule 1.1: a remux without the eac3to log is trumpable by one that includes it.'},
+            {code:'acodec-ddp',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])(?:DDP\\d?(?:\\.\\d)?|E-?AC-?3)(?=$|[ .-])',
+             message:'The ACodec element is the commercial name: DD+ (or DD+ EX). DDP and E-AC-3 are not on the list.'},
+            {code:'acodec-ac3',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])AC-?3(?=$|[ .-])',
+             message:'The ACodec element writes Dolby Digital as DD (or DD EX), not AC3.'},
+            {code:'vcodec-web',severity:'error',profiles:['movie','tv'],
+             forbid:'WEB-DL.*(?:^|[ .])x26[45](?=$|[ .-])',
+             message:'For a WEB-DL the VCodec element is H.264, H.265, VP9 or MPEG-2. x264 and x265 name an encoder, and belong to encodes and WEBRips.'},
+            {code:'vcodec-webrip',severity:'error',profiles:['movie','tv'],
+             forbid:'WEBRip.*(?:^|[ .])H\\.?26[45](?=$|[ .-])',
+             message:'For a WEBRip the VCodec element is x264 or x265 — it has been re-encoded, so the encoder is what is named.'},
+            {code:'vcodec-remux',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'REMUX.*(?:^|[ .])(?:x26[45]|H\\.?26[45])(?=$|[ .-])',
+             message:'For a remux the VCodec element is AVC, HEVC, MPEG-2 or VC-1: the stream is untouched, so the format is what is named.'},
+            {code:'dvd-resolution',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])\\d{3,4}[pi][ .](?:(?:NTSC|PAL)[ .])?DVD(?=$|[ .-])',
+             message:'The Resolution element is omitted for DVD-sourced releases: the SOURCE element already says it.'},
+            {code:'dvd-vcodec',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:NTSC|PAL)[ .]DVD.*(?:^|[ .])(?:x26[45]|H\\.?26[45]|AVC|HEVC)(?=$|[ .-])',
+             message:'The VCodec element is omitted for DVD-sourced releases.'},
+            {code:'edition-name',severity:'error',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])(?:\\d+(?:th|st|nd|rd)[ .]Anniversary[ .]Edition|Anniversary[ .]Edition|4K[ .]Remaster|Remastered|Criterion[ .]Collection|Limited)(?=$|[ .-])',
+             message:'The Edition is kept out of the name and put in the description. Only a disc may carry the distributor, e.g. Criterion Collection — if this is a disc, check the category first.'},
+            {code:'web-service',severity:'review',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])\\d{3,4}[pi][ .]WEB-?(?:DL|Rip)(?=$|[ .-])',
+             message:'For a WEB-DL or WEBRip the SOURCE element is the streaming service abbreviation, and none stands between the resolution and the type here.'},
+            {code:'repack-number',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])(?:REPACK|PROPER|RERip)[ .](?:2|3|II)(?=$|[ .-])',
+             message:'A second repack, proper or rerip is written REPACK2, PROPER2 or RERip2 — the number joined to the word.'}
+        ],
+        notes:[
+            {code:'naming-details',profiles:['movie','tv','disc'],
+             message:'What the naming standard states that a title alone cannot settle: the Name is IMDb’s, with all its punctuation; LOCALE only disambiguates titles sharing a name and year; LANGUAGE is UPPERCASE and only for non-English releases with no English audio; specials are S00E## (on TVDb) or S##E00 (not on TVDb) with the special’s name; extras packs are S## Extras or S00 Description; anime OVAs are S## OVA; Hybrid means a main stream built from two or more sources; and a FanRes carries its process word.'},
+            {code:'description',profiles:['movie','tv','disc'],
+             message:'What the description must carry (rules 5, 6.8, 6.9): at least three full-screen screenshots, BBCode medium linked, on Imgbox or another allowed host — not Imgur, Postimg or PixHost. MediaInfo including the encoding settings; an AV1 encode without them in MediaInfo must carry them in the description. Where Audio or Subtitles read Unknown, add a NOTE giving the correct languages. BDInfo is required for full discs only. The Edition belongs here rather than in the name.'},
+            {code:'content',profiles:['movie','tv','disc'],
+             message:'OnlyEncodes rules a title cannot show (rules 1.1, 9, 7.5): single-pass encodes count as Low Quality; non-English content needs English subtitles or a second English audio track; personal releases must be seeded two weeks; and a postponed upload is deleted if you do not reply within five days.'},
+            {code:'torrent',profiles:['movie','tv','disc'],
+             message:'Creating the torrent (rules 3 and 4): V1 format, Private ticked, OE in the source field, no NFOs, images or stray files in the folder, and the piece size by total size — under 1GB 1MiB, 1–4GB 2MiB, 4–12GB 4MiB, 12–20GB 8MiB, above 20GB 16MiB. Upload Assistant does all of this for you.'}
+        ]
+    };
+
+    const ALL=[
+        {profile:LUME,summary:'The LUME naming guide: both title templates and the vocabulary for every element.',
+         source:'luminarr.me — Naming Guide, as supplied 10 Sep 2026.'},
+        {profile:ONLYENCODES,summary:'OnlyEncodes+ upload rules: what a title can be checked for, and the rest as standing reminders.',
+         source:'onlyencodes.cc/wikis/2 — Upload Guide + Rules, as supplied 10 Sep 2026.'}
+    ];
+    // A fresh copy each time: what the caller does with it must never reach this list.
+    const list=()=>ALL.map(entry=>({...entry,profile:JSON.parse(JSON.stringify(entry.profile))}));
+    const get=key=>list().find(entry=>entry.profile.key===key)||null;
+    return {list,get,FORMAT};
+})();
 
 // The Tracker rules panel: build a profile from a form, paste one as JSON, or manage the
 // ones already added. Everything stays in this browser; nothing is fetched or sent.
@@ -2353,6 +2710,32 @@ const DKOKTO_PROFILES_UI = ((profiles,rules) => {
                 onChange();say(profile.label+' removed.');draw();
             }));
             row.append(actions);wrap.append(row);
+        }
+        // Rule sets this script ships with, because their guides were supplied. Adding one
+        // is your choice: it changes which rules a badge cites, so nothing happens until
+        // Add is pressed, and what it adds is an ordinary added tracker afterwards.
+        const guides=(()=>{try{return typeof DKOKTO_TRACKER_GUIDES!=='undefined'?DKOKTO_TRACKER_GUIDES.list():[];}catch{return [];}})();
+        if(guides.length) {
+            const ready=el('fieldset');ready.append(el('legend','Rule sets that ship with this script'));
+            ready.append(el('p','Built from the guides as they were supplied. Adding one is the same as pasting its JSON: it becomes an added tracker you can edit, export or remove.'));
+            for(const entry of guides) {
+                const row=el('div',undefined,'dk-profile-installed');
+                const held=profiles.get(entry.profile.key);
+                row.append(el('strong',entry.profile.label+(held?' — added':'')),
+                    el('small',entry.summary),el('small',entry.source));
+                const actions=el('div',undefined,'dk-row');
+                actions.append(button(held?'Add again, replacing yours':'Add '+entry.profile.label,()=>{
+                    if(held&&!window.confirm('Replace your '+entry.profile.label+' rules with the shipped ones? Anything you changed is lost.'))return;
+                    const result=profiles.save(entry.profile);
+                    if(!report(result))return;
+                    onChange();say(entry.profile.label+' added: '+result.profile.rules.length+' rules, '+
+                        result.profile.notes.length+' standing notes. Pick it in the Rules list to use it.');
+                    draw();
+                }));
+                actions.append(button('Copy JSON',()=>copy(JSON.stringify(entry.profile,null,2))));
+                row.append(actions);ready.append(row);
+            }
+            wrap.append(ready);
         }
         const starters=el('fieldset');starters.append(el('legend','Start from a built-in'));
         starters.append(el('p','A copy of DarkPeers’ or Zenith’s own profile, as JSON, to edit into a new tracker. Change the key and name — the built-ins themselves are not editable.'));
@@ -4124,6 +4507,14 @@ const DKOKTO_TRACKERS = (() => {
         unit('utopia','Utopia','utp.to','video','Ukrainian'),
         unit('bitporn','BitPorn','bitporn.eu','adult'),
         unit('cjav','ClearJAV','clearjav.com','adult','Asian'),
+        // Address confirmed by the user, 10 Sep 2026, from a search on the site itself.
+        unit('lume','LUME','luminarr.me'),
+        // The AvistaZ family. These are not UNIT3D and their search is their own; each
+        // address is the user's, pasted from a working search there on 10 Sep 2026, and is
+        // kept exactly as he tested it rather than tidied.
+        site('avz','AvistaZ','video','https://avistaz.to/torrents?in=1&search={q}&type=0&tags=&uploader='),
+        site('cz','CinemaZ','video','https://cinemaz.to/torrents?in=1&search={q}&type=0&tags=&uploader='),
+        site('phd','PrivateHD','video','https://privatehd.to/torrents?in=1&search={q}&type=0&tags=&uploader='),
         site('ptp','PassThePopcorn','movie','https://passthepopcorn.me/torrents.php?searchstr={q}','https://passthepopcorn.me/torrents.php?searchstr={imdb}'),
         site('btn','BroadcasTheNet','tv','https://broadcasthe.net/torrents.php?searchstr={q}'),
         site('hdb','HDBits','video','https://hdbits.org/browse.php?search={q}'),
