@@ -1,48 +1,120 @@
-DarkPeers — Torrent Inspector · changelog
+# Torrent Inspector · changelog
 
-A standalone Tampermonkey script: the MediaInfo Inspector and the automatic naming badges, with no theme, artwork, games or forum tools. It reads the page you are on and makes no requests of any kind — every link opens only when you click it.
+A standalone Tampermonkey script: the MediaInfo Inspector and the automatic naming
+badges, with no theme, artwork, games or forum tools. It reads the page you are on and
+makes no requests of any kind — every link opens only when you click it.
 
 Newest first.
 
-1.24.0 — two tracker rule sets that ship with the script, and four addresses
-LUME (luminarr.me) and OnlyEncodes+ (onlyencodes.cc), built from the guides as they were supplied, offered under Added trackers → Rule sets that ship with this script. Press Add and the profile becomes an ordinary added tracker: editable, exportable, removable, and pickable in the Rules list. Nothing is added until you press it, because adding one changes which rules a badge cites.
-LUME carries its resolution list and the vocabulary its Naming Guide sets for each title element: DD+ rather than DDP or E-AC-3, DD rather than AC3, H.264/H.265 with the dot, WEB-DL with the dash and WEBRip as one word, Atmos on its own, Dual-Audio hyphenated, Director's Cut with its apostrophe, the resolution omitted for DVDs, and the Full Disc spelling Blu-ray told apart from the remux spelling BluRay. All seven of the guide's own examples pass its rules and the shared naming checks unchanged — that is a check in the suite, not a claim.
-OnlyEncodes+ checks the title only for what its Upload Guide actually states: no tags referencing other trackers (6.3.1), NOGRP needing staff approval and every encode carrying a tag (6.3.2), season packs only after the season has aired (9), and a remux without the eac3to log being trumpable (1.1). The rest of that guide is about the upload rather than the title — screenshots, MediaInfo, piece sizes, seeding — and is carried as standing notes.
-OnlyEncodes' naming standard and banned list (wikis/18 and wikis/1) are in the profile too: 16 rules and 136 banned groups. The naming rules are the ones its standard is specific about — a WEB-DL names the format (H.264/H.265/VP9/MPEG-2), a WEBRip names the encoder (x264/x265), a remux names the format again (AVC/HEVC/MPEG-2/VC-1); DD+ not DDP; Resolution and VCodec both omitted for DVD sources; the Edition kept out of the name; S01-S03 COMPLETE for a multi-season pack; REPACK2 with the number joined on; and a missing service between the resolution and WEB-DL.
-The banned list keeps its reasons and dates, so a badge cites the tracker's own words. BHDStudio and Trix are marked removed on that page and are NOT on the list. EVO is not a flat ban but a conditional group — its WEB-DLs are allowed and nothing else is. BRrip is a source marker, matched anywhere in a title rather than as a tag.
-All four of OnlyEncodes' own examples raise no error; the two review notes that do fire on them (the eac3to log, a season pack) are meant to.
-Four addresses added to the tracker catalogue, each confirmed by the user: LUME (luminarr.me, UNIT3D — the script now runs there and picks the LUME rules by itself), and AvistaZ, CinemaZ and PrivateHD, kept exactly as they were tested. 58 entries to 62.
-Luminarr's provider list is in hand: all 195 general abbreviations were already known; its Japanese broadcasters and anime services were added (290 services). MX, TBS and ABC mean something else on the existing list and were deliberately left alone.
-Adding them found a real gap: the service token before WEB-DL was matched as letters and digits only, so AT-X, B-Global, NHK-BSP and the BS channels read as no service at all. A hyphenated abbreviation is now one abbreviation; a hyphenated word that is not a service is still reported.
-LUME carries no banned list, because none was supplied, and the profile says so.
+---
 
-1.22.0 — the settings are the same settings on every tracker
-The trackers you are on, added trackers and their rules, the internal-groups list and the per-tracker rule choice moved to Tampermonkey's per-script store, shared by every site the script runs on. Browser storage is per domain and could not do it. No new permission.
-The audit, the decision log, private notes and seen requests stay per site: they are a record of work on that tracker, not a setting.
-A setup made before this version is carried up the first time it is read; writes reach both stores, so an older copy of the script still reads what the newer one did.
+## 1.24.0 — two tracker rule sets that ship with the script, and four addresses
 
-1.21.2 — three things reported from the trackers
-Show the JSON answered an empty form with the save-time error about the key. It shows the draft now and says what is still needed; Save as file stays strict and says so.
-The lookup row's own-tracker search was labelled "Search DarkPeers" on every tracker. It is named after the site you are on now, or the hostname, or "Search this tracker".
-DarkPeers and Zenith are in the cross-check catalogue; the tracker you are standing on is skipped instead, with its reason. Writing that check found the host being lowercased after the www. prefix was stripped, so WWW.DarkPeers.org was not recognised.
+- **LUME** (luminarr.me) and **OnlyEncodes+** (onlyencodes.cc), built from the guides as they
+  were supplied, offered under *Added trackers* → *Rule sets that ship with this script*.
+  Press Add and the profile becomes an ordinary added tracker: editable, exportable,
+  removable, and pickable in the Rules list. Nothing is added until you press it, because
+  adding one changes which rules a badge cites.
+- **LUME** carries its resolution list and the vocabulary its Naming Guide sets for each
+  title element: DD+ rather than DDP or E-AC-3, DD rather than AC3, H.264/H.265 with the dot,
+  WEB-DL with the dash and WEBRip as one word, Atmos on its own, Dual-Audio hyphenated,
+  Director's Cut with its apostrophe, the resolution omitted for DVDs, and the Full Disc
+  spelling Blu-ray told apart from the remux spelling BluRay. All seven of the guide's own
+  examples pass its rules and the shared naming checks unchanged — that is a check in the
+  suite, not a claim.
+- **OnlyEncodes+** checks the title only for what its Upload Guide actually states: no tags
+  referencing other trackers (6.3.1), NOGRP needing staff approval and every encode carrying
+  a tag (6.3.2), season packs only after the season has aired (9), and a remux without the
+  eac3to log being trumpable (1.1). The rest of that guide is about the upload rather than
+  the title — screenshots, MediaInfo, piece sizes, seeding — and is carried as standing
+  notes.
+- **OnlyEncodes' naming standard and banned list** (wikis/18 and wikis/1) are in the profile
+  too: 16 rules and 136 banned groups. The naming rules are the ones its standard is specific
+  about — a WEB-DL names the format (H.264/H.265/VP9/MPEG-2), a WEBRip names the encoder
+  (x264/x265), a remux names the format again (AVC/HEVC/MPEG-2/VC-1); DD+ not DDP; Resolution
+  and VCodec both omitted for DVD sources; the Edition kept out of the name; S01-S03 COMPLETE
+  for a multi-season pack; REPACK2 with the number joined on; and a missing service between
+  the resolution and WEB-DL.
+- **The banned list keeps its reasons and dates**, so a badge cites the tracker's own words.
+  BHDStudio and Trix are marked removed on that page and are NOT on the list. EVO is not a
+  flat ban but a conditional group — its WEB-DLs are allowed and nothing else is. BRrip is a
+  source marker, matched anywhere in a title rather than as a tag.
+- All four of OnlyEncodes' own examples raise no error; the two review notes that do fire on
+  them (the eac3to log, a season pack) are meant to.
+- **Four addresses added to the tracker catalogue**, each confirmed by the user: LUME
+  (luminarr.me, UNIT3D — the script now runs there and picks the LUME rules by itself), and
+  AvistaZ, CinemaZ and PrivateHD, kept exactly as they were tested. 58 entries to 62.
+- **Luminarr's provider list** is in hand: all 195 general abbreviations were already known;
+  its Japanese broadcasters and anime services were added (290 services). MX, TBS and ABC
+  mean something else on the existing list and were deliberately left alone.
+- Adding them found a real gap: the service token before WEB-DL was matched as letters and
+  digits only, so AT-X, B-Global, NHK-BSP and the BS channels read as no service at all. A
+  hyphenated abbreviation is now one abbreviation; a hyphenated word that is not a service is
+  still reported.
+- **LUME carries no banned list**, because none was supplied, and the profile says so.
 
-Fixed in 1.21.1
+## 1.23.0 — the group list stopped ageing, and a pack hands you its file list
 
-Five bugs found in a code review of 1.21.0. Each was reproduced against the module before it was changed, and each fix carries a check confirmed to fail with the bug put back.
+- **"No home tracker recorded" for a group that ships on the list.** Adding one group used to
+  save a copy of the whole directory beside it, and from then on nothing added to the shipped
+  list in a later version ever reached you. What is kept now is what you *changed* — your
+  additions and the rows you took out — layered over the directory the script ships, so new
+  versions bring their new groups with them and what you did stays done on top of them. A list
+  saved by an older version is read as additions only: nothing is deleted on a guess.
+- **New on the shipped list**, from the user as a DarkPeers moderator (cited in the data file):
+  JBENT, "JBENT TAoE", OnlyMux and WhiskeyJack at OnlyEncodes+, and DOOBS at DarkPeers. Kitsune
+  at Aither, and twelve other names asked for in the same message, were already there.
+- **The empty first bullet in the group menu.** A row that is only a note was drawn as an empty
+  span with the note underneath it, so the bullet pointed at a blank line. It is one line now.
+- **[ MULTIPLE FILES ]**, under the release name of any torrent that holds more than one file.
+  Click it and the whole list goes to the clipboard: the folder and its total, then every file
+  with the exact byte count — the form a season pack has to be pasted in when it is checked.
+  Asked for by dreadful.
+- **The exact byte size on the vs panel.** UNIT3D puts the byte count in the title of every
+  size it rounds for display, so "17.56 GiB" now reads "17.56 GiB · 18855538688 B", and the
+  difference between two totals is given in bytes. Two files that both show "5.70 GiB" but
+  differ by a megabyte are now reported as differing — before, the rounded figures matched and
+  the difference was invisible. Where a page carried no byte count, none is invented from the
+  rounded one.
+- A page that re-renders its release name in place could write it back over the group tag,
+  leaving the name reading "…H.264-DKOKTODKOKTO" and every lookup built from it carrying that.
+  It is put right on the next pass.
 
-A bitrate or size with its thousands separated was read as its first group. MediaInfo writes 8 000 kb/s; the comparison read that as 8, so a 12.5 Mb/s release was reported as 100% higher than an 8 Mb/s one instead of 36%. The separators — space, no-break space, thin space, comma — now come out before the number is read.
+## 1.22.0 — the settings are the same settings on every tracker
 
-The AKA position check could never fire on a resolution. \d{3,4}[pi] was written inside a regex literal, where it matches a backslash rather than digits, so a title whose only technical word before the AKA was 1080p passed silently while the same title with a year was caught.
+- The trackers you are on, added trackers and their rules, the internal-groups list and the
+  per-tracker rule choice moved to Tampermonkey's per-script store, shared by every site the
+  script runs on. Browser storage is per domain and could not do it. No new permission.
+- The audit, the decision log, private notes and seen requests stay per site: they are a
+  record of work on that tracker, not a setting.
+- A setup made before this version is carried up the first time it is read; writes reach both
+  stores, so an older copy of the script still reads what the newer one did.
 
-A profile copied from a built-in carried a rule it did not describe. Every conditional group was exported with a WEB-DL pattern, so a copy of DarkPeers said HDT was allowed for Remuxes and then allowed it only on WEB-DLs.
+## 1.21.2 — three things reported from the trackers
 
-Editing a banned list did nothing until a reload if the length did not change. The built list was cached on the lengths of a profile's lists plus its label, so renaming a group left the old list in force: the group just removed was still refused, and its replacement was not.
+- Show the JSON answered an empty form with the save-time error about the key. It shows the
+  draft now and says what is still needed; Save as file stays strict and says so.
+- The lookup row's own-tracker search was labelled "Search DarkPeers" on every tracker. It is
+  named after the site you are on now, or the hostname, or "Search this tracker".
+- DarkPeers and Zenith are in the cross-check catalogue; the tracker you are standing on is
+  skipped instead, with its reason. Writing that check found the host being lowercased after
+  the www. prefix was stripped, so WWW.DarkPeers.org was not recognised.
 
-Three lines that did nothing are gone.
+## 1.21.1 — five bugs from a code review
 
-Three efficiency findings from the same review are done: the torrent page stamps its inputs cheaply instead of re-parsing the MediaInfo and re-reading the file table on every redraw; listingPage() is answered once per pass rather than two or three times (on a queue each answer walks every loose torrent link); and the audit store no longer rewrites itself when nothing has changed.
-
-Three were measured and left alone, on purpose: precompiling the naming regexes (200 titles check in 19.5 ms, so there is nothing there worth the risk in the module with 61 checks on it), memoising the release-name search across modules (saves about 8 ms a burst, at the cost of a cached answer about a page that may have changed — which is the fault behind the last three visible bugs), and folding the duplicated el(), clipboard and dialog helpers, which is worth doing as its own job rather than beside five behaviour fixes.
+- A bitrate or size with its thousands separated ("8 000 kb/s") was read as its first group,
+  so a 12.5 Mb/s release was reported as 100% higher than an 8 Mb/s one instead of 36%.
+- The AKA position check could never fire on a resolution: the marker list held \d{3,4}[pi]
+  inside a regex literal, where it matches a backslash rather than digits.
+- A profile copied from a built-in exported every conditional group with a WEB-DL pattern, so
+  a copy of DarkPeers said HDT was allowed for Remuxes and then allowed it only on WEB-DLs.
+- Editing a banned list took effect only after a reload when the length did not change: the
+  built list was cached on the lengths of the profile's lists plus its label.
+- Three no-op lines removed.
+- Redraw work: the torrent page stamps its inputs before re-parsing the MediaInfo and
+  re-reading the file table, listingPage() is answered once per pass, and the audit store
+  stops rewriting itself when nothing changed.
+- Each fix carries a check confirmed to fail with the bug put back.
 
 ## 1.21.0 — every UNIT3D tracker it can be pointed at, in a list you can walk
 
@@ -53,7 +125,7 @@ Three were measured and left alone, on purpose: precompiling the naming regexes 
 - The @match list is derived from the catalogue at build time and checked against it.
 - The chooser: your trackers first and open, the rest folded into counted groups, a search
   box over name/language/software, and each address behind its own button.
-  
+
 ## 1.20.2 — nothing appeared on a torrent page with a long cast list
 
 - The release-name search read only the first 400 candidate elements. Cast, crew, company and
@@ -85,7 +157,7 @@ Three were measured and left alone, on purpose: precompiling the naming regexes 
 - The vs comparison gained the tags and encode settings: muxer, muxing library, encoder, format
   settings, encoded and tagged dates, title tag, attachments, track titles, and the encode
   settings read option by option. It never calls a file altered.
-  
+
 ## 1.19.1 — the comparison panel was being read as the page
 
 - With the panel open, the lookup row, the other-versions row and the panel flashed in and
@@ -94,13 +166,15 @@ Three were measured and left alone, on purpose: precompiling the naming regexes 
 - The badge, lookup row and findings row were then built inside the panel and wiped by its
   next redraw. Same mistake as the blinking listing badge, in a new place.
 - SKIP now names every container this script draws, not the handful it happened to list.
-  
+
 ## 1.19.0 — the "vs" button: two releases compared, clipboard only
 
 - A "vs" button in the lookup row on a torrent page: capture this release, capture another,
   compare. Both slots are kept in this browser's own storage.
-- The payload follows HelperZ's block layout and itstwo flags, so a captured pair pastes into
-  WinMerge, meld or any two-pane diff tool.
+- The payload follows HelperZ's block layout (Torrent Moderation Helper, by MagnetZ) and its
+  two flags, so a captured pair pastes into WinMerge, meld or any two-pane diff tool.
+- HelperZ's companion server on 127.0.0.1:5123 is deliberately not used: this script still
+  declares "@grant none" and lists no @connect address, and a check asserts both.
 - Merged rather than swapped: the panel adds the file-level comparison a MediaInfo report
   cannot carry (file count, total size with the gap named, extraneous files, top folder)
   above the existing report comparison. Neither release is declared the better one.
@@ -113,7 +187,7 @@ Three were measured and left alone, on purpose: precompiling the naming regexes 
 - Group names with a space are quoted in the list, so "-Goki TAoE" resolves to OnlyEncodes+.
 - Retired/disbanded entries are kept and marked; prose asides in the sources are not filed as
   groups; the "No Home tracker" block is left out.
-  
+
 ## 1.17.3 — a group name can have a space in it
 
 - "…x265-Goki TAoE" is one group tag. It was read as no tag at all, so those rows were asked
@@ -137,7 +211,7 @@ Three were measured and left alone, on purpose: precompiling the naming regexes 
 - Addresses are never invented: a tracker this script has no address for stays plain text.
   Give it one by adding the tracker to the cross-check list, or by putting the address on its
   line in **Internal groups…**: `BeyondHD|BHDStudio FLUX|https://beyond-hd.me`.
-  
+
 ## 1.17.0 — the release group tag, and where it is internal
 
 - The group at the end of a release name is marked, on listings and on a torrent's page.
