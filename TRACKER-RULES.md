@@ -18,7 +18,7 @@ is added until you press it, because adding one changes which rules a badge cite
 | Rule set | Built from | What it does not have |
 | --- | --- | --- |
 | **LUME** (luminarr.me) | its Naming Guide — both title templates, and the vocabulary for every element | no banned-group list: none was supplied |
-| **OnlyEncodes+** (onlyencodes.cc) | its Upload Guide + Rules (`wikis/2`), its naming standard (`wikis/18`) and its banned list (`wikis/1`) — 16 rules, 136 groups | — |
+| **OnlyEncodes+** (onlyencodes.cc) | its Upload Guide + Rules, its naming standard and its banned list — 16 rules, 136 groups | — |
 
 Where a page was not supplied, the profile says so in its own standing notes rather than
 filling the gap with a guess. Paste it in and the checks can quote it instead.
