@@ -1,19 +1,20 @@
-# torrent_inspector# DarkPeers — Torrent Inspector · changelog
+DarkPeers — Torrent Inspector · changelog
 
-A standalone Tampermonkey script: the MediaInfo Inspector and the automatic naming
-badges, with no theme, artwork, games or forum tools. It reads the page you are on and
-makes no requests of any kind — every link opens only when you click it.
+A standalone Tampermonkey script: the MediaInfo Inspector and the automatic naming badges, with no theme, artwork, games or forum tools. It reads the page you are on and makes no requests of any kind — every link opens only when you click it.
 
 Newest first.
 
----
-1.23.0 — the group list stopped ageing, and a pack hands you its file list
-"No home tracker recorded" for a group that ships on the list. Adding one group used to save a copy of the whole directory beside it, and from then on nothing added to the shipped list in a later version ever reached you. What is kept now is what you changed — your additions and the rows you took out — layered over the directory the script ships, so new versions bring their new groups with them and what you did stays done on top of them. A list saved by an older version is read as additions only: nothing is deleted on a guess.
-New on the shipped list, from the user as a DarkPeers moderator (cited in the data file): JBENT, "JBENT TAoE", OnlyMux and WhiskeyJack at OnlyEncodes+, and DOOBS at DarkPeers. Kitsune at Aither, and twelve other names asked for in the same message, were already there.
-The empty first bullet in the group menu. A row that is only a note was drawn as an empty span with the note underneath it, so the bullet pointed at a blank line. It is one line now.
-[ MULTIPLE FILES ], under the release name of any torrent that holds more than one file. Click it and the whole list goes to the clipboard: the folder and its total, then every file with the exact byte count — the form a season pack has to be pasted in when it is checked. Asked for by dreadful.
-The exact byte size on the vs panel. UNIT3D puts the byte count in the title of every size it rounds for display, so "17.56 GiB" now reads "17.56 GiB · 18855538688 B", and the difference between two totals is given in bytes. Two files that both show "5.70 GiB" but differ by a megabyte are now reported as differing — before, the rounded figures matched and the difference was invisible. Where a page carried no byte count, none is invented from the rounded one.
-A page that re-renders its release name in place could write it back over the group tag, leaving the name reading "…H.264-DKOKTODKOKTO" and every lookup built from it carrying that. It is put right on the next pass.
+1.24.0 — two tracker rule sets that ship with the script, and four addresses
+LUME (luminarr.me) and OnlyEncodes+ (onlyencodes.cc), built from the guides as they were supplied, offered under Added trackers → Rule sets that ship with this script. Press Add and the profile becomes an ordinary added tracker: editable, exportable, removable, and pickable in the Rules list. Nothing is added until you press it, because adding one changes which rules a badge cites.
+LUME carries its resolution list and the vocabulary its Naming Guide sets for each title element: DD+ rather than DDP or E-AC-3, DD rather than AC3, H.264/H.265 with the dot, WEB-DL with the dash and WEBRip as one word, Atmos on its own, Dual-Audio hyphenated, Director's Cut with its apostrophe, the resolution omitted for DVDs, and the Full Disc spelling Blu-ray told apart from the remux spelling BluRay. All seven of the guide's own examples pass its rules and the shared naming checks unchanged — that is a check in the suite, not a claim.
+OnlyEncodes+ checks the title only for what its Upload Guide actually states: no tags referencing other trackers (6.3.1), NOGRP needing staff approval and every encode carrying a tag (6.3.2), season packs only after the season has aired (9), and a remux without the eac3to log being trumpable (1.1). The rest of that guide is about the upload rather than the title — screenshots, MediaInfo, piece sizes, seeding — and is carried as standing notes.
+OnlyEncodes' naming standard and banned list (wikis/18 and wikis/1) are in the profile too: 16 rules and 136 banned groups. The naming rules are the ones its standard is specific about — a WEB-DL names the format (H.264/H.265/VP9/MPEG-2), a WEBRip names the encoder (x264/x265), a remux names the format again (AVC/HEVC/MPEG-2/VC-1); DD+ not DDP; Resolution and VCodec both omitted for DVD sources; the Edition kept out of the name; S01-S03 COMPLETE for a multi-season pack; REPACK2 with the number joined on; and a missing service between the resolution and WEB-DL.
+The banned list keeps its reasons and dates, so a badge cites the tracker's own words. BHDStudio and Trix are marked removed on that page and are NOT on the list. EVO is not a flat ban but a conditional group — its WEB-DLs are allowed and nothing else is. BRrip is a source marker, matched anywhere in a title rather than as a tag.
+All four of OnlyEncodes' own examples raise no error; the two review notes that do fire on them (the eac3to log, a season pack) are meant to.
+Four addresses added to the tracker catalogue, each confirmed by the user: LUME (luminarr.me, UNIT3D — the script now runs there and picks the LUME rules by itself), and AvistaZ, CinemaZ and PrivateHD, kept exactly as they were tested. 58 entries to 62.
+Luminarr's provider list is in hand: all 195 general abbreviations were already known; its Japanese broadcasters and anime services were added (290 services). MX, TBS and ABC mean something else on the existing list and were deliberately left alone.
+Adding them found a real gap: the service token before WEB-DL was matched as letters and digits only, so AT-X, B-Global, NHK-BSP and the BS channels read as no service at all. A hyphenated abbreviation is now one abbreviation; a hyphenated word that is not a service is still reported.
+LUME carries no banned list, because none was supplied, and the profile says so.
 
 1.22.0 — the settings are the same settings on every tracker
 The trackers you are on, added trackers and their rules, the internal-groups list and the per-tracker rule choice moved to Tampermonkey's per-script store, shared by every site the script runs on. Browser storage is per domain and could not do it. No new permission.
