@@ -9,6 +9,24 @@ was named until 1.25.0.
 
 ---
 
+## 1.28.1 — frames, and scene-style titles
+
+- **Three "Inspect torrent" buttons on OnlyEncodes.** A tracker page can carry widgets of its
+  own in iframes — OE has a radio player and an Auto-DJ box — and this script is matched by
+  host, so it loaded inside each one and mounted its own launcher there. The header now carries
+  `@noframes`, and the code refuses to mount in a frame as well, for a manager that does not
+  honour the key. A fixture loads it inside two real iframes and fails if anything appears in
+  either.
+- **Half a release name offered as the group, on SeedPool.** Their titles are scene-style, with
+  tokens separated by dots rather than spaces. The group tag is whatever runs to the end from a
+  hyphen, skipping any tail that holds a technical token — but the tail was split on spaces
+  only, so `HD.MA.5.1.DV.HDR10.REMUX-seedpool` read as one word with nothing technical in it,
+  and that whole run was called the group. Tails are split on dots as well now: the four
+  examples give `seedpool`, `SPx`, `VARYG` and `OFT`. Spaced titles, groups with hyphens of
+  their own (`R-A-R-B-G`) and dotted tags (`YTS.MX`) are unchanged, and each is a check.
+
+---
+
 ## 1.28.0 — back up the lot, and a fixture in UNIT3D’s own markup
 
 - **Take your whole setup with you.** *Backup…*, beside *Internal groups…* and *Tracker rules…*
