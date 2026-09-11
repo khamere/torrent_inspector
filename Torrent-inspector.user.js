@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.28.0
+// @version      1.28.1
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       🤖T.R.A.V.I.S (original Chungus Edition); DKOKTO personal customization
 // @match        https://darkpeers.org/*
@@ -54,6 +54,7 @@
 // @match        https://*.utp.to/*
 // @match        https://*.yu-scene.net/*
 // @run-at       document-idle
+// @noframes
 // @updateURL    https://raw.githubusercontent.com/khamere/torrent_inspector/main/Torrent-inspector.user.js
 // @downloadURL  https://raw.githubusercontent.com/khamere/torrent_inspector/main/Torrent-inspector.user.js
 // Storage on this machine, not network: Tampermonkey's own per-script store is the only
@@ -1626,7 +1627,13 @@ const DKOKTO_GROUPS = ((profiles) => {
             if(!tail||tail.length>40)continue;
             const words=tail.split(/\s+/);
             if(words.length>4||!/^[A-Za-z0-9]/.test(words[0]))continue;
-            if(words.some(word=>TECHNICAL.test(word.replace(/[.,;:]+$/,''))))continue;
+            // Tokens are separated by dots in a scene-style name and by spaces in a spaced
+            // one, so both have to be looked at. Splitting on spaces alone read the whole of
+            // "HD.MA.5.1.DV.HDR10.REMUX-seedpool" as a single word, found nothing technical
+            // in it, and called that run the group — which is what SeedPool's titles look
+            // like, and made the tag menu offer half the release name.
+            const parts=tail.split(/[\s.]+/).filter(Boolean);
+            if(parts.some(word=>TECHNICAL.test(word.replace(/[.,;:]+$/,''))))continue;
             return tail;
         }
         return '';
@@ -6667,8 +6674,15 @@ const DPTI_HOST = (() => {
     // copies would duplicate badges and launchers, so this one steps aside.
     const fullEditionPresent=()=>!!document.querySelector('#dkokto-tools,.dk-toolkit-launch,.dk-listing-bar,.dk-listing-badge');
 
+    // A page's own widgets can be iframes — a radio player, a chat box — and this script is
+    // matched by host, so without a guard it loads inside each one and mounts a launcher
+    // there. @noframes says so in the header; this says it again for a manager that does not
+    // honour the key. A frame is never the torrent page.
+    const inFrame=()=>{try{return window.top!==window.self;}catch{return true;}};
+
     function mount(){
         if(mounted)return;
+        if(inFrame())return;
         if(fullEditionPresent()){console.info('Torrent Inspector: the full DKOKTO edition is active on this page, so the standalone copy stayed inactive.');return;}
         mounted=true;settings=load();
         const tools=el('div',undefined,undefined);tools.id='dp-inspector-tools';
