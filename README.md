@@ -1,4 +1,4 @@
-# Torrent Inspector 1.26.4
+# Torrent Inspector 1.27.0
 
 A Tampermonkey userscript for release naming. It reads the page you are on and tells you
 whether a release name is written the way the tracker you are on says it should be — on the
@@ -53,6 +53,24 @@ JSON somewhere before you update.
 - **CHANGES-1.12.4-to-1.22.3.md** — what changed across the older versions, grouped by what
   it does.
 - **CHANGELOG.md** — every version, newest first.
+
+## Fixed in 1.27.0
+
+**It named the wrong tracker's rules, in five places.** The Inspector's panel was headed *"DP
+naming guide check"* wherever it ran, so on Zenith it announced DarkPeers and then applied
+Zenith's rules. A copied naming report said the same thing three times over — its first line,
+its footer and its Rules line. A copied request report said *"On DarkPeers:"* beside a Zenith
+address. The shortcut field said *"Use a page on this DarkPeers site"* on Zenith. The launcher
+tooltip said *"DP naming check"*.
+
+All five now name the rule set that was actually applied, or the site you are actually on — and
+where no rules are in hand, they say that rather than naming one.
+
+A standing check now reads every module and fails if any string shown to a reader names a
+tracker, except in the modules whose strings are about a named tracker and are meant to be. The
+class is closed, not just the instances.
+
+---
 
 ## Changed in 1.26.4
 
@@ -273,6 +291,8 @@ Bureau.Burgwallen.S01.720p.WEB-DL.AAC.2.0.x264-DDF 9974836899 B
 Bureau.Burgwallen.S01E01.720p.WEB-DL.AAC.2.0.x264-DDF.mkv 1221811248 B
 Bureau.Burgwallen.S01E02.720p.WEB-DL.AAC.2.0.x264-DDF.mkv 1278590592 B
 ```
+
+Nothing is copied until you press it. (Asked for by dreadful.)
 
 **The exact byte size on the vs panel.** UNIT3D writes the byte count into the title of every
 size it rounds for display, so the comparison now reads `17.56 GiB · 18855538688 B` and gives
