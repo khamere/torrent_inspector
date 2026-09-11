@@ -1,4 +1,4 @@
-# Torrent Inspector 1.26.0
+# Torrent Inspector 1.26.2
 
 A Tampermonkey userscript for release naming. It reads the page you are on and tells you
 whether a release name is written the way the tracker you are on says it should be — on the
@@ -26,8 +26,9 @@ checks for a new version on its own schedule and offers it.
 
 ### If you had it installed before 1.26.0
 
-It was called *DarkPeers - Torrent Inspector*. From 1.26.0 it is just **Torrent Inspector**,
-it runs on 44 trackers.
+It was called *DarkPeers - Torrent Inspector* and its file was
+`DarkPeers-Torrent-Inspector.user.js`. From 1.26.0 it is just **Torrent Inspector**, because it
+is not DarkPeers' script and never was — it runs on 44 trackers.
 
 Tampermonkey identifies an installed script by what is in its header, so the rename can land
 as a **second entry in your script list** rather than as an update to the first. If you see
@@ -49,7 +50,38 @@ JSON somewhere before you update.
 - **GUIDE-1.22.md** — the older walkthrough, written for the fuller DKOKTO Scene Edition. Kept
   for reference; its theme, artwork and chat-game sections do not apply to this script.
 - **TRACKER-RULES.md** — how to add a tracker of your own, as a rules profile.
+- **CHANGES-1.12.4-to-1.22.3.md** — what changed across the older versions, grouped by what
+  it does.
 - **CHANGELOG.md** — every version, newest first.
+
+## Changed in 1.26.2
+
+**Attribution taken out of the documents.** Lines recording who supplied a list or confirmed an
+address — and in what capacity — are gone from this file, the changelog, the guide and
+`TRACKER-RULES.md`. What is cited is unchanged; who supplied it is no longer part of the
+record. Passages written as replies read as documentation now.
+
+Nothing in the script changed: same name, same namespace, same profile format, same install and
+update addresses, so this is an ordinary update.
+
+---
+
+## Fixed in 1.26.1
+
+**The template button never appeared on a real page.** UNIT3D posts a comment through Livewire
+— `<form wire:submit="postComment">`, with no `method` and no `action` — so the form's method
+reads back as `"get"`. The detector required `"post"` and refused the comment box outright, on
+every tracker. The fixture had written `method="post"` on its own form, so it agreed with the
+assumption rather than testing it; it now uses the markup UNIT3D actually ships, and the old
+code fails against it.
+
+What identifies the box now is what the page says it is — an editable, on-screen textarea the
+page calls a comment, in its name, id, placeholder, label, class or its form's. A form aimed at
+another site is still refused; having no action is not a reason to refuse anything. And where a
+page holds an edit box on an existing comment as well, the new-comment box is the one that gets
+the button.
+
+---
 
 ## New in 1.26.0
 
@@ -63,6 +95,9 @@ torrent page, the templates, the Inspector, what it stores and what it will neve
 `GUIDE-1.22.md` stays for reference and says at the top that it was written for the fuller
 Scene Edition.
 
+**A missing entry restored.** The 1.25.0 notes never mentioned that MoreThanTV and FearNoPeer
+had been removed — the change shipped, the note did not. It is written up under 1.25.0 now.
+
 **Two corrections in this file.** It claimed the script "matches only HTTPS darkpeers.org and
 www.darkpeers.org" — untrue since it started running on the UNIT3D catalogue, which is 44 hosts
 written into the header from the catalogue itself at build time. And it claimed no `@grant`
@@ -72,6 +107,14 @@ check reports were also years out of date and are now generated from what is act
 ---
 
 ## New in 1.25.0
+
+**MoreThanTV and FearNoPeer are gone from both lists.** Both closed. They are out of the
+cross-check catalogue (62 searchable trackers to 60) so no click opens a site that is not there,
+`fearnopeer.com` is off the `@match` list, and both are out of the internal-groups directory
+rather than marked closed. What that costs, said rather than hidden: SMURF, WDYM, TEPES,
+Dracula, GBL, MOLY, SOIL, VLAD, EiNSTEIN_SiR23, onlyfaffs and HiFiWiFi are now listed nowhere.
+E.N.D keeps HD-Torrents; SM737 keeps AlphaRatio and ReelFliX. (Supersedes what the 1.24.3 note
+below says about SMURF at MoreThanTV.)
 
 - **Release notes templates.** A button beside the comment box on a torrent page — the ⤵ next
   to *Write · Preview* — fills your comment template into the box, and *Templates…* opens the
@@ -99,12 +142,12 @@ check reports were also years out of date and are now generated from what is act
 ## New in 1.24.3
 
 **Internal groups.** SiGLA and SMURF are off HUNO — the community directories this ships
-carried them there and you say they are not HUNO's, so they are gone from that line.
+carried them there; they were reported as not HUNO's, so they are gone from that line.
 SMURF is still listed at MoreThanTV, which is where those directories also put it: taking a
 group off one tracker is not deleting it, and there is a check for exactly that. SiGLA was
 listed nowhere else, so nothing claims it now. **ZoroSenpai** is added at HDBits, TorrentBD
-and Blutopia — I read your "HDB, TBD, BLU" as those three; TorrentBD is the only tracker on
-the list whose abbreviation is TBD, so say the word if you meant another and I will move it.
+and Blutopia — the abbreviations "HDB, TBD, BLU" read as those three, TorrentBD being the
+only tracker on the list whose abbreviation is TBD.
 
 **The single-file marker shows the count.** It reads `[ SINGLE FILE · 2449415267 B ]` rather
 than the rounded figure. Where the page carries no exact count — no `title` on the size and
@@ -217,9 +260,9 @@ new versions bring their groups with them and your own work stays on top. A list
 older version is read as additions only; nothing is deleted on a guess. Clear list still
 brings the shipped directory back whole.
 
-**New on the shipped list**, from the user as a DarkPeers moderator and cited in the data
+**New on the shipped list**, reported to the project and cited in the data
 file: JBENT, "JBENT TAoE", OnlyMux and WhiskeyJack at OnlyEncodes+, and DOOBS at DarkPeers.
-Kitsune at Aither, and twelve other names asked for at the same time, were already there.
+Kitsune at Aither, and twelve other names reported at the same time, were already there.
 
 **The empty first bullet in the group menu.** A row that is only a note ("No home tracker
 recorded for …") was drawn as an empty span with the note on the line beneath, so the bullet
