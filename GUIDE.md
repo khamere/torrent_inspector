@@ -14,10 +14,10 @@ and nothing to sign in to. Do not double-click the file as a Windows script.
 Tampermonkey will offer updates on its own, because the script carries the address it is
 published at.
 
-**Coming from a version before 1.25.0?** It used to be called *DarkPeers - Torrent Inspector*.
+**Coming from a version before 1.26.0?** It used to be called *DarkPeers - Torrent Inspector*.
 The rename can appear as a second entry in your script list rather than as an update to the
 first — if you see two, delete the old one, or you will get two of every badge. See
-"If you had it installed before 1.25.0" in the README for what happens to your settings.
+"If you had it installed before 1.26.0" in the README for what happens to your settings.
 
 ---
 
@@ -56,10 +56,15 @@ press **Add** beside one. Adding a rule set changes what a badge cites, so it wa
 asked. Once added it is an ordinary added tracker: editable, exportable, removable, and it
 selects itself on its own site.
 
-Every other tracker is added by pasting its rules. See `TRACKER-RULES.md` — a profile is
-**data**. Nothing in one is executed, patterns are compiled as regular expressions and matched
-against a title, and one that will not compile is refused with the reason rather than
-swallowed.
+Every other tracker is added by pasting its rules. A profile is **data**: nothing in one is
+executed, patterns are compiled as regular expressions and matched against a title, and one
+that will not compile is refused with the reason rather than swallowed. `TRACKER-RULES.md` has
+the format.
+
+You do not have to write the JSON by hand. <https://torrent.dkokto.dev/rules.html> builds one
+in a browser, checks a profile you already have — telling you exactly why it was refused — and
+runs a release name through it so you can see what a badge would say. It needs nothing
+installed, which makes it the thing to send a tracker's staff.
 
 ---
 
