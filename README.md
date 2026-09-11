@@ -15,6 +15,45 @@ It runs on **43 UNIT3D trackers** and can search **60**. Naming rules for DarkPe
 LUME and OnlyEncodes+ ship with it; any other tracker is added by pasting its rules, as data,
 never as code.
 
+## What it looks like
+
+Every image here is rendered from this project's own offline demo pages — synthetic release
+names, no tracker branding, no usernames, no ratios, nothing from a real site. They are
+regenerated from the current build, so they cannot drift away from what the script does.
+
+**On a listing** — a badge per loaded title, and the bar that turns them on:
+
+![The torrent listing, with a naming badge on each loaded title](screenshots/01-listing-badges.png)
+
+**Click a badge** and it says what it found, what it could not decide, and what the tracker's
+template asks for:
+
+![A badge explaining a naming error](screenshots/02-naming-explained.png)
+
+A banned or low-quality group is named with the list it is on, and the reason that list gives:
+
+![A badge reporting a banned release group](screenshots/03-banned-group.png)
+
+**On a torrent page** — the badge on the release name, the cross-tracker lookup row, the
+**vs** capture button, and the file marker with the exact byte count:
+
+![A torrent page with the badge, lookup row and file marker](screenshots/05-torrent-page.png)
+
+**The Inspector** reads the MediaInfo already on the page and checks the name against it:
+
+![The Inspector's naming review](screenshots/06-inspector-naming.png)
+
+**Torrent nav** moves you by listing page or by torrent ID, on any tracker this runs on:
+
+![The torrent navigation panel](screenshots/12-nav.png)
+
+**On the requests page**, each request gets a search link for every tracker that can carry
+that kind of request — and a tracker that cannot is left out with the reason:
+
+![The request cross-check](screenshots/10-cross-check.png)
+
+---
+
 ## Install
 
 1. Install Tampermonkey, if you have not.
@@ -941,4 +980,8 @@ validation. The reports from the last run ship beside this file: `AUDIT-CHECKS.t
 The validation record for each version — what was built, what was checked, and what was
 confirmed to fail when the fix was taken back out — is in `VALIDATION-<version>.txt`.
 
-Original credits: Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S; DKOKTO Scene Edition personal customization.
+With thanks to 🤖T.R.A.V.I.S: this script began life inside a fork of *DarkPeers - Chungus
+Edition 1.7.5*. None of that script's code is in this one — Torrent Inspector is built from
+this project's own modules and shares no line with it — but it is where the work started. The
+fork itself is a separate edition, and it does carry that code, its credit, and the MIT notice
+for the *Enhanced Chat Unit3D* code by **ZukoXZoku** that the Chungus Edition ported.
