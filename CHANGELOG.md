@@ -9,6 +9,53 @@ was named until 1.25.0.
 
 ---
 
+## 1.28.0 — back up the lot, and a fixture in UNIT3D’s own markup
+
+- **Take your whole setup with you.** *Backup…*, beside *Internal groups…* and *Tracker rules…*
+  in the listing bar. It shows what it would save — the trackers you are on, the trackers you
+  added and their rules, which rules apply where, your internal-groups changes, your templates,
+  the audit, the decision log, requests you have checked, the comparison slots — and hands you
+  one file, copied or saved by your own browser. Restoring reads a file you give it, says what
+  it holds and when it was taken *before* writing anything, and can fill only the gaps rather
+  than replacing what you are using.
+- Why it exists: there was no way to take the lot with you, and a script manager that decides a
+  renamed script is a new one hands it an empty store. Nothing is sent anywhere; a backup is
+  the text already saved on your machine, and restoring writes back only the keys this script
+  owns — anything else in the file is ignored and named.
+- **The backup cannot go stale.** A check reads every module for the storage keys they actually
+  use and fails if one is not on the backup list, or if the list names a key nothing saves. A
+  new thing to save is a failing test until it is included.
+- **A fixture in UNIT3D's own markup.** Every fixture until now was shaped like DarkPeers, where
+  the `<h1>` is the media title and the release name sits elsewhere. Vanilla UNIT3D is not
+  shaped that way — the `<h1 class="torrent__name">` *is* the release name, the size is a
+  `<span class="torrent__size-link">` with the byte count in its title, the category an `<a>`
+  inside `<li class="torrent__category">` — and that is the shape 41 of the 43 trackers serve.
+  17 checks now run against it, built from the published templates rather than from an
+  assumption: the badge attaches to the heading, the marker reads the exact count out of
+  UNIT3D's own title attribute, the category is read rather than guessed, every link that
+  leaves the site opens in a new tab while the tracker's own search stays relative, and the
+  template button finds the Livewire comment box.
+- **Versions cannot drift.** A check compares the build's version against the README title and
+  the newest changelog entry, and fails if they disagree — which they have, three times.
+
+---
+
+## 1.27.1 — the published file names no one
+
+- **The file you install no longer says who supplied what.** The built userscript is what is
+  published and what Tampermonkey shows on its install screen, so its comments are read by
+  everyone who installs it. Eleven lines across five modules said *"the user, as a DarkPeers
+  moderator"*, *"supplied by the user"*, *"confirmed by the user"* and *"kept exactly as he
+  tested it"*. Every one now records the same fact without the person: what was in hand, and
+  when.
+- **Every citation is still there** — InviteHawk, rentry.org/internals, pastes.io, the LUME and
+  OnlyEncodes wiki pages, and the dates. A check asserts both halves: that no line names a
+  person, and that the citations are still present, so it cannot be satisfied by deleting them.
+- The same guard runs over the published web pages, which inline these modules and can be
+  view-sourced by anyone.
+
+---
+
 ## 1.27.0 — it names the rules it is applying
 
 - **The Inspector announced the wrong tracker's rules.** Its panel was headed *"DP naming guide
@@ -35,6 +82,8 @@ was named until 1.25.0.
   `page-core.js` are gated on Zenith's own rule set, the banned-group wording in `groups.js` is
   keyed per list, and the two `darkpeers.org` strings left in the source are URL parsing bases
   that are never shown.
+
+---
 
 ## 1.26.4 — this edition tests its own torrent page
 
