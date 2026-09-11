@@ -9,6 +9,36 @@ was named until 1.25.0.
 
 ---
 
+## 1.29.0 — torrent nav, on every tracker this runs on
+
+- **The nav panel is no longer one tracker's feature.** It was written beside DarkPeers and
+  Zenith and mounted only there, but nothing in it was ever specific to them: it reads
+  `/torrents?page=` and `/torrents/{id}`, which are UNIT3D's own addresses. It now mounts
+  wherever this script runs — 44 trackers in the standalone edition, and in the Scene Edition
+  on the other 42 as well as the two it started on.
+- Step by any number of listing pages or torrent IDs, jump to a page number or an ID, with
+  **Alt + Shift + N** or the **Nav** button in the launcher bar. Filters, sorting and search
+  stay on the address; only the page number is rewritten.
+- It follows a link and nothing more: no background request, no page read that you did not
+  open, nothing submitted. A pasted address is refused unless it belongs to the site you are
+  on. Where a step cannot apply the arrows are disabled *and say why*; jump still works.
+- The claim is checked where it matters rather than only in the panel's own fixture: the
+  vanilla-UNIT3D page fixture — built from UNIT3D's published templates, not this project's
+  idea of them — now asserts in both editions that the launcher appears in the bar, opens,
+  reads `Torrent #9910` out of the page's own address, is styled by this script, and says why
+  page stepping is unavailable on a torrent page.
+
+---
+
+## 1.28.5 — housekeeping
+
+- A dead selector removed from `release-title.js`: it excluded an element (`#dkokto-banner`)
+  that only ever existed in the Scene Edition, and no longer exists there either. Nothing
+  behaves differently; the two editions share this module and it is kept byte-identical
+  between them, which is what makes a difference in it worth looking at.
+
+---
+
 ## 1.28.4 — the Dub element, read off the matrix rather than half of it
 
 - **A finding said something about the page that the page contradicted.** Reported against
