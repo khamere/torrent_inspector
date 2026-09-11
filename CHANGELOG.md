@@ -9,6 +9,20 @@ was named until 1.25.0.
 
 ---
 
+## 1.28.2 — the third way a release name separates its tokens
+
+- **Scene-style music titles still gave back most of the name.** 1.28.1 taught the group-tag
+  matcher that a dotted run holds tokens too, which fixed SeedPool's films and series. Its music
+  uses a third convention — `Artist-Album-EP-WEB-2018-BLEEDiNG`, separated by **hyphens** — so
+  `WEB` and the year were still invisible and `EP-WEB-2018-BLEEDiNG` came back as the group.
+  Candidate tails are split on hyphens as well now: that title gives `BLEEDiNG`, and a
+  catalogue number in brackets is not mistaken for the group either.
+- A group whose own name carries hyphens is unaffected, because none of its pieces is a
+  technical token: `R-A-R-B-G` still comes back whole. So do `YTS.MX`, `Goki TAoE` and every
+  spaced and dotted title. Twenty-three names from the three conventions are checks now.
+
+---
+
 ## 1.28.1 — frames, and scene-style titles
 
 - **Three "Inspect torrent" buttons on OnlyEncodes.** A tracker page can carry widgets of its
