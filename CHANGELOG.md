@@ -9,6 +9,33 @@ was named until 1.25.0.
 
 ---
 
+## 1.27.0 — it names the rules it is applying
+
+- **The Inspector announced the wrong tracker's rules.** Its panel was headed *"DP naming guide
+  check"* on every tracker it ran on — so on Zenith it said DarkPeers and then applied Zenith's
+  rules. It now heads itself with the rule set actually in use (*"Zenith naming check"*) and
+  names that guide underneath. Where no rules are in hand it says so instead of naming one.
+- **A copied naming report claimed the wrong rulebook.** Its first line read *"DP display-title
+  naming review"*, its footer *"against the supplied DP naming guide"*, and its Rules line
+  *"supplied DP Naming Guide for beginners"* — all three regardless of where you were. Of the
+  things a report can be wrong about, the rulebook a finding cites is the worst. All three now
+  name the rule set that was applied.
+- **A copied request report said *"On DarkPeers:"*** next to a Zenith address. It names the
+  tracker the request is actually on, read from the address itself.
+- **The shortcut field said *"Use a page on this DarkPeers site"*** on Zenith. It names the site
+  you are on.
+- **The launcher tooltip** said *"MediaInfo review and DP naming check"*; it no longer names a
+  tracker at all, since it is the same button everywhere.
+- **A standing sweep, so the class cannot come back.** A check now reads every module and fails
+  if any string shown to a reader names DarkPeers, Zenith or DP — except in the modules whose
+  strings are *about* a named tracker and are supposed to be: its own rules, its own lists, its
+  own templates. A new module is scanned automatically; nothing has to be remembered. Each of
+  the fixes above was confirmed to fail it when put back.
+- Checked and found correct, not changed: the Zenith container and MediaInfo findings in
+  `page-core.js` are gated on Zenith's own rule set, the banned-group wording in `groups.js` is
+  keyed per list, and the two `darkpeers.org` strings left in the source are URL parsing bases
+  that are never shown.
+
 ## 1.26.4 — this edition tests its own torrent page
 
 - **A torrent-page fixture of its own.** This edition shipped `detail-fixture.js` but no page to
