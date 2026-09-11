@@ -94,7 +94,7 @@
 
 <header class="top">
   <div class="wrap">
-    <p class="eyebrow">Torrent Inspector 1.26.4</p>
+    <p class="eyebrow">Torrent Inspector 1.27.0</p>
     <h1>Tracker rules</h1>
     <p class="lede">
       Build a rules profile for a tracker, check one you already have, and run a release name
@@ -210,7 +210,7 @@
 <footer>
   <div class="wrap">
     <p><a href="index.html">← Torrent Inspector</a> · profile format documented in
-      <code>TRACKER-RULES.md</code> · built from the modules of 1.26.4</p>
+      <code>TRACKER-RULES.md</code> · built from the modules of 1.27.0</p>
   </div>
 </footer>
 
@@ -1373,7 +1373,7 @@ const DKOKTO_RULES = ((profiles) => {
 
 
 /* ── naming.js ─────────────────────────────────────────── */
-// Local checks against the user-supplied DP Naming Guide for beginners.
+// Local checks against the naming guide of whichever tracker's rules are in use.
 // A title/report is evidence, not proof of source history or upload compliance.
 const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
     const templates={
@@ -1684,7 +1684,10 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
             // The tracker's own upload rules, on top of the shared naming guide.
             for(const issue of rules.check(name,{profile,file,site:options.rules}))add(issue.severity,issue.code,issue.message);const errors=issues.filter(x=>x.severity==='error').length,reviews=issues.length-errors;return {profile,template:templates[templateKey]||'',issues,service:serviceLabel,status:errors?errors+' correction'+(errors===1?'':'s')+' needed':reviews?'No definite errors found · manual review remains':'No supported issues found'};}
     }
-    function report(name,options,file){const r=check(name,options,file);return ['DP display-title naming review',name,'Category: '+r.profile,...(r.service?['Service: '+r.service]:[]),r.status,'Template: '+r.template,...r.issues.map(i=>(i.severity==='error'?'CORRECT':'REVIEW')+': '+i.message),'Rules: supplied DP Naming Guide for beginners; no live rules lookup or upload performed.'].join('\n');}
+    function report(name,options,file){const r=check(name,options,file);
+        const whose=(()=>{try{const key=options&&options.rules?options.rules:rules.current();
+            return rules.hasRules&&rules.hasRules()?rules.labelOf(key):'';}catch{return '';}})();
+        return [(whose?whose+' ':'')+'display-title naming review',name,'Category: '+r.profile,...(r.service?['Service: '+r.service]:[]),r.status,'Template: '+r.template,...r.issues.map(i=>(i.severity==='error'?'CORRECT':'REVIEW')+': '+i.message),'Rules: '+(whose?'the '+whose+' naming guide':'the naming guide in hand')+'; no live rules lookup or upload performed.'].join('\n');}
     return {check,report,templates,akaCheck};
 })(typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./inspector.js'):DKOKTO_INSPECTOR,
    typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./services.js'):DKOKTO_SERVICES,
