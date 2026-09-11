@@ -1,4 +1,4 @@
-# Torrent Inspector 1.26.2
+# Torrent Inspector 1.26.3
 
 A Tampermonkey userscript for release naming. It reads the page you are on and tells you
 whether a release name is written the way the tracker you are on says it should be — on the
@@ -53,6 +53,25 @@ JSON somewhere before you update.
 - **CHANGES-1.12.4-to-1.22.3.md** — what changed across the older versions, grouped by what
   it does.
 - **CHANGELOG.md** — every version, newest first.
+
+## Fixed in 1.26.3
+
+**The button sat behind the comment box instead of up by the tabs**, and vanished when you
+switched to Preview. It looked for a row element holding Write · Preview that did not also
+contain the box; where a theme gives the tabs no wrapper of their own, nothing matched and it
+fell back to sitting in front of the box, under the floating label. It now anchors on the
+Preview control itself and goes straight after it — as a list item where the tabs are a list,
+inline where they are not.
+
+Switching to Preview hides the box, and a hidden textarea was being read as no box at all. The
+button belongs to the tab row rather than to the box, so it stays put across the switch, what
+it writes is there when you go back to Write, and a redraw that strips it out gets it back on
+the next pass.
+
+Placement is measured in the suite now rather than eyeballed: immediately after Preview, on the
+same line as the tabs, and clear of the box.
+
+---
 
 ## Changed in 1.26.2
 
