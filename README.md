@@ -1,4 +1,4 @@
-# Torrent Inspector 1.28.2
+# Torrent Inspector 1.28.3
 
 A Tampermonkey userscript for release naming. It reads the page you are on and tells you
 whether a release name is written the way the tracker you are on says it should be — on the
@@ -53,6 +53,17 @@ JSON somewhere before you update.
 - **CHANGES-1.12.4-to-1.22.3.md** — what changed across the older versions, grouped by what
   it does.
 - **CHANGELOG.md** — every version, newest first.
+
+## Fixed in 1.28.3
+
+**Music titles cut open at the bit depth.** `DJ Ötzi - Hey Baby (Uh Ah) 2010 WEB FLAC 16-bit
+44.1kHz Single-StellarRift` gave back `bit 44.1kHz Single-StellarRift` as the group. The
+matcher tries each hyphen in turn and skips any tail holding a technical token — but
+everything technical about `16-bit` is on the left of its hyphen, so the tail read clean. Bit
+depth and sample rate are technical tokens now: that title gives `StellarRift`. Every name
+already covered is unchanged.
+
+---
 
 ## Fixed in 1.28.2
 
