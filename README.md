@@ -1,4 +1,4 @@
-# Torrent Inspector 1.28.1
+# Torrent Inspector 1.28.2
 
 A Tampermonkey userscript for release naming. It reads the page you are on and tells you
 whether a release name is written the way the tracker you are on says it should be — on the
@@ -53,6 +53,16 @@ JSON somewhere before you update.
 - **CHANGES-1.12.4-to-1.22.3.md** — what changed across the older versions, grouped by what
   it does.
 - **CHANGELOG.md** — every version, newest first.
+
+## Fixed in 1.28.2
+
+**Scene-style music titles.** 1.28.1 fixed SeedPool's films and series by reading a dotted run
+as tokens rather than one word. Its music uses a third convention — `Artist-Album-EP-WEB-2018-
+BLEEDiNG`, separated by hyphens — so `WEB` and the year were still invisible and most of the
+name came back as the group. Tails split on hyphens too now. `R-A-R-B-G`, `YTS.MX` and
+`Goki TAoE` are unaffected: none of their pieces is a technical token.
+
+---
 
 ## Fixed in 1.28.1
 
