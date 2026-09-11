@@ -6,9 +6,7 @@
 // @author       DKOKTO
 // This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,
 // and is published with thanks to it. None of its code is here: this edition is built from
-// this project's own modules and shares no line with that script. The fork itself, which does
-// carry it, is a separate edition and keeps its own credit — including the MIT notice for the
-// Enhanced Chat Unit3D code by ZukoXZoku that it contains.
+// this project's own modules and shares no line with that script.
 // @match        https://darkpeers.org/*
 // @match        https://www.darkpeers.org/*
 // Zenith is checked against its own rules, so the Inspector runs there too.
