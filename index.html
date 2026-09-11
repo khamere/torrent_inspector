@@ -115,7 +115,7 @@
       group linked to where it is internal. Nothing is ever fetched, posted or changed.
     </p>
     <ul class="pills">
-      <li class="pill"><b>1.26.0</b></li>
+      <li class="pill"><b>1.26.2</b></li>
       <li class="pill"><b>43</b> trackers it runs on · <b>60</b> it can search</li>
       <li class="pill">No requests, no posting</li>
       <li class="pill">Nothing judged without that tracker’s rules</li>
@@ -622,6 +622,16 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
         tracker's own address. So: four trackers badge with no dropdown work — two built in, two after a
         single click.</dd>
 
+      <dt>Is it 43 trackers or 60?</dt>
+      <dd>Both, counting different things. <b>43</b> is how many UNIT3D trackers the script <em>runs
+        on</em> — the <code>@match</code> lines, where badges, the Inspector and <b>vs</b> appear.
+        <b>60</b> is how many it can <em>search</em> for the cross-check, which adds the Gazelle-family
+        and other non-UNIT3D sites — PassThePopcorn, HDBits, BroadcasTheNet, AvistaZ and the rest. It
+        never runs on those; it builds a link you click. (<b>43</b> trackers is <b>44</b>
+        <code>@match</code> lines, because DarkPeers gets one with <code>www.</code> and one without.)
+        Both numbers went down by two in 1.25.0: MoreThanTV and FearNoPeer closed, and a link to a site
+        that is gone is a wasted click.</dd>
+
       <dt>Where do those rules come from, and what is missing from them?</dt>
       <dd>From each tracker's own published guide, and the script says which parts it does not have.
         Every one of LUME's own naming examples passes LUME's rules and the shared checks — that is a
@@ -682,7 +692,7 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
 
 <footer>
   <div class="wrap">
-    <p><b>Torrent Inspector 1.26.0</b> — a personal fork, offered as-is.</p>
+    <p><b>Torrent Inspector 1.26.2</b> — a personal fork, offered as-is.</p>
     <p>Found something wrong? A screenshot with the badge's tooltip visible is the fastest fix — several bugs in this line were found exactly that way, and each one now has a test built from the row that showed it up.</p>
   </div>
 </footer>
