@@ -115,7 +115,7 @@
       group linked to where it is internal. Nothing is ever fetched, posted or changed.
     </p>
     <ul class="pills">
-      <li class="pill"><b>1.28.4</b></li>
+      <li class="pill"><b>1.29.0</b></li>
       <li class="pill"><b>43</b> trackers it runs on · <b>60</b> it can search</li>
       <li class="pill">No requests, no posting</li>
       <li class="pill">Nothing judged without that tracker’s rules</li>
@@ -307,6 +307,12 @@ BeyondHD|BHDStudio FraMeSToR FLUX|https://beyond-hd.me</code></pre>
         <p>On a torrent page, press <b>vs</b> and capture this release; open the other one and capture that. You get the file lists and sizes compared (with the gap named), the two MediaInfo reports compared, the tags and encode settings each file carries, and both releases written out in the block layout <b>WinMerge or meld</b> reads. It does <b>not</b> pick a winner: source, encode quality and provenance are not in a report, and it says so.</p>
         <p>Sizes are compared on the <b>exact byte count</b> the page carries, not the rounded figure it shows — so two torrents that both read <code>5.70 GiB</code> and differ by a megabyte are reported as differing, which the rounded numbers hide.</p>
         <p class="note">Both captures stay in your browser. No companion program, no new permission.</p>
+      </div>
+      <div class="card">
+        <h3>Move around without the address bar — <b>Nav</b></h3>
+        <p>Step forward or back by any number of listing pages, or by any number of torrent IDs, and jump straight to a page number or an ID. <b>Alt&nbsp;+&nbsp;Shift&nbsp;+&nbsp;N</b>, or the <b>Nav</b> button in the launcher bar. Your filters, sorting and search stay on the address — only the page number is rewritten.</p>
+        <p>It works on every tracker the script runs on, because the addresses are UNIT3D's own: <code>/torrents?page=</code> and <code>/torrents/{id}</code>.</p>
+        <p class="note">It follows a link, the same as typing the address yourself — nothing is fetched in the background. Torrent IDs are not consecutive, so stepping by ID can land on the tracker's own not-found page, and the panel says so before you use it. Where a step cannot apply the arrows are disabled <b>and say why</b>; jump still works. A pasted address belonging to another site is refused.</p>
       </div>
       <div class="card">
         <h3>Check a title before you upload</h3>
@@ -714,7 +720,7 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
 
 <footer>
   <div class="wrap">
-    <p><b>Torrent Inspector 1.28.4</b> — a personal fork, offered as-is.</p>
+    <p><b>Torrent Inspector 1.29.0</b> — a personal fork, offered as-is.</p>
     <p>Found something wrong? A screenshot with the badge's tooltip visible is the fastest fix — several bugs in this line were found exactly that way, and each one now has a test built from the row that showed it up.</p>
   </div>
 </footer>
