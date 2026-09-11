@@ -9,6 +9,29 @@ was named until 1.25.0.
 
 ---
 
+## 1.28.4 — the Dub element, read off the matrix rather than half of it
+
+- **A finding said something about the page that the page contradicted.** Reported against
+  `The Wrong Trousers … 1993 1080p BluRay Dual-Audio Opus 5.1 AV1-AV1ato`, whose page lists
+  English and Russian audio. The finding read: *“Dual-Audio is named, but the page gives the
+  original language as English, so there is no second language for it to mean.”* There plainly
+  is one. The verdict was right and the reason was wrong, which is the worse of the two
+  failures: a moderator checking the claim finds it false and has no reason to trust the rest.
+- The guide's Dub matrix has a row for this: **English original + one other language is
+  `Russian MULTi`** — Dual-Audio is for a non-English title carrying its original audio and an
+  English dub. The finding now says that, names the language it read, and names the tag the
+  guide asks for. An English original with two or more others, or with no English track at
+  all, gets a separate finding rather than being forced through the same sentence.
+- **Two more rows of that matrix were silent.** A bare `MULTi` where the page reports an
+  English original and exactly one other language is the same mistake in the other direction,
+  and a title with **no Dub element at all** where the page reports two languages was never
+  mentioned. Both are raised now — the first as a finding, the second as a question.
+- `Russian MULTi` itself carries the word MULTi, so the two rows are told apart by whether the
+  language the page reports is named in front of it. A correctly tagged title says nothing at
+  all, which is a check; so is `BluRay MULTi`, where the word in front is the source.
+
+---
+
 ## 1.28.3 — a hyphen inside a word is not a separator
 
 - **Music titles on DarkPeers were cut open at the bit depth.** Reported against
