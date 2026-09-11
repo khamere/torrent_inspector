@@ -9,6 +9,22 @@ was named until 1.25.0.
 
 ---
 
+## 1.28.3 — a hyphen inside a word is not a separator
+
+- **Music titles on DarkPeers were cut open at the bit depth.** Reported against
+  `DJ Ötzi - Hey Baby (Uh Ah) 2010 WEB FLAC 16-bit 44.1kHz Single-StellarRift`, which gave
+  back `bit 44.1kHz Single-StellarRift` as the release group. The hyphen in `16-bit` belongs
+  to that word, but the matcher tries each hyphen in turn, and what follows this one is four
+  short words — nothing technical among them, because everything technical about a bit depth
+  sits on the **left** of its hyphen. So the tail passed every test and was handed back whole.
+- Bit depth and sample rate are technical tokens now, like resolution or codec. That title
+  gives `StellarRift`, and one ending `16-bit 44.1kHz Single` with no group still has none.
+- Nothing else moves: `R-A-R-B-G`, `YTS.MX`, `Goki TAoE`, `seedpool`, `SPx`, `VARYG`,
+  `BLEEDiNG`, `NTb`, `10bit … x265-DKOKTO` and every other name already covered come back
+  exactly as before. Twenty-nine names across the four conventions are checks now.
+
+---
+
 ## 1.28.2 — the third way a release name separates its tokens
 
 - **Scene-style music titles still gave back most of the name.** 1.28.1 taught the group-tag
