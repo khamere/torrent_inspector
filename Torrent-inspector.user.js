@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.26.4
+// @version      1.27.0
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       🤖T.R.A.V.I.S (original Chungus Edition); DKOKTO personal customization
 // @match        https://darkpeers.org/*
@@ -1934,7 +1934,7 @@ const DKOKTO_RULES = ((profiles) => {
         bannedAuthors:()=>[...BANNED_AUTHORS],bannedWorks:()=>[...BANNED_WORKS],use(store){backing=store;migrated=false;}};
 })(typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./profiles.js'):DKOKTO_PROFILES);
 
-// Local checks against the user-supplied DP Naming Guide for beginners.
+// Local checks against the naming guide of whichever tracker's rules are in use.
 // A title/report is evidence, not proof of source history or upload compliance.
 const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
     const templates={
@@ -2245,7 +2245,10 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
             // The tracker's own upload rules, on top of the shared naming guide.
             for(const issue of rules.check(name,{profile,file,site:options.rules}))add(issue.severity,issue.code,issue.message);const errors=issues.filter(x=>x.severity==='error').length,reviews=issues.length-errors;return {profile,template:templates[templateKey]||'',issues,service:serviceLabel,status:errors?errors+' correction'+(errors===1?'':'s')+' needed':reviews?'No definite errors found · manual review remains':'No supported issues found'};}
     }
-    function report(name,options,file){const r=check(name,options,file);return ['DP display-title naming review',name,'Category: '+r.profile,...(r.service?['Service: '+r.service]:[]),r.status,'Template: '+r.template,...r.issues.map(i=>(i.severity==='error'?'CORRECT':'REVIEW')+': '+i.message),'Rules: supplied DP Naming Guide for beginners; no live rules lookup or upload performed.'].join('\n');}
+    function report(name,options,file){const r=check(name,options,file);
+        const whose=(()=>{try{const key=options&&options.rules?options.rules:rules.current();
+            return rules.hasRules&&rules.hasRules()?rules.labelOf(key):'';}catch{return '';}})();
+        return [(whose?whose+' ':'')+'display-title naming review',name,'Category: '+r.profile,...(r.service?['Service: '+r.service]:[]),r.status,'Template: '+r.template,...r.issues.map(i=>(i.severity==='error'?'CORRECT':'REVIEW')+': '+i.message),'Rules: '+(whose?'the '+whose+' naming guide':'the naming guide in hand')+'; no live rules lookup or upload performed.'].join('\n');}
     return {check,report,templates,akaCheck};
 })(typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./inspector.js'):DKOKTO_INSPECTOR,
    typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./services.js'):DKOKTO_SERVICES,
@@ -2810,7 +2813,16 @@ const DKOKTO_PROFILES_UI = ((profiles,rules) => {
 const DKOKTO_NAMING_UI = (() => {
     function mount({parent,title,getFile,el,field,button,guard,message,download}){
         const box=el('section',undefined,'dk-naming'),options={},output=el('div'),reference=el('details');
-        box.append(el('h3','DP naming guide check'),el('p','Checks the tracker display title, not filenames. Based on your supplied guide; results do not certify an upload.'));
+        // Whose guide this is checking against. It said "DP" wherever you were standing, so on
+        // Zenith the panel announced a DarkPeers check and then applied Zenith's rules.
+        const applied=()=>{try{return DKOKTO_RULES.hasRules()?DKOKTO_RULES.labelOf(DKOKTO_RULES.current()):'';}catch{return '';}};
+        const whose=applied();
+        box.append(el('h3',whose?whose+' naming check':'Naming check'),
+            el('p',whose
+                ?'Checks the tracker display title against the '+whose+' naming guide, not filenames. '+
+                 'Results do not certify an upload.'
+                :'No tracker\u2019s rules are in hand here, so only the checks that need no rulebook are '+
+                 'applied. Choose a rule set in the listing bar, or add this tracker under Tracker rules\u2026'));
         function select(parent,label,key,items){const row=el('label',label),input=el('select');input.setAttribute('aria-label',label);for(const [value,text]of items){const option=el('option',text);option.value=value;input.append(option);}options[key]=items[0][0];input.onchange=()=>{options[key]=input.value;draw();};row.append(input);parent.append(row);return input;}
         select(box,'Naming category','profile',[['auto','Auto — infer from title/report'],['movie','Movie'],['tv','TV / season / episode'],['music','Music'],['audiobook','Audiobook'],['ebook','eBook'],['software','Game / software']]);
         reference.append(el('summary','Reference details and exceptions (optional)'));
@@ -3038,7 +3050,20 @@ const DKOKTO_LISTING_CORE = ((naming,rules) => {
 // Paste-ready text for a tracker report and for an audit of loaded rows.
 // Pure text: nothing here submits, sends or fetches anything.
 const DKOKTO_REPORT = (() => {
-    const FOOTER='Checked with the DKOKTO naming checker against the supplied DP naming guide. Display title only: media, source history and tracker approval are not verified.';
+    const REST=' Display title only: media, source history and tracker approval are not verified.';
+    // Whose rules were actually applied. "DP" was written into this line, so a report copied
+    // on Zenith — or on any added tracker — claimed to have been checked against DarkPeers'
+    // guide, which is the one thing a report must not get wrong.
+    const applied=()=>{
+        try{
+            const rules=typeof DKOKTO_RULES!=='undefined'?DKOKTO_RULES
+                :(typeof require==='function'?require('./rules.js'):null);
+            return rules&&rules.hasRules()?rules.labelOf(rules.current()):'';
+        }catch{return '';}
+    };
+    const footer=()=>'Checked with the naming checker against '+
+        (applied()?'the '+applied()+' naming guide':'the naming guide in hand')+
+        '.'+REST;
     const text=(v,max=400)=>String(v??'').replace(/\s+/g,' ').trim().slice(0,max);
     const suggestion=result=>result?.review?.issues?.find(i=>i.code==='music-suggestion')?.message
         ?.replace(/^Same title in the guide.s form:\s*/,'').replace(/\s+—.*$/,'').replace(/\.\s*Confirm before renaming anything\.$/,'')||'';
@@ -3064,7 +3089,7 @@ const DKOKTO_REPORT = (() => {
             reviews.forEach((issue,index)=>lines.push(' '+(index+1)+'. '+text(issue.message,300)));
         }
         if(result.review.template)lines.push('','Template: '+text(result.review.template,300));
-        lines.push('',FOOTER);
+        lines.push('',footer());
         return lines.join('\n');
     }
 
@@ -3078,7 +3103,7 @@ const DKOKTO_REPORT = (() => {
         if(page)head.push('Page: '+text(page,300));
         head.push(errors.length+' with corrections · '+reviews.length+' needing review · '+passed.length+' passing','');
         const out=[...head];
-        if(!list.length)return [title+' · no release titles were loaded on this page','',FOOTER].join('\n');
+        if(!list.length)return [title+' · no release titles were loaded on this page','',footer()].join('\n');
         const faults=new Map();
         for(const row of errors)for(const issue of row.result.errors||[])faults.set(issue.message,(faults.get(issue.message)||0)+1);
         if(faults.size) {
@@ -3106,10 +3131,10 @@ const DKOKTO_REPORT = (() => {
             });
             out.push('');
         }
-        out.push(FOOTER);
+        out.push(footer());
         return out.join('\n');
     }
-    return {report,audit,FOOTER};
+    return {report,audit,footer,get FOOTER(){return footer();}};
 })();
 
 // A message to the uploader, built from what the check already found.
@@ -5216,7 +5241,14 @@ const DKOKTO_REQUESTS_CORE = ((links,trackers) => {
     function report(request={},result=null) {
         const found=result||search(request);
         const lines=['Request: '+(request.name||request.title||'(no name)')];
-        if(request.url)lines.push('On DarkPeers: '+request.url);
+        // Named DarkPeers whatever site the request was on, so a report copied on Zenith
+        // said "On DarkPeers: https://znth.cx/requests/…". The address says where it is;
+        // the line now says the same thing rather than contradicting it.
+        if(request.url) {
+            let where='';
+            try{where=new URL(request.url,'https://example.invalid').hostname.replace(/^www\./,'');}catch{}
+            lines.push('On '+(where&&where!=='example.invalid'?where:'this tracker')+': '+request.url);
+        }
         if(request.category)lines.push('Category: '+request.category);
         lines.push('Search term: '+(found.term||'(none — the request name could not be read)'),'');
         if(!found.links.length)lines.push('No tracker searches: choose the trackers you are on first.');
@@ -6386,7 +6418,7 @@ const DPTI_HOST = (() => {
         if(fullEditionPresent()){console.info('Torrent Inspector: the full DKOKTO edition is active on this page, so the standalone copy stayed inactive.');return;}
         mounted=true;settings=load();
         const tools=el('div',undefined,undefined);tools.id='dp-inspector-tools';
-        const launch=button('Inspect torrent',()=>open());launch.className='dk-inspector-launch';launch.title='MediaInfo review and DP naming check · Alt+Shift+I';
+        const launch=button('Inspect torrent',()=>open());launch.className='dk-inspector-launch';launch.title='MediaInfo review and naming check \u00b7 Alt+Shift+I';
         tools.append(launch);document.body.append(tools);
         window.addEventListener('keydown',e=>{if(e.altKey&&e.shiftKey&&e.code==='KeyI'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();open();}});
         DKOKTO_LISTING.mount();
