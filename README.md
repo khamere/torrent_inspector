@@ -1,4 +1,4 @@
-# Torrent Inspector 1.27.0
+# Torrent Inspector 1.28.0
 
 A Tampermonkey userscript for release naming. It reads the page you are on and tells you
 whether a release name is written the way the tracker you are on says it should be — on the
@@ -53,6 +53,38 @@ JSON somewhere before you update.
 - **CHANGES-1.12.4-to-1.22.3.md** — what changed across the older versions, grouped by what
   it does.
 - **CHANGELOG.md** — every version, newest first.
+
+## New in 1.28.0
+
+**Backup…** in the listing bar, beside *Internal groups…* and *Tracker rules…*. It shows what it
+would save — every one of the nine things this script keeps — and hands you a single file.
+Restoring says what a file holds and when it was taken before writing anything, and can fill
+only the gaps rather than replacing what you are using. Nothing is sent anywhere, and restoring
+writes back only the keys this script owns.
+
+It matters most if a script manager ever decides a renamed script is a new one and gives it an
+empty store. A check reads the modules for the keys they actually save and fails if one is not
+on the backup list, so it cannot quietly fall behind.
+
+**A fixture in UNIT3D's own markup.** Every fixture until now was shaped like DarkPeers. Vanilla
+UNIT3D puts the release name in the `<h1>`, the size in a `<span class="torrent__size-link">`
+with the byte count in its title, and the category in an `<a>` — the shape 41 of the 43 trackers
+serve, and nothing tested it. 17 checks do now, built from the published templates.
+
+**Versions cannot drift**: a check fails if the README title or the newest changelog entry
+disagrees with the build.
+
+---
+
+## Changed in 1.27.1
+
+**The published file names no one.** The built userscript is what people install, and what
+Tampermonkey shows them on the install screen — eleven comment lines across five modules
+recorded who supplied a list and in what capacity. They record what was in hand and when,
+now, and nothing about the person. Every citation stays, and a check asserts both: no line
+names a person, and the citations are still present, so it cannot be passed by deleting them.
+
+---
 
 ## Fixed in 1.27.0
 
