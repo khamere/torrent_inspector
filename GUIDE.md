@@ -131,6 +131,35 @@ Private notes are per torrent, kept in your browser only.
 
 ---
 
+## Moving around: the nav panel
+
+**Nav**, in the launcher bar, or `Alt+Shift+N`.
+
+Two modes. **Page** steps through the torrent listing — set a step size and the arrows take
+you that many pages forward or back, with your filters, sorting and search kept exactly as
+they are. **ID** steps through torrent IDs on a torrent page. **Jump** goes straight to a page
+number, or to a torrent ID, whichever mode you are in; in ID mode it also takes a pasted
+address from the same site.
+
+It works on every tracker this script runs on, because the addresses are UNIT3D's own:
+`/torrents?page=` for the listing, `/torrents/{id}` for a release.
+
+Two honest limits, both of which the panel tells you about rather than leaving you to work
+out:
+
+- **Torrent IDs are not consecutive.** Stepping by ID is arithmetic on the address, not a
+  list of what exists, so a gap lands you on the tracker's own not-found page. Nothing is
+  broken when that happens.
+- **A step that cannot apply is disabled, and says why** — page stepping needs the listing,
+  ID stepping needs a torrent page. Jump works in both.
+
+An address you paste that points at another site is refused. The panel follows a link, the
+same as typing the address yourself; it fetches nothing and reads no page you did not open.
+
+Your mode, step size and whether the panel is open are remembered in your own browser.
+
+---
+
 ## On the requests page
 
 Each request gets the same treatment: the name reduced to a title, a year and a season, and a
