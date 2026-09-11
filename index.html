@@ -562,7 +562,7 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
   <div class="wrap">
     <h2>Questions people actually ask</h2>
     <dl class="qa">
-      <dt>Fifty-odd trackers — how do I find the ones I'm on?</dt>
+      <dt>Sixty trackers — how do I find the ones I'm on?</dt>
       <dd>The chooser puts the trackers you have ticked first, in their own group, open. Everything else is folded away by
         what it carries, with a count on each group, and the search box filters by name, language or software — type
         <em>italian</em> and you get Shareisland and ItaTorrents. Each tracker's search address sits behind its own
@@ -575,8 +575,8 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
       <dd>Because the script does not have that tracker's address, and it will not guess one — private tracker domains move, and a wrong link is worse than none. Add the tracker to your cross-check list and the link appears everywhere automatically, or put the address on its line: <code>Tracker|group group group|https://address</code>.</dd>
 
       <dt>Do I have to set it up again on every tracker?</dt>
-      <dd>No. The trackers you are on, the trackers you have added and their rules, your internal-groups list, and which rules apply
-        where all live in Tampermonkey's per-script store, which every site the script runs on can see — ordinary browser storage is
+      <dd>No. The trackers you are on, the trackers you have added and their rules, your internal-groups list, your comment
+        templates, and which rules apply where all live in Tampermonkey's per-script store, which every site the script runs on can see — ordinary browser storage is
         kept per domain and cannot. Anything you had set up before this became shared is carried up the first time it is read, so
         nothing is lost. The audit, the decision log and private notes stay per tracker on purpose: those are a record of work on
         that tracker rather than a setting.</dd>
@@ -615,12 +615,18 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
         exact.</dd>
 
       <dt>Do the shipped LUME and OnlyEncodes+ rules apply automatically?</dt>
-      <dd>Not until you add them. They are offered, never applied on their own — adding a rule set
-        changes which rules a badge cites, so it waits for you to press <b>Add</b>. After that they behave
-        like any tracker you added yourself: editable, exportable, removable. And on luminarr.me or
-        onlyencodes.cc they then apply <em>without being chosen</em>, because each profile carries that
-        tracker's own address. So: four trackers badge with no dropdown work — two built in, two after a
-        single click.</dd>
+      <dd>No. They ship with the script but are not in use until you add them: <b>Tracker rules…</b> →
+        <b>Added trackers</b> → <em>Rule sets that ship with this script</em> → <b>Add</b>. Until you do,
+        <code>luminarr.me</code> and <code>onlyencodes.cc</code> are like any other tracker whose rules are
+        not in hand — nothing is badged there.
+        <p style="margin-top:10px">It waits because adding a rule set changes which rules a badge cites, and
+        a red ✕ quoting a rulebook that tracker never wrote is worse than no badge at all.</p>
+        <p>Once added, a shipped set is an ordinary added tracker — editable, exportable, removable — with one
+        convenience: the profile carries its own tracker's address, so on that tracker it selects itself and
+        you never touch the <b>Rules</b> dropdown. (If you have explicitly picked a different rule set for
+        that site, your pick wins.)</p>
+        <p>So <b>two trackers badge out of the box</b> — DarkPeers and Zenith — and <b>two more once you add
+        them</b>. On the other thirty-nine you choose a rule set, or add that tracker's rules yourself.</p></dd>
 
       <dt>Is it 43 trackers or 60?</dt>
       <dd>Both, counting different things. <b>43</b> is how many UNIT3D trackers the script <em>runs
@@ -648,10 +654,10 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
       <dd>No. It means the <em>supported title checks</em> passed. The media, the source history and tracker approval are not verified, and the tool says so rather than implying more than it knows.</dd>
 
       <dt>Can it approve, reject or post for me?</dt>
-      <dd>No. It never writes to the tracker. The decision log records what you decided, for you, in your browser; the reply builder writes a draft you copy yourself.</dd>
+      <dd>No. Nothing is approved, rejected, posted, submitted or edited on the tracker. The decision log records what <em>you</em> decided, for you, in your browser; the reply builder writes a draft you copy yourself. One button types, and only into your own comment box — <b>⤵</b> puts your template in it, touches no submit button, and stops there. What goes up is what you press post on.</dd>
 
       <dt>Where is my data kept?</dt>
-      <dd>In your own browser, each store with a fixed cap: notes, settings, the audit, the decision log, tracker profiles and the internal-groups list. Nothing is uploaded, and clearing your browser data clears it.</dd>
+      <dd>In your own browser, each store with a fixed cap: notes, settings, the audit, the decision log, tracker profiles, the internal-groups list and your comment templates. Nothing is uploaded, and clearing your browser data clears it.</dd>
     </dl>
   </div>
 </section>
