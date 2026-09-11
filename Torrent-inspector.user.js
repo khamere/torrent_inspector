@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.26.0
+// @version      1.26.1
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       🤖T.R.A.V.I.S (original Chungus Edition); DKOKTO personal customization
 // @match        https://darkpeers.org/*
@@ -4378,25 +4378,43 @@ const DKOKTO_TEMPLATES = (() => {
         : '';
 
     // --- The button beside the comment box -----------------------------------------------
-    // Found by what the page says it is, not by a route this guessed at: a visible, editable
-    // textarea in a POST form on this site, which the page itself calls a comment. Where
-    // nothing on the page says "comment", no button appears and nothing is claimed.
+    // Found by what the page says the box IS, not by how its form is wired. UNIT3D posts a
+    // comment through Livewire — <form wire:submit="postComment"> — with no method and no
+    // action attribute at all, so a form.method==='post' test reads "get" and finds nothing.
+    // That is exactly what happened: the fixture wrote method="post" and agreed with the
+    // assumption instead of testing it.
+    //
+    // What is required now is what actually identifies the box: it is editable, it is on
+    // screen, it is not inside this script's own panels, and the page itself calls it a
+    // comment — in the textarea's name, id, placeholder, label or class, or in its form's.
+    // A form that posts somewhere else entirely is still refused. Where nothing says
+    // "comment", no button appears and nothing is claimed.
+    const NOTOURS='.dk-listing-dialog,.dk-hub,#dkokto-hub,#dkokto-tools,#dkokto-game-dialog,#dp-inspector-hub,#dp-inspector-tools';
+    function names(area) {
+        const form=area.form;
+        return [area.name,area.id,area.placeholder,area.className,
+            area.getAttribute('aria-label')||'',area.getAttribute('wire:model')||'',
+            form?form.className:'',form?(form.getAttribute('action')||''):''].join(' ').toLowerCase();
+    }
     function box() {
-        for(const area of document.querySelectorAll('form textarea')) {
-            if(area.disabled||area.readOnly||area.closest('.dk-listing-dialog,.dk-hub,#dkokto-hub,#dkokto-tools,#dp-inspector-hub'))continue;
+        const found=[];
+        for(const area of document.querySelectorAll('textarea')) {
+            if(area.disabled||area.readOnly||area.closest(NOTOURS))continue;
             if(!area.getClientRects().length)continue;
             const form=area.form;
-            if(!form||(form.method||'').toLowerCase()!=='post')continue;
-            try{
-                const action=new URL(form.getAttribute('action')||location.href,location.href);
-                if(action.origin!==location.origin)continue;
-                const says=[area.name,area.id,area.placeholder,area.getAttribute('aria-label')||'',
-                    action.pathname].join(' ').toLowerCase();
-                if(!/comment/.test(says))continue;
-            }catch{continue;}
-            return area;
+            // Only a form aimed off this site is a reason to refuse; having no action, as a
+            // Livewire form has, is not.
+            if(form&&form.getAttribute('action'))
+                try{if(new URL(form.getAttribute('action'),location.href).origin!==location.origin)continue;}
+                catch{continue;}
+            if(!/comment/.test(names(area)))continue;
+            found.push(area);
         }
-        return null;
+        if(!found.length)return null;
+        // A page can hold the box you write a new comment in AND an edit box on one already
+        // posted. The new one says so — "new-comment", "new_comment" — and is preferred; the
+        // rest are left alone rather than guessed between.
+        return found.find(area=>/new[-_\s]?comment/.test(names(area)))||found[0];
     }
     // The row of tabs the page puts above the box (Write · Preview), where there is one.
     // Each tab is read as its own element rather than as one run of text: markup with no
