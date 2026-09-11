@@ -101,6 +101,15 @@
   .qa dd{margin:0; color:var(--dim)}
   footer{padding:32px 0 60px; color:var(--faint); font-size:14px}
   footer p{margin:0 0 8px}
+
+    /* Screenshots. Rendered from this project's own offline demo pages — synthetic release
+       names, no tracker branding, no usernames, nothing from a real site. */
+    .shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-top:22px}
+    .shots figure{margin:0;display:flex;flex-direction:column;gap:9px}
+    .shots img{width:100%;height:auto;display:block;border:1px solid #55405f;border-radius:6px;background:#0d0a12}
+    .shots figcaption{color:#b9a7c7;font-size:13.5px;line-height:1.55}
+    .shots .wide{grid-column:1/-1}
+    @media(max-width:640px){.shots{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -158,6 +167,51 @@
         <h3>3 · The MediaInfo is checked</h3>
         <p>On a torrent's page, what the title claims is compared with the report the uploader posted — resolution, codecs, audio, HDR, languages.</p>
       </div>
+    </div>
+  </div>
+</section>
+
+<section id="shots">
+  <div class="wrap">
+    <h2>What it looks like</h2>
+    <p class="sub">
+      Rendered from this project’s own offline demo pages and regenerated from the current build,
+      so they cannot drift from what the script actually does. Synthetic release names throughout:
+      no tracker branding, no usernames, no ratios, nothing from a real site.
+    </p>
+    <div class="shots">
+      <figure class="wide">
+        <img src="screenshots/01-listing-badges.png" alt="A torrent listing where each loaded title carries a green tick, a red cross or an amber question mark, above a bar with the rules chooser and the audit button." loading="lazy" width="1180" height="657">
+        <figcaption>A badge on every loaded title, and the bar that switches them on. The count underneath is of the titles on screen — nothing else is read.</figcaption>
+      </figure>
+      <figure>
+        <img src="screenshots/02-naming-explained.png" alt="A dialog explaining a naming error, listing the manual checks that remain and the tracker's title template." loading="lazy" width="940" height="828">
+        <figcaption>Click a badge: what it found, what it could not decide, and the template the tracker asks for.</figcaption>
+      </figure>
+      <figure>
+        <img src="screenshots/03-banned-group.png" alt="A dialog naming a release group that appears on a tracker's banned list, with the reason that list gives." loading="lazy" width="940" height="784">
+        <figcaption>A banned or low-quality group is named with the list it is on and the reason that list gives — not an accusation of its own.</figcaption>
+      </figure>
+      <figure class="wide">
+        <img src="screenshots/05-torrent-page.png" alt="A torrent page showing the badge beside the release name, a row of lookup links, the vs capture button and a file marker with the exact byte count." loading="lazy" width="1180" height="725">
+        <figcaption>On a torrent page: the badge, the cross-tracker lookup row, the <b>vs</b> capture button, and the file marker with the size to the byte.</figcaption>
+      </figure>
+      <figure>
+        <img src="screenshots/06-inspector-naming.png" alt="The Inspector panel showing a release-name check against the chosen tracker's rules." loading="lazy" width="940" height="828">
+        <figcaption>The Inspector reads the MediaInfo already on the page and checks the name against what the report says.</figcaption>
+      </figure>
+      <figure>
+        <img src="screenshots/10-cross-check.png" alt="The request cross-check panel, with a search link for each tracker that can carry that kind of request." loading="lazy" width="940" height="428">
+        <figcaption>A request gets a search link per tracker that can carry it. One that cannot is left out, with the reason.</figcaption>
+      </figure>
+      <figure>
+        <img src="screenshots/12-nav.png" alt="The torrent navigation panel, with page and ID modes, a step size, a jump box and the current page named." loading="lazy" width="330" height="248">
+        <figcaption>Torrent nav: step by listing page or by torrent ID, or jump straight to one. Every tracker this runs on.</figcaption>
+      </figure>
+      <figure>
+        <img src="screenshots/11-tracker-chooser.png" alt="The tracker chooser, listing trackers grouped by family with checkboxes." loading="lazy" width="940" height="828">
+        <figcaption>Which trackers you are on. Nothing is searched until you click a link it builds.</figcaption>
+      </figure>
     </div>
   </div>
 </section>
