@@ -1,16 +1,17 @@
-# Torrent Inspector 1.28.4
+# Torrent Inspector 1.29.0
 
 A Tampermonkey userscript for release naming. It reads the page you are on and tells you
 whether a release name is written the way the tracker you are on says it should be — on the
 listing, on the torrent page, and in a MediaInfo panel you can paste a report into. It also
 looks a release up on the other trackers you are a member of, compares two releases side by
-side, and keeps the templates you paste over and over.
+side, keeps the templates you paste over and over, and moves you around a tracker by page or
+by torrent ID.
 
 **It reads. It does not act.** No network request of any kind, no account, no cookie, no API
 key, nothing posted, submitted, uploaded or downloaded. Every link opens when you click it and
 not before. What it stores, it stores on your own machine.
 
-It runs on **44 UNIT3D trackers** and can search **60**. Naming rules for DarkPeers, Zenith,
+It runs on **43 UNIT3D trackers** and can search **60**. Naming rules for DarkPeers, Zenith,
 LUME and OnlyEncodes+ ship with it; any other tracker is added by pasting its rules, as data,
 never as code.
 
@@ -28,7 +29,7 @@ checks for a new version on its own schedule and offers it.
 
 It was called *DarkPeers - Torrent Inspector* and its file was
 `DarkPeers-Torrent-Inspector.user.js`. From 1.26.0 it is just **Torrent Inspector**, because it
-is not DarkPeers' script and never was — it runs on 44 trackers.
+is not DarkPeers' script and never was — it runs on 43 trackers.
 
 Tampermonkey identifies an installed script by what is in its header, so the rename can land
 as a **second entry in your script list** rather than as an update to the first. If you see
@@ -53,6 +54,33 @@ JSON somewhere before you update.
 - **CHANGES-1.12.4-to-1.22.3.md** — what changed across the older versions, grouped by what
   it does.
 - **CHANGELOG.md** — every version, newest first.
+
+## New in 1.29.0
+
+**Torrent nav, on every tracker this runs on.** A small panel for moving around a tracker
+without editing the address bar: step forward or back by any number of listing pages, or by
+any number of torrent IDs, and jump straight to a page number or an ID. The **Nav** button
+sits in the launcher bar beside *Inspect torrent*; **Alt + Shift + N** opens it.
+
+It works because the addresses are UNIT3D's own — `/torrents?page=` for the listing and
+`/torrents/{id}` for a release — which every tracker this runs on serves. Your filters,
+sorting and search stay on the address when the page number changes; only `page` is rewritten.
+
+What it will not do, which is the point:
+
+- It **follows a link**, the same as typing the address yourself. Nothing is fetched in the
+  background, no page is read that you did not open, and nothing is submitted.
+- A pasted address is accepted only if it belongs to the site you are on. One that points
+  somewhere else is refused and says so.
+- Stepping by ID is honest about what it is: IDs are not consecutive, so a missing one shows
+  the tracker's own not-found page. The panel says so before you use it.
+- Where a step cannot apply — page stepping on a torrent page, ID stepping on the listing —
+  the arrows are disabled **and the panel says why**, rather than going quietly dim. Jump
+  still works in both.
+
+Mode, step size and whether the panel is open are remembered in your own browser.
+
+---
 
 ## Fixed in 1.28.4
 
@@ -217,7 +245,7 @@ the button.
 
 **Renamed to just Torrent Inspector.** `@name` is **Torrent Inspector**, `@namespace` is
 `dkokto.torrent.inspector`, and the file is `Torrent-inspector.user.js` — the same name it is
-published under. It was never DarkPeers' script: it runs on 44 trackers and ships rule sets for
+published under. It was never DarkPeers' script: it runs on 43 trackers and ships rule sets for
 four. A check now fails if either the name or the namespace picks up a tracker's name again.
 
 **A guide of its own.** `GUIDE.md` is written for this script — the badges, the rules, the
@@ -834,7 +862,7 @@ The naming rules are a snapshot of the supplied guide (`NAMING-GUIDE-REFERENCE.t
 
 Private notes are per torrent ID in browser storage, not account-wide or public.
 
-The userscript matches HTTPS only, and only the 44 trackers whose addresses are in its own
+The userscript matches HTTPS only, and only the 43 trackers whose addresses are in its own
 catalogue — that list is written into the header at build time from the catalogue itself, so
 the two cannot drift apart, and there is a check for it. It asks for `GM_setValue`,
 `GM_getValue` and `GM_deleteValue`, which are storage on your machine rather than network, and
