@@ -8,6 +8,27 @@ Newest first. Older entries call the script *DarkPeers — Torrent Inspector*, w
 was named until 1.25.0.
 
 ---
+
+## 1.26.4 — this edition tests its own torrent page
+
+- **A torrent-page fixture of its own.** This edition shipped `detail-fixture.js` but no page to
+  run it in, so every validation record said the browser evidence came from the Scene Edition,
+  "over the same modules". True as far as it went — but the two editions do not share a
+  stylesheet, and a good deal of what those 144 checks measure is geometry: that the template
+  button lands on the tab row and clear of the comment box. A styling regression in
+  `inspector.css` alone would have passed unnoticed.
+- `detail-preview.html` now loads this edition's own build and its own CSS, and the 144 checks
+  pass against it. Confirmed the stylesheet really is in play rather than assumed: the button
+  comes back styled from `inspector.css`, not from the browser default.
+- It runs with the other three fixtures as a matter of course now, and its report ships as
+  `DETAIL-BROWSER-CHECKS.txt` beside the rest.
+- **The guide points at the rules builder**, which it did not — `TRACKER-RULES.md` and the site
+  had the link and the document people are handed first did not.
+- **A version in the guide was wrong**: it said the rename landed in 1.25.0. It was 1.26.0, as
+  the README says. Corrected in both places it appeared.
+
+---
+
 ## 1.26.3 — the button, put where it belongs
 
 - **The button sat behind the comment box instead of up by the tabs.** It looked for a *row*
@@ -28,7 +49,9 @@ was named until 1.25.0.
   the comment box — the two things that actually went wrong. The fixture also lays its tabs out
   horizontally, the way a theme does, so a placement that only looks right in a plain vertical
   list cannot pass.
-  
+
+---
+
 ## 1.26.2 — attribution taken out of the documents
 
 - **The documents no longer say who supplied what.** The README, CHANGELOG, GUIDE and
@@ -244,6 +267,7 @@ was named until 1.25.0.
 - **[ MULTIPLE FILES ]**, under the release name of any torrent that holds more than one file.
   Click it and the whole list goes to the clipboard: the folder and its total, then every file
   with the exact byte count — the form a season pack has to be pasted in when it is checked.
+  Asked for by dreadful.
 - **The exact byte size on the vs panel.** UNIT3D puts the byte count in the title of every
   size it rounds for display, so "17.56 GiB" now reads "17.56 GiB · 18855538688 B", and the
   difference between two totals is given in bytes. Two files that both show "5.70 GiB" but
