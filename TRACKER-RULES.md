@@ -122,5 +122,14 @@ Twelve added trackers, 1000 groups and 150 rules each, patterns up to 300 charac
 
 ## If you would rather not write JSON
 
-A tracker's rules page and banned list, as text, are all a profile needs to be written from
-— that is how DarkPeers' and Zenith's were built.
+**Build it in a browser:** <https://torrent.dkokto.dev/rules.html>. Fill in who the tracker is,
+paste its banned list, tick the rules that apply, and copy the JSON. The same page checks a
+profile you already have — telling you exactly why it was refused, in the validator's own words
+— and runs a release name through it so you can see what a badge would say before anyone
+installs anything. It needs no install itself, and runs the very modules this script is built
+from, so it cannot tell you something the script would disagree with.
+
+Inside the script, *Tracker rules… → Build one* does the same job.
+
+Either way, a tracker's rules page and banned list, as text, are all a profile needs to be
+written from — that is how DarkPeers' and Zenith's were built.
