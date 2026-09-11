@@ -1,4 +1,4 @@
-# Torrent Inspector 1.28.0
+# Torrent Inspector 1.28.1
 
 A Tampermonkey userscript for release naming. It reads the page you are on and tells you
 whether a release name is written the way the tracker you are on says it should be — on the
@@ -53,6 +53,20 @@ JSON somewhere before you update.
 - **CHANGES-1.12.4-to-1.22.3.md** — what changed across the older versions, grouped by what
   it does.
 - **CHANGELOG.md** — every version, newest first.
+
+## Fixed in 1.28.1
+
+**Three launchers on OnlyEncodes.** Its radio player and Auto-DJ box are iframes, and this
+script is matched by host, so it loaded inside each one and mounted a launcher there. It is
+`@noframes` now, and refuses to mount in a frame in code as well.
+
+**Half a release name offered as the group, on SeedPool.** Scene-style titles separate tokens
+with dots, and the tag matcher split candidate tails on spaces only — so
+`HD.MA.5.1.DV.HDR10.REMUX-seedpool` looked like one word with nothing technical in it and was
+taken for the group. Tails split on dots too now: that title gives `seedpool`. Spaced titles,
+groups with hyphens of their own, and dotted tags like `YTS.MX` are unchanged.
+
+---
 
 ## New in 1.28.0
 
