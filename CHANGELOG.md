@@ -8,7 +8,27 @@ Newest first. Older entries call the script *DarkPeers — Torrent Inspector*, w
 was named until 1.25.0.
 
 ---
+## 1.26.3 — the button, put where it belongs
 
+- **The button sat behind the comment box instead of up by the tabs.** It looked for a *row*
+  element holding Write · Preview that did not also contain the box — and where a theme gives
+  the tabs no wrapper of their own, every candidate contains the box too, so nothing matched
+  and it fell back to sitting immediately before the box, under the floating label. It now
+  anchors on the **Preview control itself**, which exists whatever is or is not wrapped around
+  it, and goes directly after it.
+- **Inside a tab list it is now a list item.** A `<span>` dropped straight into a `<ul>` is
+  invalid, and a horizontal tab row lays it out on a line of its own rather than beside the
+  tabs. Where there is no list it stays inline as before.
+- **It survives the Write / Preview switch.** Switching to Preview hides the box, and a hidden
+  textarea was treated as no box at all, so the button disappeared. The button belongs to the
+  tab row rather than to the box: it now stays put, what it writes is there when you switch
+  back, and a framework redraw that strips it out gets it put back on the next pass.
+- **Placement is measured now, not eyeballed.** The suite checks that the button lands
+  immediately after Preview, on the same line as the tabs (within 24px), and entirely clear of
+  the comment box — the two things that actually went wrong. The fixture also lays its tabs out
+  horizontally, the way a theme does, so a placement that only looks right in a plain vertical
+  list cannot pass.
+  
 ## 1.26.2 — attribution taken out of the documents
 
 - **The documents no longer say who supplied what.** The README, CHANGELOG, GUIDE and
