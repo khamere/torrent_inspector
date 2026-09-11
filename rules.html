@@ -70,7 +70,7 @@
   button.act.primary{color:#150c1d; background:var(--violet); border-color:var(--violet); font-weight:600}
   button.act.primary:hover{background:#dcb6ff}
   .say{min-height:1.4em; margin:10px 0 0; color:var(--dim); font-size:14.5px}
-  .say.bad{color:var(--red)} .say.good{color:var(--green)}
+  .say.bad{color:var(--red)} .say.good{color:var(--green)} .say.wait{color:var(--amber)}
   ul.findings{margin:12px 0 0; padding:0; list-style:none}
   ul.findings li{margin:0 0 8px; padding:9px 12px; background:var(--panel-2);
     border:1px solid var(--line); border-left:3px solid var(--line-2); border-radius:0 8px 8px 0; font-size:14.5px}
@@ -2105,6 +2105,12 @@ const DKOKTO_LISTING_CORE = ((naming,rules) => {
     notes:$('f-notes').value.split(/\n+/).map(line=>line.trim()).filter(Boolean)});
 
   let built=null;
+  const FIELDS=['f-key','f-label','f-hosts','f-groups','f-notes'];
+  const untouched=()=>FIELDS.every(id=>!$(id).value.trim())&&![...boxes.values()].some(box=>box.checked);
+  // Which of the two required fields are simply blank. This is about the form, not about the
+  // format: a validator message written for a key that is wrong ("must be 2–24 characters")
+  // reads as a telling-off on a field you have not reached yet.
+  const blanks=()=>[!$('f-key').value.trim()&&'a short key',!$('f-label').value.trim()&&'a name'].filter(Boolean);
   function draw() {
     const rows=DKOKTO_PROFILES.parseGroupList($('f-groups').value);
     $('f-groups-count').textContent=rows.length
@@ -2112,8 +2118,16 @@ const DKOKTO_LISTING_CORE = ((naming,rules) => {
       : ($('f-groups').value.trim()?'Nothing read from that yet.':'');
     built=draft();
     const check=DKOKTO_PROFILES.validate(built);
+    // An untouched form is not a wrong one. It waits, and says what it is waiting for.
+    if(untouched()) {
+      $('b-json').textContent='The profile appears here as you fill the form in.';
+      say($('b-say'),'Start with a short key and a name — the rest is optional.');
+      return;
+    }
     $('b-json').textContent=JSON.stringify(built,null,2);
-    if(check.errors.length)say($('b-say'),'Still needed: '+check.errors.join(' · '),'bad');
+    const missing=blanks();
+    if(missing.length)say($('b-say'),'Still needs '+missing.join(' and ')+'.','wait');
+    else if(check.errors.length)say($('b-say'),'Not accepted yet: '+check.errors.join(' · '),'bad');
     else say($('b-say'),'This profile is complete and would be accepted.'+
       (check.warnings.length?' Worth a look: '+check.warnings.join(' · '):''),'good');
   }
@@ -2124,8 +2138,18 @@ const DKOKTO_LISTING_CORE = ((naming,rules) => {
     try{await navigator.clipboard.writeText(text);say(where,'Copied.','good');}
     catch{window.prompt('Copy the profile:',text);}
   };
-  $('b-copy').onclick=()=>copy($('b-json').textContent,$('b-say'));
+  // Nothing hands on a form nobody has filled in: the JSON pane holds a sentence at that
+  // point, and copying it, saving it or sending it to Check would pass that sentence along
+  // as though it were a profile.
+  const notYet=()=>{
+    if(!untouched())return false;
+    say($('b-say'),'Fill in a short key and a name first — there is no profile to take yet.','wait');
+    $('f-key').focus();
+    return true;
+  };
+  $('b-copy').onclick=()=>{if(!notYet())copy($('b-json').textContent,$('b-say'));};
   $('b-download').onclick=()=>{
+    if(notYet())return;
     const name=(built&&built.key?built.key:'tracker')+'-rules.json';
     const blob=new Blob([JSON.stringify(built,null,2)],{type:'application/json'});
     const link=el('a');link.href=URL.createObjectURL(blob);link.download=name;
@@ -2133,8 +2157,10 @@ const DKOKTO_LISTING_CORE = ((naming,rules) => {
     setTimeout(()=>URL.revokeObjectURL(link.href),2000);
     say($('b-say'),'Saved as '+name+'.','good');
   };
-  $('b-toCheck').onclick=()=>{$('c-json').value=$('b-json').textContent;show('tab-check');runCheck();};
-  $('b-toTry').onclick=()=>{$('c-json').value=$('b-json').textContent;show('tab-try');runTry();};
+  $('b-toCheck').onclick=()=>{if(notYet())return;
+    $('c-json').value=$('b-json').textContent;show('tab-check');runCheck();};
+  $('b-toTry').onclick=()=>{if(notYet())return;
+    $('c-json').value=$('b-json').textContent;show('tab-try');runTry();};
 
   // --- Check --------------------------------------------------------------------------
   function readPasted() {
