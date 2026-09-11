@@ -1,4 +1,4 @@
-# Torrent Inspector 1.26.3
+# Torrent Inspector 1.26.4
 
 A Tampermonkey userscript for release naming. It reads the page you are on and tells you
 whether a release name is written the way the tracker you are on says it should be — on the
@@ -53,6 +53,20 @@ JSON somewhere before you update.
 - **CHANGES-1.12.4-to-1.22.3.md** — what changed across the older versions, grouped by what
   it does.
 - **CHANGELOG.md** — every version, newest first.
+
+## Changed in 1.26.4
+
+**This edition tests its own torrent page now.** It shipped the fixture but no page to run it
+in, so the evidence came from the Scene Edition's run. The two editions do not share a
+stylesheet, and much of what those 144 checks measure is geometry — so a regression in
+`inspector.css` alone could have gone unnoticed. `detail-preview.html` now runs them against
+this build and this CSS, with the other three fixtures, and its report ships as
+`DETAIL-BROWSER-CHECKS.txt`.
+
+`GUIDE.md` now links the rules builder, and a version number in it was wrong: the rename landed
+in 1.26.0, not 1.25.0.
+
+---
 
 ## Fixed in 1.26.3
 
@@ -259,8 +273,6 @@ Bureau.Burgwallen.S01.720p.WEB-DL.AAC.2.0.x264-DDF 9974836899 B
 Bureau.Burgwallen.S01E01.720p.WEB-DL.AAC.2.0.x264-DDF.mkv 1221811248 B
 Bureau.Burgwallen.S01E02.720p.WEB-DL.AAC.2.0.x264-DDF.mkv 1278590592 B
 ```
-
-Nothing is copied until you press it. (Asked for by dreadful.)
 
 **The exact byte size on the vs panel.** UNIT3D writes the byte count into the title of every
 size it rounds for display, so the comparison now reads `17.56 GiB · 18855538688 B` and gives
