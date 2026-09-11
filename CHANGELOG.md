@@ -9,6 +9,43 @@ was named until 1.25.0.
 
 ---
 
+## 1.26.2 — attribution taken out of the documents
+
+- **The documents no longer say who supplied what.** The README, CHANGELOG, GUIDE and
+  TRACKER-RULES carried lines like *"from the user as a DarkPeers moderator"*, *"each confirmed
+  by the user"* and *"you say they are not HUNO's"* — where a list or an address came from, and
+  in whose capacity. Every one of those now reads impersonally: reported, confirmed from a
+  working search, or simply stated. What is cited is unchanged; who supplied it is no longer
+  part of the record.
+- **Correspondence phrasing gone with it.** Passages written as replies — *"I read your 'HDB,
+  TBD, BLU'"*, *"say the word and I will move it"*, *"adopted from your 1.24.1"* — now read as
+  documentation rather than as half of a conversation.
+- Nothing in the script changed. The name, the namespace `dkokto.torrent.inspector`, the
+  `dkokto-tracker-rules` profile format and the install and update addresses are all untouched,
+  so this is an ordinary update with no reinstall and no saved profile invalidated.
+
+---
+
+## 1.26.1 — the template button, which was never appearing
+
+- **The template button never appeared on a real page.** UNIT3D posts a comment through
+  Livewire — `<form wire:submit="postComment">`, with no `method` and no `action` attribute at
+  all — so a form whose `method` reads back as `"get"`. The detector required `"post"` and
+  refused the box outright, on every tracker. Nothing showed up beside *Write · Preview*.
+- **Why the suite did not catch it:** the fixture wrote `method="post"` on its own form, so it
+  agreed with the assumption instead of testing it. The fixture now uses the markup UNIT3D
+  actually ships — the Livewire form, `name="comment"`, `id="new-comment__textarea"`,
+  `class="form__textarea"` — and the old code fails against it.
+- **What identifies the box now** is what the page says it is, not how its form is wired: an
+  editable, on-screen textarea that is not inside this script's own panels, and that the page
+  calls a comment in its name, id, placeholder, label, class or its form's. A form aimed at
+  another site is still refused; having no action is not a reason to refuse anything.
+- **An edit box no longer takes the button.** A page can hold both the new-comment box and an
+  edit box on a comment already posted; the one that says *new-comment* is preferred, and the
+  rest are left alone rather than guessed between.
+
+---
+
 ## 1.26.0 — just Torrent Inspector
 
 - **Renamed.** `@name` is now **Torrent Inspector** and `@namespace` is
@@ -24,6 +61,9 @@ was named until 1.25.0.
   script saves is written both to Tampermonkey's per-script store and to ordinary browser
   storage on the tracker you were using, and a fresh install adopts the second, per site.
   Export your added trackers first if you have set up a lot.
+- **A new GUIDE.md**, written for this script rather than for the fuller Scene Edition: the
+  badges, the rules, the torrent page, the templates, the Inspector, what it stores and what it
+  will never do. `GUIDE-1.22.md` stays for reference and now says at the top what it is.
 - **The README was rewritten at both ends.** A real front page — what it is, how to install it,
   what to read — and the module list, the suite list and the check reports brought up to date.
 - **A correction.** The README claimed the script "matches only HTTPS darkpeers.org and
@@ -40,7 +80,7 @@ was named until 1.25.0.
 - **MoreThanTV and FearNoPeer are gone from both lists.** Both trackers closed. They are out of
   the cross-check catalogue — 62 searchable trackers to 60 — so no click opens a site that is not
   there, and `fearnopeer.com` is off the `@match` list, 45 lines to 44. They are out of the
-  internal-groups directory too, which is what was asked for rather than marking them closed. That
+  internal-groups directory too, rather than being marked closed and left in place. That
   costs something and it is worth knowing: SMURF, WDYM, TEPES, Dracula, GBL, MOLY, SOIL, VLAD,
   EiNSTEIN_SiR23, onlyfaffs and HiFiWiFi are now listed nowhere. E.N.D keeps HD-Torrents; SM737
   keeps AlphaRatio and ReelFliX. (This bullet was missing from the 1.25.0 entry when it shipped
@@ -71,7 +111,7 @@ was named until 1.25.0.
 ## 1.24.3 — the directory, and bytes on the single-file marker
 
 - **SiGLA and SMURF are off HUNO.** The community directories this ships carried them there;
-  you say they are not HUNO's, so they are gone from that line. SMURF is still listed at
+  they were reported as not HUNO's, so they are gone from that line. SMURF is still listed at
   MoreThanTV, which is where those directories also put it — taking a group off one tracker
   is not deleting it, and there is a check for exactly that. SiGLA was listed nowhere else,
   so nothing claims it now.
@@ -109,7 +149,7 @@ was named until 1.25.0.
 - **A dialog the site took away with it.** Where a tracker redraws its own page, this
   script's dialog can go out of the document with it; reusing that detached one would open
   the explanation onto nothing. A dialog is now reused only while it is still in the page.
-  (Adopted from your 1.24.1 — see the note at the end of this entry.)
+  (Adopted from the 1.24.1 build — see the note at the end of this entry.)
 - Checks: 12 file-list, 17 capture and 106 torrent-page browser checks, each new one
   confirmed to fail with its fix taken back out. Everything else unchanged and green.
 - **On 1.24.1:** it carries the detached-dialog guard above, which is now in here. Three
@@ -155,7 +195,8 @@ was named until 1.25.0.
   source marker, matched anywhere in a title rather than as a tag.
 - All four of OnlyEncodes' own examples raise no error; the two review notes that do fire on
   them (the eac3to log, a season pack) are meant to.
-- **Four addresses added to the tracker catalogue**, each confirmed by the user: LUME
+- **Four addresses added to the tracker catalogue**, each confirmed from a working search on
+  the site itself: LUME
   (luminarr.me, UNIT3D — the script now runs there and picks the LUME rules by itself), and
   AvistaZ, CinemaZ and PrivateHD, kept exactly as they were tested. 58 entries to 62.
 - **Luminarr's provider list** is in hand: all 195 general abbreviations were already known;
@@ -175,15 +216,14 @@ was named until 1.25.0.
   additions and the rows you took out — layered over the directory the script ships, so new
   versions bring their new groups with them and what you did stays done on top of them. A list
   saved by an older version is read as additions only: nothing is deleted on a guess.
-- **New on the shipped list**, from the user as a DarkPeers moderator (cited in the data file):
+- **New on the shipped list**, reported to the project (cited in the data file):
   JBENT, "JBENT TAoE", OnlyMux and WhiskeyJack at OnlyEncodes+, and DOOBS at DarkPeers. Kitsune
-  at Aither, and twelve other names asked for in the same message, were already there.
+  at Aither, and twelve other names reported at the same time, were already there.
 - **The empty first bullet in the group menu.** A row that is only a note was drawn as an empty
   span with the note underneath it, so the bullet pointed at a blank line. It is one line now.
 - **[ MULTIPLE FILES ]**, under the release name of any torrent that holds more than one file.
   Click it and the whole list goes to the clipboard: the folder and its total, then every file
   with the exact byte count — the form a season pack has to be pasted in when it is checked.
-  Asked for by dreadful.
 - **The exact byte size on the vs panel.** UNIT3D puts the byte count in the title of every
   size it rounds for display, so "17.56 GiB" now reads "17.56 GiB · 18855538688 B", and the
   difference between two totals is given in bytes. Two files that both show "5.70 GiB" but
@@ -331,7 +371,7 @@ was named until 1.25.0.
 - The group at the end of a release name is marked, on listings and on a torrent's page.
   Click it for every tracker it is **listed as** internal at, a search for its other releases
   here, and the same on the trackers you have chosen.
-- The list is the InviteHawk internal-encoders directory supplied by the user (433 groups,
+- The list is the InviteHawk internal-encoders directory (433 groups,
   35 trackers, dated in `source/internals-data.js`). It is a community directory, so entries
   read "listed as", and **Internal groups…** lets you paste your own over it.
 - Where another script has already made the tag a link, this one leaves it alone entirely.
