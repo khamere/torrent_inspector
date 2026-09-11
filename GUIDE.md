@@ -149,6 +149,20 @@ left out with the reason, rather than given a link that finds nothing.
 - Claim a rule it was not given. Where a rule is quoted it is the tracker's own; where none is
   in hand, the finding says so and no badge is coloured by it.
 
+## Taking it with you
+
+**Backup…** in the listing bar saves everything this script has kept — the trackers you are on,
+the trackers you added and their rules, which rules apply where, your internal-groups changes,
+your templates, and the records of what you have looked at — as one file, copied or saved by
+your own browser.
+
+Restoring reads a file you give it. It says what the file holds and when it was taken **before**
+writing anything, and it can fill only the gaps rather than replacing what you are already
+using. Only the keys this script owns are ever written back; anything else in the file is
+ignored and named.
+
+Worth doing before you change script managers, move machines, or update across a rename.
+
 ## What it stores, and where
 
 Added trackers, rule sets, the internal-groups list, your templates, your private notes and
