@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.28.2
+// @version      1.28.3
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       🤖T.R.A.V.I.S (original Chungus Edition); DKOKTO personal customization
 // @match        https://darkpeers.org/*
@@ -1612,7 +1612,7 @@ const DKOKTO_GROUPS = ((profiles) => {
     // word — so everything after the closing hyphen is taken, up to four words. What tells
     // that from "…WEB-DL AAC 2.0 H.264", which has no tag at all, is that a technical token
     // is never part of a group name.
-    const TECHNICAL=/^(?:\d{3,4}[pi]|(?:18|19|20)\d{2}|S\d{2}(?:E\d{2})?|E\d{2}|\d+\.\d+|BluRay|BDRip|BRRip|BDMV|ISO|WEB|WEBRip|WEBDL|DL|HDTV|UHDTV|SDTV|DVD|DVDRip|UHD|HD|SD|Rip|Disc|REMUX|Hybrid|x26[45]|H\.?26[45]|AVC|HEVC|AV1|XviD|DivX|VC-?1|MPEG-?\d?|DD|DDP|DD\+|AC3|EAC3|AAC|FLAC|DTS|DTS-HD|DTS-X|MA|TrueHD|Atmos|Opus|LPCM|PCM|MP3|Audio|HDR|HDR10|HDR10\+|DV|SDR|HLG|10bit|Hi10P|IMAX|REPACK|PROPER|EXTENDED|UNCUT|Remastered|Criterion|MULTi|SUBBED|DUBBED|Subs?|Dubs?|Complete|Season|Part|AKA|Edition|Cut|NTSC|PAL)$/i;
+    const TECHNICAL=/^(?:\d{3,4}[pi]|(?:18|19|20)\d{2}|S\d{2}(?:E\d{2})?|E\d{2}|\d+\.\d+|BluRay|BDRip|BRRip|BDMV|ISO|WEB|WEBRip|WEBDL|DL|HDTV|UHDTV|SDTV|DVD|DVDRip|UHD|HD|SD|Rip|Disc|REMUX|Hybrid|x26[45]|H\.?26[45]|AVC|HEVC|AV1|XviD|DivX|VC-?1|MPEG-?\d?|DD|DDP|DD\+|AC3|EAC3|AAC|FLAC|DTS|DTS-HD|DTS-X|MA|TrueHD|Atmos|Opus|LPCM|PCM|MP3|Audio|\d*bits?|\d+(?:\.\d+)?kHz|HDR|HDR10|HDR10\+|DV|SDR|HLG|Hi10P|IMAX|REPACK|PROPER|EXTENDED|UNCUT|Remastered|Criterion|MULTi|SUBBED|DUBBED|Subs?|Dubs?|Complete|Season|Part|AKA|Edition|Cut|NTSC|PAL)$/i;
     function trailingTag(title) {
         const value=String(title||'').replace(DECORATION,'').trim();
         // Each hyphen in turn, earliest first, because a group name can hold hyphens of its
@@ -1632,6 +1632,10 @@ const DKOKTO_GROUPS = ((profiles) => {
             //   spaced    "… WEB-DL DD+ 5.1 H.264-DKOKTO"
             //   dotted    "… DTS-HD.MA.5.1.DV.HDR10.REMUX-seedpool"
             //   hyphened  "Terrestrial_Hospice-Universal_Hate_Speech-EP-WEB-2018-BLEEDiNG"
+            // A hyphen can also sit INSIDE a technical token — "FLAC 16-bit 44.1kHz" — where
+            // everything technical is on the left of it and the tail reads clean. The audio
+            // words are what tell that apart, so bit depth and sample rate are technical
+            // tokens here like any other.
             // Splitting on spaces alone read a dotted run as one word with nothing technical
             // in it and called that the group. Adding dots fixed the video names and left the
             // music ones, where WEB and the year are joined by hyphens instead. Splitting a
