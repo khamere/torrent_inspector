@@ -94,7 +94,7 @@
 
 <header class="top">
   <div class="wrap">
-    <p class="eyebrow">Torrent Inspector 1.27.0</p>
+    <p class="eyebrow">Torrent Inspector 1.28.0</p>
     <h1>Tracker rules</h1>
     <p class="lede">
       Build a rules profile for a tracker, check one you already have, and run a release name
@@ -210,7 +210,7 @@
 <footer>
   <div class="wrap">
     <p><a href="index.html">← Torrent Inspector</a> · profile format documented in
-      <code>TRACKER-RULES.md</code> · built from the modules of 1.27.0</p>
+      <code>TRACKER-RULES.md</code> · built from the modules of 1.28.0</p>
   </div>
 </footer>
 
@@ -386,7 +386,7 @@ const DKOKTO_INSPECTOR = (() => {
 
 
 /* ── services.js ─────────────────────────────────────────── */
-// Streaming-service abbreviations from the supplied DP list. Data only: the list
+// Streaming-service abbreviations from the list in hand. Data only: the list
 // records how a service is spelled in a title, never where a release came from.
 // Several services have more than one accepted spelling, separated by " / ".
 const DKOKTO_SERVICES = (() => {
@@ -1697,17 +1697,17 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
 
 /* ── tracker-guides.js ─────────────────────────────────────────── */
 // Rule sets for trackers whose guides are in hand, in the same profile format you would
-// paste in yourself — data, not code. Nothing here is fetched: each one is the guide as the
-// user supplied it, and the module says plainly which parts of a guide it does NOT have.
+// paste in yourself — data, not code. Nothing here is fetched: each one is the guide as it
+// was given to this project, and the module says plainly which parts it does NOT have.
 //
 // Sources, cited rather than inferred:
 //   · LUME (luminarr.me) — "Naming Guide": the two title templates and the explanation of
-//     every title element, supplied by the user 10 Sep 2026. Its provider list (wikis/7) is
-//     in hand as well and went into services.js. No LUME banned-group list has been
-//     supplied, so this carries none and says so rather than pretending otherwise.
+//     every title element, in hand 10 Sep 2026. Its provider list (wikis/7) is in hand as
+//     well and went into services.js. No LUME banned-group list has been provided, so this
+//     carries none and says so rather than pretending otherwise.
 //   · OnlyEncodes+ (onlyencodes.cc) — "Upload Guide + Rules" (wikis/2), the naming standard
-//     (wikis/18) and the banned release groups (wikis/1), all supplied by the user 10 Sep
-//     2026. Two groups that page marks as removed are deliberately absent; see below.
+//     (wikis/18) and the banned release groups (wikis/1), all in hand 10 Sep 2026. Two
+//     groups that page marks as removed are deliberately absent; see below.
 //
 // Adding one of these is your choice, not this script's: it changes which rules a badge
 // cites, so nothing is added until you press Add. A profile added from here is an ordinary
