@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.28.3
+// @version      1.28.4
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       🤖T.R.A.V.I.S (original Chungus Edition); DKOKTO personal customization
 // @match        https://darkpeers.org/*
@@ -810,19 +810,51 @@ const DKOKTO_PAGE = (() => {
         if(!spoken.length)return issues;
         const hasEnglish=spoken.some(isEnglish);
         const hasOriginal=!original||spoken.some(language=>norm(language).startsWith(norm(original))||norm(original).startsWith(norm(language)));
+        // Dual-Audio is the tag for a NON-English title carrying its original audio and an
+        // English dub. An English original with a second language is a different row of the
+        // guide's matrix — "German MULTi", "Russian MULTi" — so what is wrong is the tag
+        // chosen, not the number of languages. Saying "there is no second language for it to
+        // mean" while the page plainly lists two is a false claim about the page, and the
+        // person reading it has to work out for themselves what the tag should have been.
+        const other=spoken.filter(language=>!isEnglish(language));
+        // "Russian MULTi" carries the word MULTi, so the plain test above matches it. Whether
+        // the language is NAMED in front of it is what tells the two rows apart, and the only
+        // safe way to ask is against the language the page actually reports: the word before
+        // MULTi is otherwise the source ("BluRay MULTi" has the same shape).
+        const escaped=String(other[0]||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+        const named=other.length===1&&escaped
+            &&new RegExp('(?:^|[ ._-])'+escaped+'[ ._-]MULTi(?=$|[ ._-])','i').test(value);
         if(dual) {
-            if(originalEnglish)add('error','page-dual-english','Dual-Audio is named, but the page gives the original language as English, so there is no second language for it to mean.');
+            if(spoken.length<2)add('error','page-dual-one','Dual-Audio is named, but only one audio language is reported ('+spoken[0]+').');
+            else if(originalEnglish&&hasEnglish&&other.length===1)
+                add('error','page-dual-english','Dual-Audio is named, but the page gives the original language as English. '+
+                    'Dual-Audio is for a non-English title carrying its original audio and an English dub; the naming guide '+
+                    'in hand writes an English original with one other language ('+other[0]+') as “'+other[0]+' MULTi”.');
+            else if(originalEnglish)
+                add('error','page-dual-english-other','Dual-Audio is named, but the page gives the original language as '+
+                    'English and the audio is '+spoken.join(', ')+'. Dual-Audio is for a non-English title carrying its '+
+                    'original audio and an English dub, which this is not — check the Dub element against the guide.');
             else if(spoken.length>2)add('error','page-dual-many','Dual-Audio is named, but the report has '+spoken.length+' audio languages ('+spoken.join(', ')+'). More than two is MULTi.');
-            else if(spoken.length<2)add('error','page-dual-one','Dual-Audio is named, but only one audio language is reported ('+spoken[0]+').');
             else if(!hasEnglish)add('review','page-dual-english-missing','Dual-Audio is named and neither track is English ('+spoken.join(', ')+'). Confirm what the tag is meant to carry here.');
             else if(!hasOriginal)add('review','page-dual-original','Dual-Audio is named, and the original language the page gives ('+original+') is not among the audio tracks ('+spoken.join(', ')+').');
         }
         if(multi&&spoken.length<2)
             add('error','page-multi-one','MULTi is named, but only one audio language is reported ('+spoken[0]+').');
+        // Bare MULTi is three or more languages, or an English original with two or more
+        // besides English. An English original with exactly one other language is the
+        // Language MULTi row — and the title has not named that language.
+        else if(multi&&!dual&&originalEnglish&&hasEnglish&&other.length===1&&spoken.length===2&&!named)
+            add('error','page-multi-language','MULTi is named, but the page gives the original language as English and '+
+                'reports two audio languages ('+spoken.join(', ')+'). The naming guide in hand writes an English original '+
+                'with one other language as “'+other[0]+' MULTi”, with the language named.');
         if(!dual&&!multi&&spoken.length>2)
             add('review','page-multi-missing',spoken.length+' audio languages are reported ('+spoken.join(', ')+') and the name carries no MULTi.');
         if(!dual&&!multi&&spoken.length===2&&hasEnglish&&original&&!originalEnglish&&hasOriginal)
             add('review','page-dual-missing','English and the original language ('+original+') are both reported, which is what Dual-Audio describes. Confirm whether the tag belongs here.');
+        if(!dual&&!multi&&spoken.length===2&&originalEnglish&&hasEnglish&&other.length===1)
+            add('review','page-language-multi-missing','The page gives the original language as English and reports a second '+
+                'audio language ('+other[0]+'), which the naming guide in hand writes as “'+other[0]+' MULTi”. The name carries '+
+                'no Dub element at all — confirm whether one belongs here.');
         if(!hasEnglish&&!subs.some(isEnglish))
             add('review','page-subtitles','The audio is '+spoken.join(', ')+' and no English subtitle track is reported'+
                 (subs.length?' (subtitles: '+subs.join(', ')+')':'')+'. Most trackers require them for non-English audio — check this one’s rules.');
