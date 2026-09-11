@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.28.1
+// @version      1.28.2
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       🤖T.R.A.V.I.S (original Chungus Edition); DKOKTO personal customization
 // @match        https://darkpeers.org/*
@@ -1627,12 +1627,17 @@ const DKOKTO_GROUPS = ((profiles) => {
             if(!tail||tail.length>40)continue;
             const words=tail.split(/\s+/);
             if(words.length>4||!/^[A-Za-z0-9]/.test(words[0]))continue;
-            // Tokens are separated by dots in a scene-style name and by spaces in a spaced
-            // one, so both have to be looked at. Splitting on spaces alone read the whole of
-            // "HD.MA.5.1.DV.HDR10.REMUX-seedpool" as a single word, found nothing technical
-            // in it, and called that run the group — which is what SeedPool's titles look
-            // like, and made the tag menu offer half the release name.
-            const parts=tail.split(/[\s.]+/).filter(Boolean);
+            // A release name separates its tokens with spaces, dots or hyphens, depending
+            // on whose convention it follows, and all three have to be looked at:
+            //   spaced    "… WEB-DL DD+ 5.1 H.264-DKOKTO"
+            //   dotted    "… DTS-HD.MA.5.1.DV.HDR10.REMUX-seedpool"
+            //   hyphened  "Terrestrial_Hospice-Universal_Hate_Speech-EP-WEB-2018-BLEEDiNG"
+            // Splitting on spaces alone read a dotted run as one word with nothing technical
+            // in it and called that the group. Adding dots fixed the video names and left the
+            // music ones, where WEB and the year are joined by hyphens instead. Splitting a
+            // tail on its hyphens costs nothing: a group whose own name carries them
+            // (R-A-R-B-G) has no technical token among the pieces.
+            const parts=tail.split(/[\s.-]+/).filter(Boolean);
             if(parts.some(word=>TECHNICAL.test(word.replace(/[.,;:]+$/,''))))continue;
             return tail;
         }
