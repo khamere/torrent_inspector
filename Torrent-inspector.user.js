@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.27.0
+// @version      1.28.0
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       🤖T.R.A.V.I.S (original Chungus Edition); DKOKTO personal customization
 // @match        https://darkpeers.org/*
@@ -955,7 +955,7 @@ const DKOKTO_RELEASE_TITLE = (() => {
     return {find,score,looksLikeRelease,textOf,clean};
 })();
 
-// Streaming-service abbreviations from the supplied DP list. Data only: the list
+// Streaming-service abbreviations from the list in hand. Data only: the list
 // records how a service is spelled in a title, never where a release came from.
 // Several services have more than one accepted spelling, separated by " / ".
 const DKOKTO_SERVICES = (() => {
@@ -2256,17 +2256,17 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
    typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./rules.js'):DKOKTO_RULES);
 
 // Rule sets for trackers whose guides are in hand, in the same profile format you would
-// paste in yourself — data, not code. Nothing here is fetched: each one is the guide as the
-// user supplied it, and the module says plainly which parts of a guide it does NOT have.
+// paste in yourself — data, not code. Nothing here is fetched: each one is the guide as it
+// was given to this project, and the module says plainly which parts it does NOT have.
 //
 // Sources, cited rather than inferred:
 //   · LUME (luminarr.me) — "Naming Guide": the two title templates and the explanation of
-//     every title element, supplied by the user 10 Sep 2026. Its provider list (wikis/7) is
-//     in hand as well and went into services.js. No LUME banned-group list has been
-//     supplied, so this carries none and says so rather than pretending otherwise.
+//     every title element, in hand 10 Sep 2026. Its provider list (wikis/7) is in hand as
+//     well and went into services.js. No LUME banned-group list has been provided, so this
+//     carries none and says so rather than pretending otherwise.
 //   · OnlyEncodes+ (onlyencodes.cc) — "Upload Guide + Rules" (wikis/2), the naming standard
-//     (wikis/18) and the banned release groups (wikis/1), all supplied by the user 10 Sep
-//     2026. Two groups that page marks as removed are deliberately absent; see below.
+//     (wikis/18) and the banned release groups (wikis/1), all in hand 10 Sep 2026. Two
+//     groups that page marks as removed are deliberately absent; see below.
 //
 // Adding one of these is your choice, not this script's: it changes which rules a badge
 // cites, so nothing is added until you press Add. A profile added from here is an ordinary
@@ -3556,6 +3556,13 @@ const DKOKTO_LISTING = (() => {
         manage.title='Add a tracker by pasting its rules';
         manage.onclick=()=>DKOKTO_PROFILES_UI.open(()=>{fill();recheck();});
         rules.append(manage);
+        // Everything this script has saved, in one file. Next to the two panels that make
+        // most of it, because that is where you would look for it.
+        const backup=el('button','Backup…');backup.type='button';backup.className='dk-listing-rules-edit';
+        backup.setAttribute('aria-haspopup','dialog');
+        backup.title='Save everything this script has kept, or put a backup back';
+        backup.onclick=()=>DKOKTO_BACKUP_UI.open(()=>{fill();recheck();});
+        rules.append(backup);
         const legend=el('span','✕ Naming error · ✓ Title checks pass · ? Review needed');counts=el('span');counts.setAttribute('role','status');counts.setAttribute('aria-live','polite');bar.append(label,rules,legend,audit,log,el('small','Loaded titles only. Click a badge for details; media and source history are not verified.'),counts);
         logged=el('span');logged.setAttribute('role','status');bar.append(logged);root.prepend(bar);
     }
@@ -4536,6 +4543,253 @@ const DKOKTO_TEMPLATES = (() => {
     return {editor,attach,clear,all,save,reset,facts,CLASS};
 })();
 
+// Everything this script has saved, in one file — and back again.
+//
+// What it keeps is spread over nine keys: the trackers you are on, the trackers you added and
+// their rules, which rules apply where, the internal-groups list, your templates, the audit,
+// the decision log, which requests you have seen, and the two comparison slots. There was no
+// way to take the lot with you, which matters when a script manager can decide a renamed
+// script is a new one and hand it an empty store.
+//
+// Data only: this reads and writes the store it is given and nothing else. No DOM, no
+// network, nothing executed. What comes out is the text that was saved, not an interpretation
+// of it — so a backup taken by one version can be restored by another without this module
+// having to understand what any of it means.
+const DKOKTO_BACKUP_CORE = (() => {
+    const FORMAT='dkokto-backup';
+    const VERSION=1;
+    const MAX_BYTES=4e6;
+
+    // Every key, and whether it is a setting (the same everywhere) or a record of work on one
+    // tracker. Both are backed up; the labels are so a person can see what they are restoring.
+    const KEYS=[
+        {key:'dkokto_trackers_v1',       label:'The trackers you are on',        kind:'setting'},
+        {key:'dkokto_tracker_profiles_v1',label:'Trackers you added, and their rules',kind:'setting'},
+        {key:'dkokto_rules_v1',          label:'Which rules apply where',        kind:'setting'},
+        {key:'dkokto_internal_groups_v1',label:'Your internal-groups changes',    kind:'setting'},
+        {key:'dkokto_templates_v1',      label:'Your comment templates',          kind:'setting'},
+        {key:'dkokto_audit_v1',          label:'The audit of what you looked at', kind:'record'},
+        {key:'dkokto_decisions_v1',      label:'The decision log',                kind:'record'},
+        {key:'dkokto_requests_seen_v1',  label:'Requests you have checked',       kind:'record'},
+        {key:'dkokto_compare_slots_v1',  label:'The two comparison slots',        kind:'record'}];
+    const KNOWN=new Set(KEYS.map(entry=>entry.key));
+
+    const read=(store,key)=>{try{const value=store.getItem(key);return value==null?null:String(value);}catch{return null;}};
+
+    // What is there, as it is there. A key that was never set is left out rather than written
+    // as empty — restoring a backup must not plant blanks over a setup that has something.
+    function gather(store,{when=new Date().toISOString().slice(0,10)}={}) {
+        const saved={};
+        let count=0;
+        for(const entry of KEYS) {
+            const value=read(store,entry.key);
+            if(value===null||value==='')continue;
+            saved[entry.key]=value;count++;
+        }
+        return {format:FORMAT,version:VERSION,taken:when,keys:count,saved};
+    }
+
+    // What a backup holds, in words, before anything is written. Nothing is restored by
+    // asking this.
+    function describe(backup) {
+        const checked=validate(backup);
+        if(checked.errors.length)return {errors:checked.errors,entries:[]};
+        const entries=[];
+        for(const entry of KEYS) {
+            const value=checked.backup.saved[entry.key];
+            if(value===undefined)continue;
+            entries.push({key:entry.key,label:entry.label,kind:entry.kind,
+                bytes:value.length,items:countOf(value)});
+        }
+        return {errors:[],taken:checked.backup.taken,entries};
+    }
+    // A rough count of what is in one stored value, for the "12 trackers" line. It is a
+    // description, never a decision: nothing downstream depends on it being right.
+    function countOf(value) {
+        try{
+            const parsed=JSON.parse(value);
+            if(Array.isArray(parsed))return parsed.length;
+            if(parsed&&typeof parsed==='object') {
+                for(const field of ['rows','list','added','entries','profiles'])
+                    if(Array.isArray(parsed[field]))return parsed[field].length;
+                return Object.keys(parsed).length;
+            }
+        }catch{}
+        return 0;
+    }
+
+    function validate(backup) {
+        let value=backup;
+        if(typeof value==='string') {
+            if(value.length>MAX_BYTES)return {errors:['That file is larger than a backup can be.'],backup:null};
+            try{value=JSON.parse(value);}
+            catch(error){return {errors:['That is not valid JSON: '+error.message],backup:null};}
+        }
+        const errors=[];
+        if(!value||typeof value!=='object'||Array.isArray(value))
+            return {errors:['A backup is a JSON object; this is not one.'],backup:null};
+        if(value.format!==FORMAT)
+            errors.push('This is not a backup of this script: "format" should be "'+FORMAT+'".');
+        if(!Number.isInteger(value.version)||value.version>VERSION)
+            errors.push('This backup was written by a newer version than the one restoring it.');
+        if(!value.saved||typeof value.saved!=='object'||Array.isArray(value.saved))
+            errors.push('It carries nothing to restore.');
+        if(errors.length)return {errors,backup:null};
+        // Only the keys this script owns, and only text. A backup is not a way to write
+        // anything you like into the store.
+        const saved={},unknown=[];
+        for(const [key,item] of Object.entries(value.saved)) {
+            if(!KNOWN.has(key)){unknown.push(key);continue;}
+            if(typeof item!=='string')continue;
+            saved[key]=item;
+        }
+        if(!Object.keys(saved).length)
+            return {errors:['Nothing in it belongs to this script.'+
+                (unknown.length?' It carries: '+unknown.slice(0,4).join(', ')+'.':'')],backup:null};
+        return {errors:[],warnings:unknown.length?['Ignored, not ours: '+unknown.join(', ')]:[],
+            backup:{format:FORMAT,version:value.version,taken:String(value.taken||''),
+                keys:Object.keys(saved).length,saved}};
+    }
+
+    // Put it back. `only` restores a subset; `replace:false` leaves alone anything already
+    // set, so a restore can fill gaps without overwriting what you have been using.
+    function restore(store,backup,{only=null,replace=true}={}) {
+        const checked=validate(backup);
+        if(checked.errors.length)return {ok:false,errors:checked.errors,written:[],skipped:[]};
+        const wanted=only?new Set(only):null;
+        const written=[],skipped=[];
+        for(const entry of KEYS) {
+            const value=checked.backup.saved[entry.key];
+            if(value===undefined)continue;
+            if(wanted&&!wanted.has(entry.key))continue;
+            if(!replace&&read(store,entry.key)!==null){skipped.push(entry.key);continue;}
+            try{store.setItem(entry.key,value);written.push(entry.key);}
+            catch{skipped.push(entry.key);}
+        }
+        return {ok:written.length>0,errors:[],warnings:checked.warnings||[],written,skipped};
+    }
+
+    const toJSON=backup=>JSON.stringify(backup,null,2);
+    const api={FORMAT,VERSION,KEYS,MAX_BYTES,gather,describe,validate,restore,toJSON};
+    if(typeof module!=='undefined'&&module.exports)module.exports=api;
+    return api;
+})();
+
+// Take your whole setup with you, and put it back.
+//
+// One file holding everything this script has saved. Nothing is sent anywhere: the file is
+// copied to your clipboard or saved by your own browser, and restoring reads a file you give
+// it. The panel says what it is about to write before it writes anything.
+const DKOKTO_BACKUP_UI = (() => {
+    const core=typeof DKOKTO_BACKUP_CORE!=='undefined'?DKOKTO_BACKUP_CORE:null;
+    const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
+    const button=(label,onClick,cls)=>{const b=el('button',label,cls);b.type='button';b.onclick=onClick;return b;};
+    const store=()=>{try{return DKOKTO_STORE.open();}catch{return null;}};
+    let dialog=null,onChange=()=>{};
+
+    const stamp=()=>{try{return new Date().toISOString().slice(0,10);}catch{return '';}};
+    const taken=()=>core.gather(store()||{getItem:()=>null},{when:stamp()});
+
+    function open(after) {
+        onChange=typeof after==='function'?after:()=>{};
+        if(!dialog?.isConnected) {
+            dialog=el('dialog',undefined,'dk-listing-dialog dk-hub');
+            dialog.setAttribute('aria-labelledby','dk-backup-heading');
+            document.body.append(dialog);
+        }
+        draw();
+        if(!dialog.open)dialog.showModal();
+    }
+    function draw() {
+        if(!dialog?.isConnected)return;
+        dialog.replaceChildren();
+        const head=el('header'),heading=el('h2','Backup');heading.id='dk-backup-heading';
+        head.append(heading,button('Close',()=>dialog.close()));
+        dialog.append(head);
+        const body=el('section',undefined,'dk-hub-content');
+        const status=el('p','','dk-backup-status');status.setAttribute('role','status');
+
+        // --- What you have ----------------------------------------------------------------
+        const mine=taken();
+        const told=core.describe(mine);
+        body.append(el('h3','What this would save'));
+        if(!told.entries.length)
+            body.append(el('p','Nothing yet. Add a tracker, change the groups list or write a template, and it will be here.'));
+        else {
+            const list=el('ul',undefined,'dk-backup-list');
+            for(const entry of told.entries) {
+                const item=el('li');
+                item.append(el('b',entry.label),
+                    el('span',entry.items?' — '+entry.items+(entry.kind==='record'?' recorded':' saved'):''));
+                item.dataset.kind=entry.kind;
+                list.append(item);
+            }
+            body.append(list);
+            body.append(el('small','Settings are the same on every tracker this runs on. The records — the '+
+                'audit, the decision log, requests you have checked — are kept per tracker, so a backup '+
+                'taken here carries this tracker’s.'));
+        }
+        const out=el('div',undefined,'dk-row');
+        out.append(button('Copy it',async()=>{
+            const text=core.toJSON(taken());
+            try{await navigator.clipboard.writeText(text);status.textContent='Copied.';}
+            catch{window.prompt('Copy your backup:',text);}
+        },'dk-primary'),button('Save it as a file',()=>{
+            const text=core.toJSON(taken());
+            const name='torrent-inspector-backup-'+(stamp()||'today')+'.json';
+            try{
+                const link=el('a');link.href=URL.createObjectURL(new Blob([text],{type:'application/json'}));
+                link.download=name;document.body.append(link);link.click();link.remove();
+                setTimeout(()=>URL.revokeObjectURL(link.href),2000);
+                status.textContent='Saved as '+name+'.';
+            }catch{window.prompt('Copy your backup:',text);}
+        }));
+        body.append(out);
+
+        // --- Putting one back --------------------------------------------------------------
+        body.append(el('h3','Restore one'));
+        const area=el('textarea');area.rows=6;area.className='dk-reply-text';
+        area.setAttribute('aria-label','Paste a backup');
+        area.placeholder='Paste a backup file here.';
+        body.append(area);
+        const keep=el('label'),tick=el('input');tick.type='checkbox';
+        keep.append(tick,document.createTextNode(' Leave anything I already have, and only fill the gaps'));
+        body.append(keep);
+        const preview=el('div',undefined,'dk-backup-preview');
+        body.append(preview);
+        area.oninput=()=>{
+            preview.replaceChildren();
+            if(!area.value.trim())return;
+            const told=core.describe(area.value);
+            if(told.errors.length){preview.append(el('p',told.errors.join(' · '),'dk-backup-bad'));return;}
+            preview.append(el('p','That file was taken '+(told.taken||'at an unrecorded date')+
+                ' and holds '+told.entries.length+':'));
+            const list=el('ul',undefined,'dk-backup-list');
+            for(const entry of told.entries)list.append(el('li',entry.label));
+            preview.append(list);
+        };
+        body.append(button('Restore it',()=>{
+            const told=core.describe(area.value);
+            if(told.errors.length){status.textContent=told.errors.join(' · ');return;}
+            if(!window.confirm(tick.checked
+                ? 'Fill in anything not already set, from this backup?'
+                : 'Replace what is saved with this backup? What it carries is written over.'))return;
+            const done=core.restore(store(),area.value,{replace:!tick.checked});
+            if(!done.ok){status.textContent=done.errors.join(' · ')||'Nothing was restored.';return;}
+            status.textContent='Restored '+done.written.length+
+                (done.skipped.length?', left '+done.skipped.length+' alone':'')+
+                '. Reload the page for all of it to take effect.';
+            onChange();
+        },'dk-primary'));
+        body.append(status);
+        body.append(el('small','Nothing here is sent anywhere. A backup is the text this script has already '+
+            'saved on this machine, and restoring only writes back the keys this script owns — anything '+
+            'else in the file is ignored and named.'));
+        dialog.append(body);
+    }
+    return {open};
+})();
+
 // The "vs" button on a torrent page: capture this release, capture another, compare.
 //
 // It reads the loaded page — the release name, the file list with its sizes, the total
@@ -5005,11 +5259,11 @@ const DKOKTO_TRACKERS = (() => {
         unit('utopia','Utopia','utp.to','video','Ukrainian'),
         unit('bitporn','BitPorn','bitporn.eu','adult'),
         unit('cjav','ClearJAV','clearjav.com','adult','Asian'),
-        // Address confirmed by the user, 10 Sep 2026, from a search on the site itself.
+        // Address confirmed 10 Sep 2026, from a search run on the site itself.
         unit('lume','LUME','luminarr.me'),
         // The AvistaZ family. These are not UNIT3D and their search is their own; each
-        // address is the user's, pasted from a working search there on 10 Sep 2026, and is
-        // kept exactly as he tested it rather than tidied.
+        // address was pasted from a working search there on 10 Sep 2026 and is kept exactly
+        // as it was tested rather than tidied into a neater-looking form.
         site('avz','AvistaZ','video','https://avistaz.to/torrents?in=1&search={q}&type=0&tags=&uploader='),
         site('cz','CinemaZ','video','https://cinemaz.to/torrents?in=1&search={q}&type=0&tags=&uploader='),
         site('phd','PrivateHD','video','https://privatehd.to/torrents?in=1&search={q}&type=0&tags=&uploader='),
@@ -5264,20 +5518,20 @@ const DKOKTO_REQUESTS_CORE = ((links,trackers) => {
 
 // Which tracker a release group is internal to.
 //
-// Sources, in hand and cited rather than invented — all three supplied by the user, and all
-// three community-maintained directories rather than any tracker's own staff list:
+// Sources, in hand and cited rather than invented. The first three are community-maintained
+// directories rather than any tracker's own staff list:
 //   · InviteHawk "Internal Encoders / Groups from Private Trackers" (topic 154380), 9 Sep 2026
 //   · rentry.org/internals — internal groups and their respective trackers, 9 Sep 2026
 //   · pastes.io/yiahe8Xf — site / P2P groups table, 9 Sep 2026
-//   · the user, as a DarkPeers moderator, 9 Sep 2026 — JBENT, "JBENT TAoE", OnlyMux and
-//     WhiskeyJack at OnlyEncodes+, and DOOBS at DarkPeers. The other names asked for in the
-//     same message (Kitsune at Aither; BiNGUS, Breeze, DarQ, "DarQ HONE", DBMS, edwood,
-//     "Goki TAoE", noxxus, PrimeX, Ralphy, sCOOTER, Vialle) were already on the lines below.
-//   · the user, as a DarkPeers moderator, 10 Sep 2026 — ZoroSenpai at HDBits, TorrentBD and
-//     Blutopia ("HDB, TBD, BLU"); and SiGLA and SMURF taken off HUNO, where the community
-//     lists above had carried them.
-//   · 10 Sep 2026, same source: MoreThanTV and FearNoPeer are closed, and both lines are
-//     off this list entirely, as asked. The community directories above still carry them.
+//   · Reported to this project, 9 Sep 2026 — JBENT, "JBENT TAoE", OnlyMux and WhiskeyJack at
+//     OnlyEncodes+, and DOOBS at DarkPeers. The other names reported at the same time
+//     (Kitsune at Aither; BiNGUS, Breeze, DarQ, "DarQ HONE", DBMS, edwood, "Goki TAoE",
+//     noxxus, PrimeX, Ralphy, sCOOTER, Vialle) were already on the lines below.
+//   · Reported to this project, 10 Sep 2026 — ZoroSenpai at HDBits, TorrentBD and Blutopia
+//     ("HDB, TBD, BLU"); and SiGLA and SMURF taken off HUNO, where the community lists
+//     above had carried them.
+//   · 10 Sep 2026: MoreThanTV and FearNoPeer are closed, and both lines are off this list
+//     entirely. The community directories above still carry them.
 //     What that costs, said rather than hidden: SMURF, WDYM, TEPES, Dracula, GBL, MOLY,
 //     SOIL, VLAD, EiNSTEIN_SiR23, onlyfaffs and HiFiWiFi are now listed nowhere (HUNO was
 //     SMURF's other line and came off in the same version). E.N.D keeps HD-Torrents and
@@ -5444,8 +5698,8 @@ Ztracker|ARROW
 
 // Which tracker a release group is internal to.
 //
-// The list is data, not a judgement: it ships with the InviteHawk community directory the
-// user supplied (see internals-data.js for the citation and date), and anything you paste
+// The list is data, not a judgement: it ships with the InviteHawk community directory
+// (see internals-data.js for the citations and dates), and anything you paste
 // over it replaces it. Nothing here is inferred — a group that is not on the list is
 // reported as not on the list, never guessed at — and a directory can be stale, so every
 // entry is offered as "listed as internal at", not as fact.
