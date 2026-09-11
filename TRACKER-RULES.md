@@ -1,9 +1,14 @@
 # Adding a tracker
 
-DarkPeers, Zenith, OnlyEncodes and Luminarr are built in. Any other tracker is added as a **profile**: a JSON
-object holding who the tracker is, its banned release group list, and its rules. Nothing in
-a profile is executed and nothing is fetched — patterns are compiled as regular expressions
-and matched against a title, and one that will not compile is refused with the reason.
+Four rule sets ship with the script: **DarkPeers**, **Zenith**, **LUME** and
+**OnlyEncodes+**. The first two are built in; the other two are offered under *Added
+trackers → Rule sets that ship with this script* and become ordinary added trackers when you
+press **Add**.
+
+Any other tracker is added as a **profile**: a JSON object holding who the tracker is, its
+banned release group list, and its rules. Nothing in a profile is executed and nothing is
+fetched — patterns are compiled as regular expressions and matched against a title, and one
+that will not compile is refused with the reason.
 
 Open **Tracker rules…** beside the *Rules* dropdown, in the listing legend bar or at the
 top of the naming box.
@@ -18,7 +23,7 @@ is added until you press it, because adding one changes which rules a badge cite
 | Rule set | Built from | What it does not have |
 | --- | --- | --- |
 | **LUME** (luminarr.me) | its Naming Guide — both title templates, and the vocabulary for every element | no banned-group list: none was supplied |
-| **OnlyEncodes+** (onlyencodes.cc) | its Upload Guide + Rules, its naming standard and its banned list — 16 rules, 136 groups | — |
+| **OnlyEncodes+** (onlyencodes.cc) | its Upload Guide + Rules (`wikis/2`), its naming standard (`wikis/18`) and its banned list (`wikis/1`) — 16 rules, 136 groups | — |
 
 Where a page was not supplied, the profile says so in its own standing notes rather than
 filling the gap with a guess. Paste it in and the checks can quote it instead.
@@ -117,5 +122,5 @@ Twelve added trackers, 1000 groups and 150 rules each, patterns up to 300 charac
 
 ## If you would rather not write JSON
 
-Send the tracker's rules page and banned list as text and I will produce the profile for
-you — that is how DarkPeers' and Zenith's were built.
+A tracker's rules page and banned list, as text, are all a profile needs to be written from
+— that is how DarkPeers' and Zenith's were built.
