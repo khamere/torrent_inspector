@@ -3,7 +3,12 @@
 // @namespace    dkokto.torrent.inspector
 // @version      1.29.0
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
-// @author       🤖T.R.A.V.I.S (original Chungus Edition); DKOKTO personal customization
+// @author       DKOKTO
+// This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,
+// and is published with thanks to it. None of its code is here: this edition is built from
+// this project's own modules and shares no line with that script. The fork itself, which does
+// carry it, is a separate edition and keeps its own credit — including the MIT notice for the
+// Enhanced Chat Unit3D code by ZukoXZoku that it contains.
 // @match        https://darkpeers.org/*
 // @match        https://www.darkpeers.org/*
 // Zenith is checked against its own rules, so the Inspector runs there too.
@@ -5578,6 +5583,8 @@ const DKOKTO_REQUESTS_CORE = ((links,trackers) => {
 //   · Reported to this project, 10 Sep 2026 — ZoroSenpai at HDBits, TorrentBD and Blutopia
 //     ("HDB, TBD, BLU"); and SiGLA and SMURF taken off HUNO, where the community lists
 //     above had carried them.
+//   · Reported to this project, 11 Sep 2026 — j3rico at Zenith. Zenith had no line on this
+//     list at all until now: the community directories above do not carry it.
 //   · 10 Sep 2026: MoreThanTV and FearNoPeer are closed, and both lines are off this list
 //     entirely. The community directories above still carry them.
 //     What that costs, said rather than hidden: SMURF, WDYM, TEPES, Dracula, GBL, MOLY,
@@ -5741,6 +5748,7 @@ World-In-HD|FURAX GAIA Heman HGR LFN PULSE STEAL TMB WiHD
 Xthor|CARPEDiEM JUSTFORFUN A3L BlackFlag BOUQUINE Giorgy NLX5 LiBE RTAD Poney ReBot ViKINGS FRATERNiTY WEEDS GHZ NEO SCiTiS BSD MYSTERiON Scaph ALLDAYiN CHiLL RiPiT DELiCiOUS CherryCoke DEMON iXTHOR QWERTZ LOOKSMAX SpiriTus DZ DavidGoodenough* Tokuchi* Yn1D* QUALiTY* LEGi*
 XtremeZone|Werip XtremeHD
 YUScene|R&H YUTeamHD
+Zenith|j3rico
 Ztracker|ARROW
 `;
 
