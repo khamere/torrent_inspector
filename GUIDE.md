@@ -43,7 +43,11 @@ Above the results is a bar with:
 - **Automatic naming checks** — the on/off switch.
 - **Rules** — whose rules the badges are applying. On a tracker whose rules are not in hand
   this says so, and nothing is judged until you choose.
-- **Internal groups…** — the directory of which tracker a group is internal to.
+- **Internal groups…** — the directory of which tracker a group is internal to. A group's tag
+  in a release name is clickable; the popup says *listed as internal at* and, on the same
+  line, **where that came from** — the community directories with their date, a report to
+  this project with its date, or your own addition. A directory's word can be months stale
+  and is nobody's staff list, so check before acting on it.
 - **Tracker rules…** — add a tracker of your own.
 - **Audit loaded titles** — everything on the page at once, as a table you can copy.
 - **Copy moderation log** — the record of what you have looked at and decided, kept locally.
@@ -181,14 +185,18 @@ left out with the reason, rather than given a link that finds nothing.
 ## Taking it with you
 
 **Backup…** in the listing bar saves everything this script has kept — the trackers you are on,
-the trackers you added and their rules, which rules apply where, your internal-groups changes,
-your templates, and the records of what you have looked at — as one file, copied or saved by
-your own browser.
+the trackers you added and their rules, which rule set applies on which tracker, whether the
+automatic checks are on, your internal-groups changes, your templates, your private notes, the
+nav settings, and the records of what you have looked at — as one file, copied or saved by your
+own browser. Tick *leave my private notes out* for a file you might hand to someone.
 
 Restoring reads a file you give it. It says what the file holds and when it was taken **before**
 writing anything, and it can fill only the gaps rather than replacing what you are already
 using. Only the keys this script owns are ever written back; anything else in the file is
 ignored and named.
+
+If you have the fuller DKOKTO Scene Edition, its reading toolkit used to have an export of its
+own. That is gone; a file it wrote still restores here, and the panel says so when it reads one.
 
 Worth doing before you change script managers, move machines, or update across a rename.
 
