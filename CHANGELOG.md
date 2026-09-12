@@ -9,13 +9,49 @@ was named until 1.25.0.
 
 ---
 
+## 1.30.0 — the backup carries everything, and a sweep for checks that could not fail
+
+- **Backup… carried 9 of 13 keys.** Left behind on every restore: `dp_torrent_inspector_v1`
+  (your private notes), `dkokto_rules_host_v1` (which rule set applies on which tracker),
+  `dkokto_listing_checks_v1` (whether the automatic checks are on) and `dkokto_torrent_nav_v1`.
+  The Scene Edition additionally lost the game helper's settings. All eighteen keys across the
+  two editions are listed now, each marked with the edition that writes it.
+- **The check that should have caught it could never fail.** It found keys with
+  `/KEY\s*=\s*'dkokto_…'/` — the uppercase convention that exactly the nine listed modules
+  follow — so it confirmed what was already true and never once said no. It now scans every
+  shipped module for anything shaped like a storage key, and each must be carried or be on a
+  short list of keys deliberately not carried, with a reason. Planting a new key fails it;
+  listing a key nothing writes fails it; both name the file.
+- **One backup, not two.** The Scene toolkit's own *Export settings JSON* covered the very
+  things Backup… omitted, under a different format. It is retired; Backup… reads its old
+  `dkokto-settings` files section by section and says so, and gains the one thing the toolkit
+  export had that it lacked — *leave my private notes out*, for a file you might share.
+- **Provenance in the internal-groups popup.** Each *Listed as internal at* line now says
+  whether it came from the community directories (with their date), was reported to this
+  project (with that date), or was added by you. The reported entries are data, not only
+  comments, and a check confirms each one is actually on the list it is cited for.
+- **Request cross-check wording**, corrected against a screenshot: "blocked the other 5" when
+  all five were blocked (now *all* or *the other*, by what happened); "one at a time below"
+  for a button that sits above (no direction now); "unknown request" (now *kind not
+  recognised*); "the rules of the other tracker" (now *that tracker's rules*). The fixture had
+  asserted the wrong wording as correct; it asserts the right one now, and covers the
+  realistic first-tab-opens case as well.
+- **The no-request guarantee, checked by mutation.** Nineteen modules have a check that they
+  make no request, and every one catches a planted `fetch()`. The built-script check covered
+  one slice — CAPTURE to PAGE — so fourteen modules, including nav, requests and templates,
+  could have gained one unnoticed. It covers the whole built file now (in the Scene Edition,
+  the whole added region, with the game helper's one same-origin fetch carved out and pinned
+  to exactly one). 19 of 19 and 47 of 47 planted fetches are caught.
+
+---
+
 ## 1.29.0 — torrent nav, on every tracker this runs on
 
 - **The nav panel is no longer one tracker's feature.** It was written beside DarkPeers and
   Zenith and mounted only there, but nothing in it was ever specific to them: it reads
   `/torrents?page=` and `/torrents/{id}`, which are UNIT3D's own addresses. It now mounts
-  wherever this script runs — 44 trackers in the standalone edition, and in the Scene Edition
-  on the other 42 as well as the two it started on.
+  wherever this script runs — 43 trackers in the standalone edition, and in the Scene Edition
+  on the other 41 as well as the two it started on.
 - Step by any number of listing pages or torrent IDs, jump to a page number or an ID, with
   **Alt + Shift + N** or the **Nav** button in the launcher bar. Filters, sorting and search
   stay on the address; only the page number is rewritten.
@@ -27,7 +63,32 @@ was named until 1.25.0.
   idea of them — now asserts in both editions that the launcher appears in the bar, opens,
   reads `Torrent #9910` out of the page's own address, is styled by this script, and says why
   page stepping is unavailable on a torrent page.
-
+- **Screenshots**, in the README and on the front page. Every one is rendered from this
+  project's own offline demo pages and regenerated from the current build, so they cannot
+  drift from what the script does. Synthetic release names throughout: no tracker branding,
+  no usernames, no ratios, nothing from a real site — which is the only sane way to publish
+  pictures of a private tracker's pages. A gallery is the easiest thing on a site to break
+  silently, so six checks cover it: every image loads, nothing 404s, each has alt text and a
+  caption, each carries its dimensions and loads lazily. Removing one file fails two of them.
+- **j3rico** is listed as internal at **Zenith**, reported 11 Sep 2026. Zenith had no line on
+  that list at all before now — the community directories the rest of it is drawn from do not
+  carry it — so it is named in the sources note and given a check of its own, because an entry
+  no directory carries is exactly the kind that disappears when a list is regenerated.
+- **The author credit is accurate now.** The header credited the Chungus Edition, and none of
+  its code is in this script: no upstream file in its source tree, no line of 45 characters or
+  more shared with it, and the only identifiers in common are words like `options` and
+  `container`. The credit stays — this project began inside a fork of it — but it now says
+  that, rather than implying the code is there. The fork itself is a separate edition, and it
+  does carry that code, its credit, and the MIT notice for the *Enhanced Chat Unit3D* code by
+  **ZukoXZoku** that the Chungus Edition ported.
+- The README stated the wrong tracker count in four places: it gave the number of `@match`
+  lines instead, and DarkPeers gets one with `www.` and one without, so the lines are one more
+  than the trackers. Corrected to **43**, and checked now rather than left to drift — the
+  counts are read out of `trackers.js`, the `@match` lines are counted out of the built script
+  and must be one more, and every sentence claiming coverage in the README and the guide must
+  state one of the two numbers. Dated entries in this file are left as they were written: they
+  are a record of what was true at the time, and editing them to match today's catalogue would
+  make them wrong in a different way.
 ---
 
 ## 1.28.5 — housekeeping
