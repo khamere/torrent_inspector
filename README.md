@@ -1,4 +1,4 @@
-# Torrent Inspector 1.30.1
+# Torrent Inspector 1.31.0
 
 A Tampermonkey userscript for release naming. It reads the page you are on and tells you
 whether a release name is written the way the tracker you are on says it should be — on the
@@ -93,6 +93,41 @@ JSON somewhere before you update.
 - **CHANGES-1.12.4-to-1.22.3.md** — what changed across the older versions, grouped by what
   it does.
 - **CHANGELOG.md** — every version, newest first.
+
+## New in 1.31.0
+
+**Turn an amber ? into a green tick, when you have checked it.** An amber badge means the
+checks could not decide — not that anything is wrong. Once you have gone through the manual
+checks and the name conforms, its dialog has **Mark as conforming**. The badge turns green,
+shown as *yours*: a dotted ring, *marked as conforming by you on <date>* in its tooltip, and
+**Undo** in the dialog. The check's own finding is kept alongside, the manual checks stay
+listed, and the listing counts say *3 passed (1 marked by you)*.
+
+What it will not do: **red stays red.** A definite rule error can never be marked over, and
+if a later rule change turns a marked name red, red wins. The mark is per rule set — a name
+that conforms to the DarkPeers guide is not thereby fine under Zenith's — and it verifies
+nothing and changes nothing on the tracker. Kept on your machine, carried by Backup….
+
+**The torrent-page badge uses what the page states.** It used to check the title alone and
+list *verify the title against TMDB* and *audio languages are not confirmed* as things for
+you to do — while the findings row three lines below had already read the page's heading,
+original language and MediaInfo. Now the badge's check gets the same page facts the findings
+row does, so those become checks that are *made*: the manual list shrinks to what the page
+cannot state (provenance, episode mapping), and the dialog says exactly what it read —
+*Checked against the display title, this page's title and year, its original language, its
+MediaInfo*. A page that states nothing hands in nothing.
+
+**Rule sets say how old they are.** The naming panel now reads *against the DarkPeers naming
+guide (in hand 10 Sep 2026)* — or, where no date was recorded when a guide was supplied,
+says exactly that rather than inventing one. LUME and OnlyEncodes+ carry their dates; the
+two built-in guides arrived without one, and the panel says so until one is given.
+
+**"Kind not recognised" says why.** A request the cross-check could not classify now names
+what it looked at — *no category on the row, and the title carries no year, resolution,
+season or format to go on*, or *a year alone does not say whether it is a film, a series or
+an album* — so you know it is the row's data, not the script guessing.
+
+---
 
 ## Fixed in 1.30.1
 
