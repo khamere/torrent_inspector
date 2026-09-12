@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.30.0
+// @version      1.30.1
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       DKOKTO
 // This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,
@@ -5430,7 +5430,7 @@ const DKOKTO_TRACKERS = (() => {
         try{const parsed=new URL(value.replace(/\{q\}/g,'term').replace(/\{imdb\}/g,'tt0000001'));
             return parsed.protocol==='https:'&&parsed.hostname.includes('.');}catch{return false;}
     }
-    const empty=()=>({enabled:[],search:{},custom:[],popups:''});
+    const empty=()=>({enabled:[],search:{},custom:[],popups:{}});
     function read() {
         const store=storage();if(!store)return empty();
         try{
@@ -5449,12 +5449,21 @@ const DKOKTO_TRACKERS = (() => {
             }
             const known=new Set([...CATALOGUE.map(t=>t.key),...custom.map(t=>t.key)]);
             const enabled=(Array.isArray(parsed.enabled)?parsed.enabled:[]).filter(key=>typeof key==='string'&&known.has(key)).slice(0,120);
-            return {enabled,search,custom,popups:parsed.popups==='blocked'?'blocked':parsed.popups==='ok'?'ok':''};
+            // Pop-up permission is per SITE, so what the browser did is remembered per site.
+            // This used to be one string for every tracker this runs on — set once, on any of
+            // them, it put every request dialog everywhere into the one-at-a-time mode, and
+            // nothing but a full burst succeeding (which a default browser never allows)
+            // cleared it. An old string value is dropped rather than read: it was that state.
+            const popups={};
+            if(parsed.popups&&typeof parsed.popups==='object'&&!Array.isArray(parsed.popups))
+                for(const [host,value] of Object.entries(parsed.popups).slice(0,120))
+                    if(/^[a-z0-9.-]{3,80}$/.test(host)&&(value==='blocked'||value==='ok'))popups[host]=value;
+            return {enabled,search,custom,popups};
         }catch{return empty();}
     }
     function write(state) {
         const store=storage();if(!store)return state;
-        try{store.setItem(KEY,JSON.stringify({enabled:state.enabled.slice(0,120),search:state.search,popups:state.popups||'',custom:state.custom.slice(0,MAX_CUSTOM)
+        try{store.setItem(KEY,JSON.stringify({enabled:state.enabled.slice(0,120),search:state.search,popups:state.popups||{},custom:state.custom.slice(0,MAX_CUSTOM)
             .map(({key,label,kind,search})=>({key,label,kind,search}))}));}catch{}
         return state;
     }
@@ -5505,13 +5514,15 @@ const DKOKTO_TRACKERS = (() => {
         delete state.search[key];write(state);
         return state.custom.length<before;
     }
-    // Whether this browser refused a burst of tabs last time, so the next attempt can
-    // offer the one-at-a-time route first instead of wasting a click.
-    const popupsBlocked=()=>read().popups==='blocked';
+    // Whether this browser refused a burst of tabs ON THIS SITE, so the next attempt here
+    // can offer the one-at-a-time route first instead of wasting a click. Another site's
+    // answer says nothing about this one: pop-up permission is granted per site.
+    const thisSite=()=>{try{return location.hostname.toLowerCase().replace(/^www\./,'');}catch{return '';}};
+    const popupsBlocked=()=>read().popups[thisSite()]==='blocked';
     function notePopups(blocked) {
-        const state=read(),value=blocked?'blocked':'ok';
-        if(state.popups===value)return value;
-        state.popups=value;write(state);return value;
+        const state=read(),value=blocked?'blocked':'ok',host=thisSite();
+        if(!host||state.popups[host]===value)return value;
+        state.popups[host]=value;write(state);return value;
     }
     function clear(){const store=storage();try{store?.removeItem(KEY);}catch{}return 0;}
     return {list,chosen,count,here,hostOf,setEnabled,setSearch,add,remove,clear,valid,popupsBlocked,notePopups,OUTDATED,catalogue:()=>CATALOGUE.map(entry=>({...entry})),KINDS,KEY,use(store){backing=store;}};
@@ -6625,9 +6636,11 @@ const DKOKTO_REQUESTS = (() => {
         const actions=el('div',undefined,'dk-row');
         const stepRow=el('div',undefined,'dk-row');
         if(result.links.length) {
-            // A browser that refused a burst before is offered the route that works first.
+            // A browser that refused a burst on THIS site before is offered the route that
+            // works first. The button keeps its plain name: it is the same action, and "try
+            // again" made every dialog read like a retry of some failure weeks ago.
             const stepFirst=DKOKTO_TRACKERS.popupsBlocked();
-            const all=el('button',stepFirst?'Try Search all '+result.links.length+' again':'Search all '+result.links.length+' trackers');
+            const all=el('button','Search all '+result.links.length+' trackers');
             all.type='button';all.className=stepFirst?'dk-detail-copy':'dk-listing-copy';
             all.onclick=()=>{
                 const outcome=openAll(result.links);
@@ -6639,7 +6652,8 @@ const DKOKTO_REQUESTS = (() => {
             actions.append(all);
             if(stepFirst) {
                 stepper(result.links,stepRow,message);
-                message.textContent='This browser blocked a burst of tabs last time, so they are offered one at a time — one click each, no permission needed.';
+                // What browsers do and how to change it — not a story about last time.
+                message.textContent='Browsers open one tab per click, so this site’s trackers are offered one at a time. Allow pop-ups for this site (the blocked-pop-up icon in the address bar) and Search all opens them in one go.';
             }
         }
         actions.append(copyButton('Copy the search term',()=>result.term),
