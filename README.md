@@ -1,4 +1,4 @@
-# Torrent Inspector 1.30.0
+# Torrent Inspector 1.30.1
 
 A Tampermonkey userscript for release naming. It reads the page you are on and tells you
 whether a release name is written the way the tracker you are on says it should be — on the
@@ -93,6 +93,19 @@ JSON somewhere before you update.
 - **CHANGES-1.12.4-to-1.22.3.md** — what changed across the older versions, grouped by what
   it does.
 - **CHANGELOG.md** — every version, newest first.
+
+## Fixed in 1.30.1
+
+**The request cross-check was stuck in "blocked last time" mode.** One flag, kept for all 43
+trackers at once, set the first time a browser refused a burst of tabs — which a default
+browser always does, since it allows one tab per click — and cleared only when a full burst
+succeeded, which it therefore never was. From then on every request dialog on every tracker
+opened with *Try Search all N again* and a note about what happened "last time". Pop-up
+permission is granted **per site**, so the memory is per site now; the old global flag is
+dropped rather than carried over; the button is plainly *Search all N trackers*; and the
+note says what browsers do and how to change it, not what happened before.
+
+---
 
 ## Fixed in 1.30.0
 
