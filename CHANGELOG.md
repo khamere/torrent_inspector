@@ -9,6 +9,38 @@ was named until 1.25.0.
 
 ---
 
+## 1.31.0 — mark an amber badge as conforming; the torrent-page badge reads the page
+
+- **Mark as conforming.** An amber ? badge's dialog offers to mark the name as conforming;
+  the badge turns green with a dotted ring, its tooltip and dialog say it was you and when,
+  and Undo puts it back. The tool's own finding is carried alongside, not replaced; the
+  manual checks stay listed; the counts read *N passed (M marked by you)*. Red is never
+  marked over. Per rule set, bounded (2,000), oldest out first, stored in the shared
+  per-script store under `dkokto_reviewed_v1` — which the rewritten backup check caught on
+  the module's first run, before anything else did, and which Backup… now carries.
+- Eight Node checks (amber becomes yours, red does not, green needs no help, per rule set,
+  undo, whitespace-insensitive names, bounds and junk, no DOM or network) and twelve browser
+  checks on the listing plus six on the torrent page: mark, ring, tooltip, counts, dialog,
+  storage under the rule set, undo, and that a red badge's dialog offers no such button.
+- **The torrent-page badge is handed what the page states** — media title and year from the
+  heading, original language, and the parsed MediaInfo — through `assess(title, category,
+  known, file)`, the same readers the findings row uses. "Verify the title against TMDB" is
+  now a comparison with the heading; "audio languages not confirmed" is now the Inspector's
+  own language check. The dialog names what was read. Where the page's heading is not under
+  the class the reader knew, the media title is taken from a heading by its shape — "Title
+  (Year)" and nothing technical — rather than by a guessed class name; a heading that IS the
+  release name is left alone.
+- **Guide dates at the point of use.** `rules.guideSince()`: *in hand 10 Sep 2026*, or *as
+  supplied; the date it was supplied was not recorded*. The profile format gains an optional
+  `source` line, which the two shipped profiles carry inside the profile (so an install keeps
+  it) and which `validate()` keeps. The naming panel and the Rules chooser's tooltips show it.
+  The DarkPeers and Zenith guides have no recorded date, and the panel says so.
+- **"Kind not recognised" gives its reason**, true of the title: what the row's category was
+  (or that there was none) and what the title lacked — or, for a title that has a year, that a
+  year alone does not decide film, series or album.
+
+---
+
 ## 1.30.1 — the cross-check's stuck "blocked last time" mode
 
 - Reported with a screenshot on 1.36: the same dialog as before the wording fixes, still
