@@ -9,6 +9,31 @@ was named until 1.25.0.
 
 ---
 
+## 1.30.1 — the cross-check's stuck "blocked last time" mode
+
+- Reported with a screenshot on 1.36: the same dialog as before the wording fixes, still
+  reading *Try Search all 5 again* and *This browser blocked a burst of tabs last time*. The
+  wording fixes had landed; the **state** was the fault, in three ways.
+- **It never cleared.** The flag reset only when a full burst of tabs succeeded — and a
+  default browser allows one tab per click, so it never did. After the first *Search all*,
+  every request dialog opened in this mode, for good.
+- **It was the wrong scope.** One string in the shared per-script store, for all 43 trackers.
+  Pop-up permission is granted per site: allowing pop-ups on DarkPeers changed nothing
+  because the flag had been set on Zenith. It is per site now, keyed by host with `www.`
+  dropped, and an old global value is discarded on read rather than carried into the new
+  form — it *was* the stuck state.
+- **It narrated history.** "Last time" could have been weeks ago on another tracker, and the
+  note never said how to leave the state. It now says what browsers do and how to change it:
+  one tab per click, so this site's trackers are offered one at a time; allow pop-ups for
+  this site and *Search all* opens them in one go. The button keeps its plain name in either
+  state — *Try … again* made every dialog read like a retry of some old failure.
+- The stepper-first layout on a site that refused before is unchanged: that part was right.
+- Checked in Node (per-site memory, `www.` folded, another site unaffected, old value
+  dropped, junk ignored) and in the browser fixture (plain button name, the new note with no
+  "last time" in it, the flag stored under this page's own host and nothing else).
+
+---
+
 ## 1.30.0 — the backup carries everything, and a sweep for checks that could not fail
 
 - **Backup… carried 9 of 13 keys.** Left behind on every restore: `dp_torrent_inspector_v1`
