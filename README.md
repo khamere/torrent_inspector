@@ -982,6 +982,4 @@ confirmed to fail when the fix was taken back out — is in `VALIDATION-<version
 
 With thanks to 🤖T.R.A.V.I.S: this script began life inside a fork of *DarkPeers - Chungus
 Edition 1.7.5*. None of that script's code is in this one — Torrent Inspector is built from
-this project's own modules and shares no line with it — but it is where the work started. The
-fork itself is a separate edition, and it does carry that code, its credit, and the MIT notice
-for the *Enhanced Chat Unit3D* code by **ZukoXZoku** that the Chungus Edition ported.
+this project's own modules and shares no line with it — but it is where the work started.
