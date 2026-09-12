@@ -1,4 +1,4 @@
-# Torrent Inspector 1.29.0
+# Torrent Inspector 1.30.0
 
 A Tampermonkey userscript for release naming. It reads the page you are on and tells you
 whether a release name is written the way the tracker you are on says it should be — on the
@@ -93,6 +93,34 @@ JSON somewhere before you update.
 - **CHANGES-1.12.4-to-1.22.3.md** — what changed across the older versions, grouped by what
   it does.
 - **CHANGELOG.md** — every version, newest first.
+
+## Fixed in 1.30.0
+
+**Backup… left things behind.** It said *take your whole setup with you* and carried nine
+keys while the script wrote thirteen. Left out of every restore: **your private notes**, which
+rule set applies on which tracker, whether the automatic checks were on, and the nav settings.
+All carried now — and there is a *leave my private notes out* option for a file you might
+hand to someone. The check that should have caught this could not: it found keys by the
+spelling `KEY = 'dkokto_…'`, which is exactly the nine already listed. It reads every stored-key
+literal in the shipped modules now, so a module that starts saving something is caught the
+first time its suite runs. Verified by planting a new key and watching it fail.
+
+**The internal-groups popup says where each line came from.** *Listed as internal at Aither*
+now carries *community directories (InviteHawk, rentry, pastes.io), 9 Sep 2026* — or
+*reported to this project, 11 Sep 2026*, or *added by you*. A directory's word can be months
+stale and is nobody's staff list; someone acting on it is entitled to know which it is.
+
+**The request cross-check said "blocked the other 5" when the browser had blocked all five**,
+and pointed at a button "below" that sits above. It says *all* or *the other* according to what
+happened, and no longer points in a direction. *Unknown request* — which read as if the
+request were unknown — is *kind not recognised*.
+
+**The no-request guarantee is now checked across the whole built script.** It was checked
+module by module for nineteen modules, and across the built file for only one slice — so
+fourteen modules could have gained a `fetch()` unnoticed. Found by planting one in each and
+running the suites. The whole file is checked now; every one of the nineteen is caught.
+
+---
 
 ## New in 1.29.0
 
@@ -982,4 +1010,6 @@ confirmed to fail when the fix was taken back out — is in `VALIDATION-<version
 
 With thanks to 🤖T.R.A.V.I.S: this script began life inside a fork of *DarkPeers - Chungus
 Edition 1.7.5*. None of that script's code is in this one — Torrent Inspector is built from
-this project's own modules and shares no line with it — but it is where the work started.
+this project's own modules and shares no line with it — but it is where the work started. The
+fork itself is a separate edition, and it does carry that code, its credit, and the MIT notice
+for the *Enhanced Chat Unit3D* code by **ZukoXZoku** that the Chungus Edition ported.
