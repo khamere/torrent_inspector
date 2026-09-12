@@ -52,6 +52,19 @@ Above the results is a bar with:
 - **Audit loaded titles** — everything on the page at once, as a table you can copy.
 - **Copy moderation log** — the record of what you have looked at and decided, kept locally.
 
+### An amber ? you have checked
+
+Amber means the checks could not decide, not that anything is wrong. When you have gone
+through the manual checks in its dialog and the name conforms, press **Mark as conforming**.
+The badge turns green with a dotted ring — that ring means *your* verdict, not the check's —
+and the dialog says when you marked it and offers **Undo**. The counts read *3 passed (1 marked
+by you)*.
+
+Red is never marked over: a definite rule error stays red whatever you mark, and if a rule
+change later turns a marked name red, red wins. The mark is per rule set, so marking a name
+under DarkPeers' rules says nothing about it under Zenith's. It verifies nothing and changes
+nothing on the tracker; it records that you looked.
+
 ### Whose rules?
 
 Four rule sets ship: **DarkPeers**, **Zenith**, **LUME** and **OnlyEncodes+**. LUME and
