@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.31.0
+// @version      1.32.0
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       DKOKTO
 // This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,
@@ -1750,10 +1750,11 @@ const DKOKTO_RULES = ((profiles) => {
     // `guideDate` is when the rule set was supplied to this project. It is shown at the point
     // of use so a moderator knows how old what they are reading against may be. Empty means
     // no date was recorded when it was supplied — which is said, not hidden, and never
-    // guessed at: the two built-in guides arrived without one.
+    // guessed at. The two built-in guides carried no date until 12 Sep 2026, when both were
+    // given as supplied on 9 Sep 2026.
     const SITES=[
-        {key:'dp',label:'DarkPeers',hosts:['darkpeers.org','www.darkpeers.org'],guideDate:''},
-        {key:'zenith',label:'Zenith',hosts:['znth.cx','www.znth.cx'],guideDate:''}
+        {key:'dp',label:'DarkPeers',hosts:['darkpeers.org','www.darkpeers.org'],guideDate:'9 Sep 2026'},
+        {key:'zenith',label:'Zenith',hosts:['znth.cx','www.znth.cx'],guideDate:'9 Sep 2026'}
     ];
     // Zenith 5.6 and 5.7, as supplied.
     const BANNED_AUTHORS=['J.R.R. Tolkien','Anne Perry','Simon Scarrow','Sara Gruen','Joan Elliott',
@@ -2106,6 +2107,87 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
         if(original&&other&&other.toLowerCase()!==original.toLowerCase()&&before.toLowerCase()!==original.toLowerCase())
             add('error','aka-mismatch','The AKA reads “'+other+'”, but the original title you supplied is “'+original+'”.');
     }
+    // --- Episodes, read from the file list ----------------------------------------------
+    // After ZenGuard 1.9.1's _tvEpisodes and _isSeasonPack (notes/zenguard-1.9.1-excerpts.js,
+    // as pasted 12 Sep 2026; not verified against any live page): an S##E## in a name is an
+    // episode the torrent holds, and a torrent is a season pack when its files hold more than
+    // one episode of the season, or its name says S## with no E## after it. Two things go a
+    // step past ZenGuard's pattern, and are the only things that do: the guide's own double
+    // and range forms (S01E02E03, S01E02-04, and E02-E04 as it is sometimes written) are read
+    // as every episode they span, and a token glued to a letter or digit is not read at all.
+    // A range that runs backwards, or that leads into something that is not an episode
+    // number (S02E05-1080p), is its first episode only.
+    const EPISODE=/(?<![A-Za-z0-9])S(\d{1,3})E(\d{1,4})((?:E\d{1,4}|-E?\d{1,4})*)(?![A-Za-z0-9])/gi;
+    const VIDEO_FILE=/\.(?:mkv|mp4|m4v|avi|wmv|ts|m2ts|vob|mpg|mpeg|mov|flv|webm)$/i;
+    const pathOf=entry=>typeof entry==='string'?entry:entry&&typeof entry.path==='string'?entry.path:'';
+    function episodes(values) {
+        const found=new Map();
+        for(const value of (Array.isArray(values)?values:[]).slice(0,2000)) {
+            const text=pathOf(value).slice(0,300);
+            for(const match of text.matchAll(EPISODE)) {
+                const season=Number(match[1]),first=Number(match[2]);
+                const numbers=[first];
+                for(const part of match[3].match(/E\d{1,4}|-E?\d{1,4}/g)||[]) {
+                    const n=Number(part.replace(/^-?E?/,''));
+                    if(part.startsWith('-')){if(n>first&&n-first<=100)for(let e=first+1;e<=n;e++)numbers.push(e);}
+                    else numbers.push(n);
+                }
+                for(const episode of numbers)found.set(season+':'+episode,{season,episode});
+            }
+        }
+        return [...found.values()].sort((a,b)=>a.season-b.season||a.episode-b.episode);
+    }
+    function isSeasonPack(title,files,season) {
+        if(episodes(files).filter(e=>e.season===season).length>1)return true;
+        const name=String(title||'');
+        return new RegExp('S0*'+season+'(?!\\d)(?!E\\d)','i').test(name)&&!/S\d{1,3}E\d{1,4}/i.test(name);
+    }
+    // "E01–E03, E05–E10": runs of consecutive numbers, written the way the guide writes them.
+    const two=n=>'E'+String(n).padStart(2,'0');
+    function runs(numbers) {
+        const sorted=[...new Set(numbers)].sort((a,b)=>a-b),out=[];
+        for(let i=0;i<sorted.length;) {
+            let j=i;while(j+1<sorted.length&&sorted[j+1]===sorted[j]+1)j++;
+            out.push(j===i?two(sorted[i]):two(sorted[i])+'–'+two(sorted[j]));
+            i=j+1;
+        }
+        return out.join(', ');
+    }
+    // What the file list says about the episodes, against what the name says. Only called
+    // when a list is in hand: without one the reminder stands, and this is never reached.
+    function episodeFindings(title,token,files,add) {
+        const season=Number(String(token).match(/^S(\d+)/i)[1]);
+        const videos=files.map(pathOf).filter(path=>VIDEO_FILE.test(path));
+        const named=episodes([token]).map(e=>e.episode);            // [] for a pack name
+        if(!videos.length) {
+            add('review','episode-verify','The file list is in hand but holds no video file, so which episodes it holds cannot be read from it. Verify episode mapping and pack completeness against the intended listing.');
+            return;
+        }
+        const held=episodes(videos);
+        if(!held.length) {
+            add('review','episode-verify','None of the '+videos.length+' video file'+(videos.length===1?'':'s')+' in the file list carries an S##E## number, so which episodes it holds cannot be read from the list. Verify episode mapping and pack completeness against the intended listing.');
+            return;
+        }
+        const mine=held.filter(e=>e.season===season).map(e=>e.episode);
+        const label=e=>'S'+String(e.season).padStart(2,'0')+two(e.episode);
+        const specials=held.filter(e=>e.season===0&&season!==0),others=held.filter(e=>e.season!==season&&e.season!==0);
+        if(others.length)add('error','episode-season','The name says S'+String(season).padStart(2,'0')+', but the file list holds '+others.map(label).join(', ')+(mine.length?' as well':'')+'. The name and the files have to agree about which season this is.');
+        if(specials.length)add('review','episode-specials','The file list also holds '+specials.map(label).join(', ')+', which the name does not number. Specials require the special name after numbering — confirm what this one is and whether it belongs in this pack.');
+        if(named.length) {
+            const missing=named.filter(n=>!mine.includes(n)),extra=mine.filter(n=>!named.includes(n));
+            if(missing.length)add('error','episode-missing','The name says '+token+', but no file carries '+runs(missing)+(mine.length?' — the files hold '+runs(mine):' — the files carry no episode of this season')+'.');
+            if(extra.length)add('error','episode-extra','The name numbers '+runs(named)+', but the files also hold '+runs(extra)+'. By the file list this is a season pack ('+mine.length+' episodes of the season), which the guide numbers S'+String(season).padStart(2,'0')+' for a whole season or S'+String(season).padStart(2,'0')+two(Math.min(...mine))+'-'+String(Math.max(...mine)).padStart(2,'0')+' for a range.');
+        } else if(mine.length===1) {
+            add('error','episode-single','The name says S'+String(season).padStart(2,'0')+', a season pack, but the file list holds one episode of it: '+runs(mine)+'. A single episode is numbered S'+String(season).padStart(2,'0')+two(mine[0])+'.');
+        } else if(mine.length) {
+            const low=Math.min(...mine),high=Math.max(...mine);
+            const gaps=[];for(let e=low+1;e<high;e++)if(!mine.includes(e))gaps.push(e);
+            if(gaps.length)add('review','episode-gap','The name says S'+String(season).padStart(2,'0')+', a season pack, and the files hold '+mine.length+' episodes: '+runs(mine)+'. Not in the list: '+runs(gaps)+'. A pack that skips an episode needs saying — confirm against the intended listing.');
+            else if(low>1)add('review','episode-partial','The name says S'+String(season).padStart(2,'0')+', a season pack, and the files run '+runs(mine)+' — nothing before '+two(low)+'. Confirm against the intended listing whether this is the whole season or a part of it.');
+        }
+        const unnumbered=videos.filter(path=>!episodes([path]).length);
+        if(unnumbered.length)add('review','episode-unnumbered',unnumbered.length+' video file'+(unnumbered.length===1?'':'s')+' in the list carr'+(unnumbered.length===1?'ies':'y')+' no episode number ('+unnumbered.slice(0,3).map(path=>path.split('/').pop().slice(0,80)).join(', ')+(unnumbered.length>3?', …':'')+'). Check what '+(unnumbered.length===1?'it is':'they are')+' — a sample or an extra is not wanted in most packs.');
+    }
     function check(name,options={},file=null){
         const issues=[],add=(severity,code,message)=>{if(!issues.some(i=>i.code===code))issues.push({severity,code,message});};
         let serviceLabel='';
@@ -2207,7 +2289,12 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
             if(range&&Number(range[3])<=Number(range[2]))add('error','episode-order','The final episode must be after the first episode.');
             if(/S00E\d{2}|S\d{2}E00/i.test(s))add('review','special','Specials require the special name after numbering. Verify S00E## against TVDB, or use S##E00 for specials not on TVDB.');
             if(date){const parts=date[1].split('-').map(Number);if(parts[1]<1||parts[1]>12||parts.length===3&&(parts[2]<1||parts[2]>new Date(Date.UTC(parts[0],parts[1],0)).getUTCDate()))add('error','date','Daily-show date is not a valid calendar date.');}
-            add('review','episode-verify','Verify episode mapping and pack completeness against the intended listing; numbers in a title do not establish which episodes the files contain.');
+            // Which episodes the files hold is read from the file list where a page hands one
+            // in (a torrent page does; the listing and the Inspector do not). Without one, or
+            // for a daily show numbered by date, it stays a reminder.
+            const files=Array.isArray(options.files)?options.files.slice(0,2000).filter(entry=>pathOf(entry)):[];
+            if(ep&&!date&&files.length)episodeFindings(s,ep[1],files,add);
+            else add('review','episode-verify','Verify episode mapping and pack completeness against the intended listing; numbers in a title do not establish which episodes the files contain.');
         }
         if(options.year&&year&&String(options.year)!==year)add('error','year-conflict','Title year '+year+' differs from the reference year '+options.year+'.');
         if(knownTitle){const canonical=s.slice(0,knownTitle.length);if(canonical.localeCompare(knownTitle,undefined,{sensitivity:'accent'})!==0)add('review','title-spelling','The title does not start with the supplied official title, including punctuation: '+knownTitle+'. Check AKA / locale and multi-title releases manually.');}
@@ -2314,7 +2401,7 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
         const whose=(()=>{try{const key=options&&options.rules?options.rules:rules.current();
             return rules.hasRules&&rules.hasRules()?rules.labelOf(key):'';}catch{return '';}})();
         return [(whose?whose+' ':'')+'display-title naming review',name,'Category: '+r.profile,...(r.service?['Service: '+r.service]:[]),r.status,'Template: '+r.template,...r.issues.map(i=>(i.severity==='error'?'CORRECT':'REVIEW')+': '+i.message),'Rules: '+(whose?'the '+whose+' naming guide':'the naming guide in hand')+'; no live rules lookup or upload performed.'].join('\n');}
-    return {check,report,templates,akaCheck};
+    return {check,report,templates,akaCheck,episodes,isSeasonPack};
 })(typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./inspector.js'):DKOKTO_INSPECTOR,
    typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./services.js'):DKOKTO_SERVICES,
    typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./groups.js'):DKOKTO_GROUPS,
@@ -4030,6 +4117,11 @@ const DKOKTO_LINKS_CORE = (() => {
         return {title:head,year,season:episode?.[1]||'',episode:episode?.[2]||'',query:clean(head)};
     }
     const q=v=>encodeURIComponent(v);
+    // The release group at the end of a name, read by the same reader the naming check and
+    // the group tag use, so the three cannot disagree about which group a name carries.
+    const groupsModule=()=>{try{return typeof DKOKTO_GROUPS!=='undefined'?DKOKTO_GROUPS
+        :(typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./groups.js'):null);}catch{return null;}};
+    const groupOf=name=>{try{return String(groupsModule()?.trailingTag(name)||'').trim();}catch{return '';}};
     // ids: only what the page already links to.
     function links(name,{ids={},category='',site=''}={}) {
         const p=parse(name),out=[],term=p.query||clean(name),tv=/tv|show|series|anime/i.test(category)||!!p.season;
@@ -4041,6 +4133,9 @@ const DKOKTO_LINKS_CORE = (() => {
         // the label was not. Named after the site you are on, or left neutral if it cannot
         // be named — "Search DarkPeers" on Zenith is simply wrong.
         add('dp','Search '+(String(site||'').trim()||'this tracker'),'/torrents?name='+q(term),'This tracker, same title');
+        // And the whole name as it stands, for finding this very release rather than the
+        // title: trimmed, otherwise untouched, on this tracker's own search.
+        add('exact','Exact name','/torrents?name='+q(String(name||'').normalize('NFKC').trim()),'This tracker, this exact release name');
         if(ids.imdb)add('imdb','IMDb','https://www.imdb.com/title/'+q(ids.imdb)+'/','From the ID on this page');
         else if(!music&&!book&&!game)add('imdb','IMDb','https://www.imdb.com/find/?q='+q(withYear)+'&s=tt');
         if(ids.tmdb&&(tv||!music))add('tmdb','TMDB','https://www.themoviedb.org/'+(tv?'tv':'movie')+'/'+q(ids.tmdb),'From the ID on this page');
@@ -4056,7 +4151,11 @@ const DKOKTO_LINKS_CORE = (() => {
         if(music)add('musicbrainz','MusicBrainz','https://musicbrainz.org/search?query='+q(term)+'&type=release');
         if(book)add('openlibrary','Open Library','https://openlibrary.org/search?q='+q(term));
         if(game)add('igdb','IGDB','https://www.igdb.com/search?type=1&q='+q(term));
-        add('srrdb','srrDB','https://www.srrdb.com/browse/'+term.split(' ').filter(Boolean).map(q).join('/')+'/1','Scene release records');
+        // A scene name is not a tracker display title, so the whole name would find nothing
+        // there; the title words and the release group are what a scene record is found by.
+        const group=groupOf(name);
+        add('srrdb','srrDB','https://www.srrdb.com/browse/'+[...term.split(' '),...group.split(/\s+/)].filter(Boolean).map(q).join('/')+'/1',
+            group?'Scene release records: the title and the group '+group:'Scene release records');
         return out;
     }
     // Tracker searches for other versions of the same title. The site's name filter is
@@ -5226,6 +5325,9 @@ const DKOKTO_DETAIL = (() => {
         if(page.options.officialTitle)read.push('this page’s title'+(page.options.year?' and year':''));
         if(page.options.originalLanguage)read.push('its original language');
         if(page.file)read.push('its MediaInfo');
+        // The file list is read for the episodes a TV name numbers; for anything else it is
+        // not looked at, and is not claimed.
+        if(page.options.files&&r.review.profile==='tv')read.push('its file list');
         body.append(el('h3',entry.title),el('p',r.label),el('p',(read.length?'Checked against the display title, '+read.join(', ')+' · ':'Display title only · ')+
             (entry.category||'category inferred from title')+'. Green means the supported title checks passed, not verified media or tracker approval.'));
         if(r.review.service)body.append(el('p','Service: '+r.review.service));
@@ -5265,6 +5367,9 @@ const DKOKTO_DETAIL = (() => {
         if(original)options.originalLanguage=original;
         let file=null;
         try{file=DKOKTO_INSPECTOR.readPage(document).map(text=>{try{return DKOKTO_INSPECTOR.parse(text)[0];}catch{return null;}}).find(Boolean)||null;}catch{file=null;}
+        // The file list, read by the same reader the marker under the name copies from, so
+        // the episodes a pack holds can be read from it rather than left to verify by hand.
+        try{const files=DKOKTO_FILES_UI.list().map(row=>row.path);if(files.length)options.files=files;}catch{}
         return knownMemo={options,file};
     }
     function badge(node,title) {
@@ -6885,15 +6990,19 @@ const DKOKTO_REQUESTS = (() => {
     // A row of tracker searches under the title, on a request's page or a torrent page.
     function attachedRow() {
         const existing=document.querySelector('.dk-request-page');
-        if(!onePage()&&!torrentPage()){existing?.remove();return;}
+        const exactRow=()=>document.querySelector('.dk-request-exact');
+        if(!onePage()&&!torrentPage()){existing?.remove();exactRow()?.remove();return;}
         const source=torrentPage()?'torrent':'request';
         const found=source==='torrent'?DKOKTO_RELEASE_TITLE.find(document):pageTitle();
-        if(!found||!found.title||source==='torrent'&&!found.score){existing?.remove();return;}
+        if(!found||!found.title||source==='torrent'&&!found.score){existing?.remove();exactRow()?.remove();return;}
         const request={name:found.title,category:pageCategory(),url:location.origin+location.pathname,source};
         const result=DKOKTO_REQUESTS_CORE.search(request,{ids:DKOKTO_LINKS_CORE.ids(document),host:location.hostname});
+        // On a torrent page, the whole release name as well — searched as it stands on
+        // each tracker, for finding this very release elsewhere rather than the title.
+        const exact=source==='torrent'?DKOKTO_REQUESTS_CORE.search(request,{exact:true,host:location.hostname}):{links:[]};
         // Rebuilt only when something actually changed, so the page is not churned.
-        const signature=found.title+'\n'+result.links.map(link=>link.url).join('|');
-        if(existing){if(existing.dataset.signature===signature)return;existing.remove();}
+        const signature=found.title+'\n'+result.links.map(link=>link.url).join('|')+'\n'+exact.links.map(link=>link.url).join('|');
+        if(existing){if(existing.dataset.signature===signature)return;existing.remove();exactRow()?.remove();}
         const row=el('nav',undefined,'dk-detail-links dk-request-links dk-request-page');row.dataset.signature=signature;
         row.setAttribute('aria-label','Search this title on your trackers');
         row.append(el('span',result.links.length?'On your trackers:':'Cross-check:','dk-detail-links-label'));
@@ -6922,6 +7031,21 @@ const DKOKTO_REQUESTS = (() => {
         const rows=[...document.querySelectorAll('.dk-detail-links:not(.dk-request-links)')];
         const anchor=rows.at(-1)||found.node;
         (anchor.parentElement||anchor).insertBefore(row,anchor.nextSibling);
+        if(!exact.links.length)return;
+        const second=el('nav',undefined,'dk-detail-links dk-request-links dk-request-exact');
+        second.setAttribute('aria-label','Search this exact release name on your trackers');
+        second.append(el('span','This exact name:','dk-detail-links-label'));
+        for(const link of exact.links.slice(0,12)) {
+            const a=el('a',link.label);a.href=link.url;a.target='_blank';a.rel='noopener noreferrer';a.title=link.note;
+            second.append(a);
+        }
+        if(exact.links.length>1) {
+            const all=el('button','Search all');all.type='button';all.className='dk-detail-copy';
+            all.title='Open every one of these exact-name searches in its own tab';
+            all.onclick=()=>{const outcome=openAll(exact.links);if(outcome.blocked.length){returnFocus=all;show(request);}};
+            second.append(all);
+        }
+        row.after(second);
     }
     // Any title you select on this site, or Alt+Shift+T on its own.
     function selectionText() {
@@ -6950,7 +7074,7 @@ const DKOKTO_REQUESTS = (() => {
             // The page additions belong to /requests and a torrent page; the dialog does
             // not. It is opened from Alt+Shift+T and from a selection, on any page — so a
             // redraw must never close it. Only leaving the page it was opened on does.
-            document.querySelectorAll('.dk-request-bar,.dk-request-page,.dk-request-open,.dk-request-seen').forEach(node=>node.remove());
+            document.querySelectorAll('.dk-request-bar,.dk-request-page,.dk-request-exact,.dk-request-open,.dk-request-seen').forEach(node=>node.remove());
             floating=null;return;
         }
         bar();rowButtons();attachedRow();
