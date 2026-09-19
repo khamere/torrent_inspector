@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.32.0
+// @version      1.32.1
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       DKOKTO
 // This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,
@@ -4321,9 +4321,16 @@ const DKOKTO_FILES_UI = (() => {
         }
         return 0;
     }
+    // Where a page keeps its file list. The DarkPeers-shaped dialog puts the List tab in a
+    // .dialog__form and the tree in spans; upload.cx (markup pasted 19 Sep 2026) puts the
+    // List tab in a .data-table-wrapper and the tree in <details> with .file-tree__name and
+    // .file-tree__size, the exact count in the size's title on both tabs. A hidden tab is
+    // still in the page, so the list is read from whichever tab is found first, never both.
+    const LIST_ROWS='.dialog__form[data-tab="list"] table tbody tr,.data-table-wrapper[data-tab="list"] table tbody tr';
+    const TREE_NAMES='.dialog__form[data-tab="hierarchy"] span[style*="word-break"],.torrent__files li,.dialog__form[data-tab="hierarchy"] .file-tree__name';
     function list() {
         const rows=[];
-        for(const row of document.querySelectorAll('.dialog__form[data-tab="list"] table tbody tr')) {
+        for(const row of document.querySelectorAll(LIST_ROWS)) {
             const cells=[...row.children];
             const values=cells.map(textOf);
             const path=values.find(value=>value&&!SIZE.test(value)&&!/^\d+$/.test(value));
@@ -4333,10 +4340,12 @@ const DKOKTO_FILES_UI = (() => {
             rows.push({path,size,bytes:titleBytes(at>=0?cells[at]:null)||titleBytes(row)});
         }
         if(!rows.length)
-            for(const node of document.querySelectorAll('.dialog__form[data-tab="hierarchy"] span[style*="word-break"],.torrent__files li')) {
+            for(const node of document.querySelectorAll(TREE_NAMES)) {
                 const path=textOf(node);
                 if(!path||!/\.[a-z0-9]{2,4}$/i.test(path)||rows.some(entry=>entry.path===path))continue;
-                rows.push({path,size:'',bytes:nearBytes(node)});
+                // A file-tree row carries its size beside the name, with the count in its title.
+                const beside=node.parentElement?.querySelector('.file-tree__size');
+                rows.push({path,size:beside?textOf(beside):'',bytes:titleBytes(beside)||nearBytes(node)});
             }
         return rows.slice(0,core?core.MAX:2000);
     }
@@ -4445,7 +4454,7 @@ const DKOKTO_FILES_UI = (() => {
         if(!holder.isConnected)parent.insertBefore(holder,node.nextSibling);
     }
     const clear=()=>{holder?.remove();holder=null;seen='';forget();};
-    return {list,stated,clipboardText,mark,clear,CLASS};
+    return {list,stated,clipboardText,mark,clear,CLASS,LIST_ROWS,TREE_NAMES};
 })();
 
 // Release-notes templates: the text you paste over and over, kept once and filled in from
@@ -5467,13 +5476,14 @@ const DKOKTO_DETAIL = (() => {
         const paths=new Set();
         // The list tab gives whole paths; the tree gives names, which is enough for the
         // container and for whether a pack agrees with itself.
-        for(const row of document.querySelectorAll('.dialog__form[data-tab="list"] table tbody tr')) {
+        // The same places the file reader looks (files.js), so the two agree on every tracker.
+        for(const row of document.querySelectorAll(DKOKTO_FILES_UI.LIST_ROWS)) {
             const cell=row.children[1]||row.children[0];
             const value=textOf(cell);
             if(value&&!/^\d+(?:\.\d+)?\s*(?:[KMGT]i?B|bytes)$/i.test(value))paths.add(value);
         }
         if(!paths.size)
-            for(const node of document.querySelectorAll('.dialog__form[data-tab="hierarchy"] span[style*="word-break"],.torrent__files li,.dialog__form table tbody tr td:first-child')) {
+            for(const node of document.querySelectorAll(DKOKTO_FILES_UI.TREE_NAMES+',.dialog__form table tbody tr td:first-child')) {
                 const value=textOf(node);
                 if(value&&/\.[a-z0-9]{2,4}$/i.test(value))paths.add(value);
             }
@@ -5512,7 +5522,7 @@ const DKOKTO_DETAIL = (() => {
     let pageStamp='',pageDrew=false;
     function pageInputs(name,profile) {
         return [name,profile,
-            document.querySelectorAll('.dialog__form[data-tab="list"] table tbody tr').length,
+            document.querySelectorAll(DKOKTO_FILES_UI.LIST_ROWS).length,
             document.querySelectorAll('.torrent-mediainfo-dump code,.torrent-mediainfo-dump pre,code[x-ref="mediainfo"]').length,
             fieldOf('h1.meta__title','.meta__title','.torrent__meta-title'),
             fieldOf('li.torrent__type a','.torrent__type a','.torrent__type'),
