@@ -1,4 +1,4 @@
-# Torrent Inspector 1.31.0
+# Torrent Inspector 1.34.0
 
 A Tampermonkey userscript for release naming. It reads the page you are on and tells you
 whether a release name is written the way the tracker you are on says it should be — on the
@@ -12,8 +12,8 @@ key, nothing posted, submitted, uploaded or downloaded. Every link opens when yo
 not before. What it stores, it stores on your own machine.
 
 It runs on **43 UNIT3D trackers** and can search **60**. Naming rules for DarkPeers, Zenith,
-LUME and OnlyEncodes+ ship with it; any other tracker is added by pasting its rules, as data,
-never as code.
+LUME, OnlyEncodes+ and HomieHelpDesk ship with it; any other tracker is added by pasting its
+rules, as data, never as code.
 
 ## What it looks like
 
@@ -93,6 +93,143 @@ JSON somewhere before you update.
 - **CHANGES-1.12.4-to-1.22.3.md** — what changed across the older versions, grouped by what
   it does.
 - **CHANGELOG.md** — every version, newest first.
+
+## New in 1.34.0
+
+**A tracker's own rules are the default on that tracker.** Until now LUME, OnlyEncodes+ and
+HomieHelpDesk shipped with the script but did nothing until you pressed **Add**, so on
+homiehelpdesk.net the bar said no rules were in hand and nothing was badged. Now the shipped
+rule sets are in force on their own trackers as they ship, the same as DarkPeers on DarkPeers
+and Zenith on Zenith: they sit in the **Rules** list without being added, self-select on their
+own host, and their banned lists and rules apply there. On a tracker with no rule set nothing
+changes — the group tags are marked as before and nothing is judged until you choose one.
+**Add** now copies a shipped set into your added trackers so you can edit it; your copy then
+applies instead of the shipped one, and removing your copy brings the shipped one back. If
+you had already added one of them, nothing changes for you: your copy still wins.
+`TRACKER-RULES.md` and the site say so. Three Node checks changed and one added
+(profiles.available(), the shipped fallback in profiles.get(), the same object each time so
+the banned-list cache holds); the listing fixture checks the Rules list carries all three
+without an Add, that Add makes a copy yours, and that removing the copy leaves the shipped
+set in force.
+
+## Fixed in 1.33.1
+
+**The count line no longer says "No release titles found" on a tracker with no rule set
+chosen.** On homiehelpdesk.net with *Rules* at *Not chosen* (screenshot, 20 Sep 2026) the
+bar said that over twenty-five rows. The rows are there; nothing is judged until a rule set
+is chosen, and the line now says exactly that. One listing browser check.
+
+## New in 1.33.0
+
+**HomieHelpDesk's rules ship with the script.** Open *Tracker rules…* → **Added trackers**
+and **HomieHelpDesk** sits under *Rule sets that ship with this script* beside LUME and
+OnlyEncodes+, built from its Upload rules page, its Banned Release Groups list and its naming
+standard, all supplied as text on 20 Sep 2026. Press **Add** and it is an ordinary added
+tracker, and it selects itself on homiehelpdesk.net.
+
+| Rule set | Built from | What it does not have |
+| --- | --- | --- |
+| **HomieHelpDesk** (homiehelpdesk.net) | its Upload rules (`pages/7`), its banned list (`wikis/8`), its naming standard (`wikis/30`), its E-book and its Comic, Manga and Magazine naming standards, and its Trumping & Quality Tiers page — 35 rules, 48 groups | its Audiobook Naming and Folder Standard was not supplied |
+
+Twenty-seven video rules read from a title: the vocabulary of every element the standard lists
+(DD+ not DDP, DD not AC3, Atmos alone, H.264 with the dot, WEB-DL with its dash, WEBRip as
+one word, Dual-Audio hyphenated, REPACK2 joined, HDR / HDR10+ / DV as the HDR list writes
+them), the VCodec that belongs to each type (H.264 for a WEB-DL, x264 for a WEBRip, AVC for a
+remux), the resolution and codec omitted for DVDs, BluRay one word for encodes and remuxes
+and Blu-ray with the hyphen for discs, the Edition kept for the description, the streaming
+service before WEB-DL, a multi-season pack written S##-S## COMPLETE, and the rules page's
+own thresholds: encodes at least 720p (§4), an SD WEB-DL or DVD remux only under §4's
+conditions, a 1080p-or-below x265 encode on SDR asked about (§5 says x264 unless an
+exception is granted — and the standard's own worked example is 1080p x265, so it is a
+question, not a finding), and a single episode after a season has aired asked about (§6's
+72-hour window; a pilot is allowed at any time). The banned list is the page's one table,
+every name under its one heading, *Low-Quality Releases*; the three qualified names beneath
+it are written as the page states them — EVO's WEB-DLs allowed, HDT refused for remuxes
+only, FGT kept with *unless no other encode is available* as its reason. Five standing notes
+carry what a title cannot show: the naming details, §1/§2/§6 content rules, §5 format rules
+the report can be read against, §10 description requirements, and §9 trumping. All seven
+names the supplied text gives as examples pass its rules and the shared checks with no
+error.
+
+Its books are named its own way — `Author Name - Title.epub`, a series as `Author Name -
+[Series Name 01] - Title.epub`, a comic `Series Title 001 (Year).cbz`, a manga volume `v01`,
+a magazine `Publication Name - Month Year.pdf` — with no year, format word or ISBN, so
+DarkPeers' book template would have marked every conforming name wrong. A profile can now say
+so: `"books": "own"` (TRACKER-RULES.md) stands the shared book checks down for ebooks and
+audiobooks on that tracker, the panel says whose book naming applies, and the profile's own
+rules are what is checked. HomieHelpDesk's eight: the four layouts above (a question where a
+name is none of them), no underscores, no REPACK / RETAIL / PROPER, no URLs, no ZIP / RAR /
+7z (a comic's CBZ / CBR excepted), no -RELEASEGROUP suffix (a question, since a last word can
+simply be hyphenated), the series volume zero-padded to two digits and a comic issue to
+three. Comics, manga and magazines have no category of their own and are told by their
+CBZ / CBR / PDF, so they are checked as books. The Trumping & Quality Tiers page went into
+the §9 note. Five new Node checks; the listing fixture expects the third Add button.
+
+## New in 1.32.0
+
+**Which episodes a pack holds is read from the file list.** On a torrent page the badge's
+check is now handed the page's own file list — the same list `[ MULTIPLE FILES ]` copies —
+and for a TV name reads the `S##E##` numbers off the file names. The reminder *verify episode
+mapping and pack completeness* becomes a finding where the list can answer it: a name that
+says **S02** over files that run E01–E10 with E04 missing gets an amber ? that says exactly
+that (*the files hold 9 episodes: E01–E03, E05–E10. Not in the list: E04*); a pack that
+starts at E03 is asked whether it is the whole season; a name that says **S02E03** over
+files that hold E03–E05 is a red ✕, because by the file list that is a season pack; a name
+that says **S02** over one file holding E03 is a red ✕ the other way; a file from another
+season, or an episode the name numbers that no file carries, is a red ✕ too. Specials (S00)
+in the list, and video files that carry no episode number at all (a sample, an extra), are
+questions. The rule is ZenGuard 1.9.1's, as supplied: an `S##E##` in a file name is an
+episode the torrent holds, and it is a season pack when the files hold more than one episode
+of the season or the name says S## with no E##. The guide's own double and range forms
+(S01E02E03, S01E02-04) are read as every episode they span.
+
+What does not change: on the listing and in the Inspector there is no file list, so the
+reminder stays; a list whose file names carry no `S##E##` (a disc's stream files, *Episode
+4.mkv*) says so and keeps the reminder; a daily show numbered by date is not read against the
+list; and the dialog says *its file list* only when it read one for this purpose. Nothing is
+fetched — the list is the one already rendered on the page.
+
+**Search the whole release name from the torrent page.** The lookup row's searches use the
+title — *Ghostbusters: Afterlife* — because they exist to find other releases of it. Next to
+this tracker's title search there is now **Exact name**, which searches this tracker for the
+release name as it stands (*Ghostbusters: Afterlife 2021 2160p UHD BluRay TrueHD 7.1 Atmos
+DV HDR x265-W4NK3R*), and under the cross-check a second row, **This exact name:**, does the
+same on every tracker you are on, with its own **Search all**. Nothing is opened until you
+click. The name goes in untouched — trimmed, nothing else — so what the tracker's own search
+makes of the colon is the tracker's business. The **srrDB** link is different, because a scene
+record is not found by a tracker display title: it now searches the title words *and the
+release group* — `browse/Ghostbusters/Afterlife/W4NK3R` — read by the same group reader the
+badge uses, so a group written with a space (*Goki TAoE*) is two words and a hyphenated one
+(*R-A-R-B-G*) stays whole. A name with no tag searches the title alone, as before.
+
+**The file list is read on upload.cx.** Its Files dialog keeps the List tab in a
+`.data-table-wrapper` and the tree in a `<details>` with `.file-tree__name` / `.file-tree__size`
+(markup as pasted 19 Sep 2026), neither of which the reader knew, so a one-file torrent there
+got no `[ SINGLE FILE ]` marker at all. Both shapes are read now, with the exact count from the
+size's `title` — `[ SINGLE FILE · 4636568918 B ]` — and the page findings and the episode check
+read the same list. The tab that is hidden is not counted twice. OnlyEncodes+ (markup pasted
+the same day) carries no tab attributes at all — its tree is a `<details>` inside a
+`.dialog__form` with the count in a span's `title`, its List tab a `.data-table-wrapper` —
+and that shape is read too.
+
+**The file tree is read as the sites write it, and the first line of the copy is the top
+folder.** With the Files dialogs of DarkPeers, upload.cx, Zenith, OnlyEncodes+ and LUME in
+hand (pasted 19–20 Sep 2026) the reader walks the tree itself: the folder row at the top,
+then every folder and file by its icon, so each file's path carries the folders above it. The
+copied list — and `{files}` in a template — now opens with the top folder read from the page,
+with the total, then each file with its folders and its exact count. A disc set with the same
+file names on two discs is two sets of files, where it used to collapse to one. Where the
+files sit in no folder there is no first line at all: the display title no longer stands in
+for a folder anywhere.
+
+**The group tag is marked whether or not the automatic checks are on.** Clearing *Automatic
+naming checks* used to take the group tags off the listing along with the badges (seen on
+OnlyEncodes+, 20 Sep 2026). The tag is the internal-groups directory, not a naming check, so
+it now stays; only the badges go.
+
+**The DarkPeers and Zenith guides now carry their date.** Both were supplied on 9 Sep 2026,
+so the naming panel reads *against the DarkPeers naming guide (in hand 9 Sep 2026)* where it
+said *the date it was supplied was not recorded*.
 
 ## New in 1.31.0
 

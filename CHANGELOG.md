@@ -9,6 +9,188 @@ was named until 1.25.0.
 
 ---
 
+## 1.34.0 — a tracker's own rules are the default on that tracker
+
+- Asked 20 Sep 2026: "if we have rules for the site, those rules are the default … and if
+  no naming rules just the group tags as normal". profiles.js: `shipped()` validates the
+  tracker-guides.js sets once and keeps them as the same frozen objects (groups.js keys its
+  banned-list cache on the object); `get(key)` falls back to the shipped set when nothing is
+  added under that key; `available()` is what you added plus the shipped sets not yet
+  copied; `baseline()` reads notes from `available()`. rules.js `added()` uses
+  `available()`, so `list()`, `siteFor()`, `labelOf()`, `guideDate()`, `booksOf()` and
+  `check()` all see the shipped sets, and `settled()` self-selects them by host. `all()` is
+  unchanged: Added trackers stays what you added. Nothing changes on a tracker with no rule
+  set. profiles-ui.js: the shipped fieldset says each set is in force on its host, Add reads
+  "copies it into your added trackers", a copy is marked "your copy applies", and removing
+  the copy falls back.
+- Checks. guides-check.cjs, red first: with nothing added the Rules list is dp, zenith,
+  lume, oe, hhd; homiehelpdesk.net / onlyencodes.cc / luminarr.me resolve to their sets and
+  an unknown host to none; HomieHelpDesk's rules, notes and banned list are in force there;
+  the same object each time; an added copy wins and its removal falls back. Three fixed
+  lists in profiles-check.cjs and rules-check.cjs now expect the shipped sets after the
+  built-ins. Listing fixture 209 (206). Node 876 (874). Reverting `available()` to added-only:
+  red. A planted fetch() in profiles.js: refused.
+
+## 1.33.1 — the count line on a tracker with no rule set
+
+- listing.js `updateCounts()`: with the checks on and no rule set chosen for the tracker,
+  `assess()` never creates an entry, so the count line fell through to "No release titles
+  found. Use List or Card view…" — seen on homiehelpdesk.net over 25 rows (screenshot,
+  20 Sep 2026). It now says "No rule set chosen for this tracker, so nothing is judged."
+  One listing browser check in the no-rules block (listing 206); red with the line reverted.
+
+## 1.33.0 — HomieHelpDesk's rules ship with the script
+
+- **HomieHelpDesk in tracker-guides.js.** Key `hhd`, host homiehelpdesk.net, base `dp`
+  (both of its templates are the element order the shared templates check, and its five
+  worked examples pass them unchanged). Built from the Upload rules page (pages/7), the
+  Banned Release Groups list (wikis/8) and the naming standard (wikis/30), supplied as text on
+  20 Sep 2026 and kept verbatim in `notes/homiehelpdesk-rules-2026-09-20.md`; the rules page
+  numbers only its sections, so a rule is cited by section (§4, §5, §6, §9, §10), never by a
+  bullet number the page does not carry. 27 rules: the element vocabulary (acodec-ddp,
+  acodec-ac3, acodec-dolby, object-atmos, hdr-vocab, vcodec-dot, type-webdl, type-webrip,
+  dub-dual-audio, repack-number), the VCodec per type (vcodec-web, vcodec-webrip,
+  vcodec-remux), DVD omissions (dvd-resolution, dvd-vcodec), the source spellings
+  (remux-source, encode-source), edition-name, web-service, multi-season, group-tag and
+  nogroup, and the rules page's thresholds — encode-sd (§4, error), web-sd and dvd-remux (§4,
+  review), hevc-sdr (§5, review: its own example is 1080p x265) and single-episode (§6,
+  review, pilot excepted). Five standing notes (naming-details, content, format, description,
+  trumping). Banned list: the page's 47 table names, all under its one reason *Low-Quality
+  Releases*, BRrip moved to `groups.sources` as a source marker; EVO conditional on WEB-DL;
+  HDT conditional — refused where the title says REMUX, nothing else of its claimed; FGT
+  banned with the page's own condition as its reason. Resolutions as the standard lists them.
+- **Its books, comics and magazines.** The E-book Naming Standard, the Comic, Manga and
+  Magazine Naming Standard and the Trumping & Quality Tiers page, supplied later the same
+  day, are in the same notes file. HomieHelpDesk's book names carry no year, format word or
+  ISBN (`Author Name - Title.epub`), which DarkPeers' book template would mark wrong on every
+  conforming name, so the profile format gains an optional `books` field: `"own"` stands the
+  shared book checks down for ebooks and audiobooks (naming.js adds a review note `book-own`
+  saying whose naming applies and shows no template; rules.js `booksOf()`; profiles.js
+  validates `base`/`own` and round-trips it; the profile dialog and the site's validator say
+  "its own book names"). Eight ebook-category rules for HomieHelpDesk: book-form (review — the
+  four layouts the two pages give), book-underscore, book-tags, book-url, book-archive (CBZ /
+  CBR excepted), book-group (review), book-series-pad, comic-pad; a `books` note carrying the
+  loose-file, junk-file and container rules. Comics, manga and magazines are told by their
+  CBZ / CBR / PDF and land in the ebook category. The Audiobook Naming and Folder Standard
+  was not supplied, and the note says so. 35 rules in all.
+- **Checks.** guides-check.cjs: four new tests — the seven names the text gives as examples
+  raise no error under its rules or the shared ones (and the two review-level questions they
+  do raise are the intended ones), every rule fires on the form the standard does not use
+  and none fires on what it allows, and the banned list is the page's with its three
+  qualified names kept apart. A shipped message over the profile's 600-character limit is now
+  refused at the source rather than cut short. Listing fixture: the third Add button and the
+  20 Sep 2026 date; the six example names of the two book pages pass, the nine forbidden
+  forms fire. profiles-check.cjs: a `books:"own"` profile keeps the shared book findings
+  out, its own rule fires, audiobooks follow, music does not, and anything but base/own is
+  refused. Node 874 (864 before), listing 205 unchanged.
+- Versions from here go up with each delivered change (Khamere, 20 Sep 2026); the handoff
+  notes were removed at the same request, CLAUDE.md is the state of play.
+
+## 1.32.0 — episodes read from the file list; the built-in guides get their date
+
+- **Episodes from the file list, against the name.** `naming.check()` takes `options.files`
+  (paths, or `{path}` rows, at most 2,000) and, for a TV name that is not a daily-show date,
+  reads the `S##E##` numbers off the video files. The torrent page hands the list in through
+  `known()` in detail.js, read by `DKOKTO_FILES_UI.list()` — the reader the `[ MULTIPLE
+  FILES ]` marker copies from — so the badge and the marker cannot disagree about the page.
+  Where the list answers the question the `episode-verify` reminder is replaced: `episode-gap`
+  and `episode-partial` (a pack that skips an episode, or starts after E01) are amber;
+  `episode-single` (a pack name over one episode), `episode-extra` (an episode name over more
+  files than it numbers — a season pack by the file list), `episode-missing` (a numbered
+  episode no file carries) and `episode-season` (a file from another season) are red;
+  `episode-specials` (S00 in the list) and `episode-unnumbered` (video files with no number)
+  are amber. Where the list holds no video file, or none of its video files carries an
+  `S##E##`, the reminder stays and says why. The dialog adds *its file list* to what it read,
+  for a TV name only.
+- The reading is ZenGuard 1.9.1's `_tvEpisodes` and `_isSeasonPack`, from
+  `notes/zenguard-1.9.1-excerpts.js` as pasted 12 Sep 2026, not verified against any live
+  page, and exposed as `naming.episodes()` and `naming.isSeasonPack()`. Two steps past its
+  pattern, and only two: the guide's double and range forms (S01E02E03, S01E02-04, and
+  E02-E04 as it is sometimes written) are read as every episode they span, and a token glued
+  to a letter or digit is not read. A range that runs backwards or into something that is not
+  an episode number (S02E05-1080p) is its first episode only; a range is capped at 100.
+- Seven Node checks per edition (the reading, the season-pack rule, the reminder untouched
+  without a list, gaps and partial packs, pack/episode names the wrong way round, other
+  seasons and specials, unnumbered files and lists with no numbers) and twelve browser checks
+  on the torrent page: no list means no claim and the old reminder; a list with E04 missing
+  turns the badge amber and the dialog names the run and the gap and says it read the list; the
+  complete run is green; a single-episode name over the pack is red; the list gone is green
+  again. Confirmed by reverting: without the module change the Node suite fails on the first
+  new check, and without the detail.js change the fixture fails at the amber badge. A planted
+  `fetch()` in naming.js is refused by both built-script checks.
+- **The exact release name as a search.** `links()` adds an `exact` link right after the
+  title search — `/torrents?name=<the name, trimmed>` — and on a torrent page requests.js
+  builds a second row, `.dk-request-exact` ("This exact name:"), from
+  `requests-core.search(request,{exact:true,host})`, one link per chosen tracker, with a
+  Search all of its own; the tracker you are on is skipped there as it always was. Rebuilt
+  and removed with the cross-check row (its URLs are in the signature). Asked 15 Sep 2026,
+  folded into 1.32.0 as unshipped. One Node check (the link, its place, its URL, the title
+  search unchanged, trimming) and six torrent-page browser checks (the lookup-row link, the
+  row under the cross-check, one link per tracker carrying the whole name in a new tab, no
+  ID search among them, its Search all, one row each); the UNIT3D-shape fixture now expects
+  two relative links. Confirmed by reverting each module alone; a planted `fetch()` in
+  requests.js is refused by the built-script check.
+- **srrDB by title and group.** The srrDB lookup was the title words alone; a scene record
+  is found by the title and the release group, so `links()` now appends the group read by
+  `DKOKTO_GROUPS.trailingTag()` (the badge's own reader; required in Node, taken from the
+  page in the browser), one path segment per word, and says so in the link's note. No tag,
+  no change. Asked 16 Sep 2026, folded into 1.32.0. One Node check (W4NK3R; a spaced and a
+  hyphenated group; no tag; WEB-DL's hyphen is not a tag) and one torrent-page browser
+  check; confirmed by reverting.
+- **upload.cx's Files dialog is read.** files.js gains `LIST_ROWS` and `TREE_NAMES`
+  (exported, and used by detail.js's `filesOf()` and page stamp so the readers agree):
+  `.data-table-wrapper[data-tab="list"] table tbody tr` for the List tab and
+  `.dialog__form[data-tab="hierarchy"] .file-tree__name` for the tree, whose size sits beside
+  it in `.file-tree__size` with the count in its `title`. Seen on upload.cx, markup pasted
+  19 Sep 2026. OnlyEncodes+ (markup pasted the same day) has no `data-tab` at all — tree as
+  `.dialog__form details summary span[style*="word-break"]` with the count in a sibling
+  span's title (found by the existing `nearBytes`), list as `.data-table-wrapper
+  table.data-table tbody tr` — so both selectors were widened to that; not verified on any
+  other tracker. Five torrent-page browser checks for each shape: both tabs present (the
+  hidden one not doubled), List alone, Hierarchy alone, the copied line, and the marker
+  going with the dialog; the upload.cx set is: both
+  tabs present (the hidden one not doubled), List alone, Hierarchy alone, the copied line,
+  and the marker going with the dialog. Confirmed by reverting; a planted `fetch()` in
+  files.js is refused.
+- **A `.data-table` without sizes is not the file list.** Widening the List-tab selector
+  for OnlyEncodes+ let another table on LUME's torrent page count as files (seen 20 Sep
+  2026: a one-file torrent marked `[ MULTIPLE FILES ]`). A row from such a table now counts
+  only if it carries a size; the DarkPeers-shaped list tab is read as before. Two browser
+  checks (a decoy table of formats and scores gives no marker; the real one-file list beside
+  it is still one file). Which LUME table it was is not recorded — it was not read from here.
+- **The file tree read by its icons; the top folder first; no title in its place.** files.js
+  `treeRows()`: in any `.dialog__form` holding `details > summary` with a file/folder icon,
+  the root folder is the bare `<span>` with a folder icon at the top, folders are summaries
+  with a folder icon, files are summaries with a file icon (name in `.file-tree__name` or the
+  leaf span that is neither count nor size; bytes in the size's `title`), and each path is
+  `root/folder…/file`. Read from the Files dialogs of DarkPeers (a nested two-disc set),
+  upload.cx, Zenith, OnlyEncodes+ and LUME (one file and a pack), all pasted 19–20 Sep 2026;
+  no other tracker is claimed. The List tab is read only where no tree is, and only from a
+  table headed `# / Name / Size` (a page can carry other `.data-table`s — the LUME one-file
+  torrent that read as several; which table that was is still not recorded). `files-core
+  .listing()` and `templates-core`'s `{files}` no longer put the display title where a
+  folder would go: no common folder, no first line (asked 20 Sep 2026). detail.js's
+  `filesOf()` is the same reader; the page stamp uses `count()`. Two Node checks changed to
+  the new rule; eleven torrent-page browser checks with the five sites' markup (DarkPeers
+  disc set kept apart, upload.cx, Zenith with its List tab beside it, OnlyEncodes+, LUME
+  one-file, loose files). Confirmed by reverting the four modules; a planted `fetch()` in
+  files.js is refused.
+- **The group tag stays marked with the automatic checks off.** listing.js `scan()` returned
+  before judging anything once the *Automatic naming checks* box was cleared, and the group
+  tag is marked inside `assess()`, so clearing the box also took every tag off the listing —
+  seen on OnlyEncodes+ (screenshots 20 Sep 2026: bar reading *Checks disabled*, no tags on
+  any row). The tag is the internal-groups directory, not a naming check, so `scan()` now
+  marks it on every release link before returning, checks off or on; badges stay off. Two
+  listing browser checks (a marked row keeps its tag when the checks are turned off; a row
+  loaded while they are off gets its tag and no badge). Confirmed by reverting listing.js;
+  a planted `fetch()` in listing.js is refused.
+- **The DarkPeers and Zenith guides carry a date.** Khamere gave both as supplied on 9 Sep
+  2026 (answered 12 Sep 2026), so `rules.guideDate('dp')` and `('zenith')` are `9 Sep 2026`
+  and the panel reads *in hand 9 Sep 2026*. The 1.31.0 entry below was right when written:
+  no date had been recorded then. The no-date wording is kept for a rule set that has none.
+- Counts: 864 Node checks (846 before); detail fixture 192 (153 before), UNIT3D-shape 25
+  (24 before); every other fixture count unchanged; 70 shared modules identical.
+
 ## 1.31.0 — mark an amber badge as conforming; the torrent-page badge reads the page
 
 - **Mark as conforming.** An amber ? badge's dialog offers to mark the name as conforming;

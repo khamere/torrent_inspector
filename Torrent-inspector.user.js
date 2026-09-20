@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.32.2
+// @version      1.34.0
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       DKOKTO
 // This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,
@@ -1361,6 +1361,12 @@ const DKOKTO_PROFILES = (() => {
         const label=text(input.label,LIMITS.label)||key;
         const base=text(input.base,10).toLowerCase()||'dp';
         if(!RESERVED.includes(base))errors.push('“base” must be "dp" (DarkPeers templates) or "zenith" (Zenith templates).');
+        // Whose book naming applies: the base's templates (the default), or the tracker's
+        // own — for a tracker whose e-book names carry no year, format word or ISBN, where
+        // the base's book template would mark every conforming name wrong. "own" stands the
+        // shared book checks down for ebooks and audiobooks; the profile's rules then speak.
+        const books=text(input.books,10).toLowerCase()||'base';
+        if(!['base','own'].includes(books))errors.push('“books” must be "base" (the base’s book templates) or "own" (this tracker names books its own way).');
         const hosts=(Array.isArray(input.hosts)?input.hosts:[]).slice(0,LIMITS.hosts)
             .map(host=>text(host,80).toLowerCase().replace(/^https?:\/\//,'').replace(/\/.*$/,''))
             .filter(host=>/^[a-z0-9.-]+\.[a-z]{2,}$/.test(host));
@@ -1426,11 +1432,11 @@ const DKOKTO_PROFILES = (() => {
         // Optional: where these rules came from and when, as one line of text — shown at the
         // point of use so a person knows how old what they are reading against may be.
         const source=text(input.source,200);
-        return {errors,warnings,profile:{key,label,base,hosts,banned,conditional,sources,resolutions,rules,notes,...(source?{source}:{})}};
+        return {errors,warnings,profile:{key,label,base,books,hosts,banned,conditional,sources,resolutions,rules,notes,...(source?{source}:{})}};
     }
     // Back to the JSON you would paste, so a profile can be edited and shared.
     function toJSON(profile) {
-        return {format:FORMAT,version:1,key:profile.key,label:profile.label,base:profile.base,hosts:[...profile.hosts],
+        return {format:FORMAT,version:1,key:profile.key,label:profile.label,base:profile.base,...(profile.books==='own'?{books:'own'}:{}),hosts:[...profile.hosts],
             groups:{banned:profile.banned.map(entry=>[...entry]),
                 conditional:profile.conditional.map(entry=>({name:entry.name,allowIf:entry.allow.source,allowed:entry.allowed,otherwise:entry.otherwise})),
                 sources:profile.sources.map(entry=>({name:entry.name,pattern:entry.pattern.source}))},
@@ -1448,7 +1454,27 @@ const DKOKTO_PROFILES = (() => {
     }
     let cache=null;
     const all=()=>cache||(cache=read());
-    const get=key=>all().find(profile=>profile.key===key)||null;
+    // The rule sets that ship with the script (tracker-guides.js), validated once and kept as
+    // the same objects, so groups.js's per-profile cache holds. They are in force on their
+    // own trackers without being added (asked 20 Sep 2026: "if we have rules for the site,
+    // those rules are the default"); one you add under the same key is yours and wins, and
+    // removing yours falls back to the shipped one. all() stays what you added; available()
+    // is what the Rules list offers.
+    let shippedCache=null;
+    function shipped() {
+        if(shippedCache)return shippedCache;
+        let guides=null;
+        try{guides=typeof DKOKTO_TRACKER_GUIDES!=='undefined'?DKOKTO_TRACKER_GUIDES
+            :(typeof require==='function'?require('./tracker-guides.js'):null);}catch{guides=null;}
+        const list=[];
+        for(const entry of (guides?.list?.()||[])) {
+            const profile=validate(entry.profile).profile;
+            if(profile)list.push(Object.freeze({...profile,shipped:true}));
+        }
+        return shippedCache=list;
+    }
+    const get=key=>all().find(profile=>profile.key===key)||shipped().find(profile=>profile.key===key)||null;
+    const available=()=>[...all(),...shipped().filter(entry=>!all().some(profile=>profile.key===entry.key))];
     function write(list) {
         const text=JSON.stringify(list.map(toJSON));
         if(text.length>LIMITS.bytes)throw Error('Those profiles come to '+text.length+' characters, over the '+LIMITS.bytes+' this keeps.');
@@ -1555,9 +1581,9 @@ const DKOKTO_PROFILES = (() => {
         return issues;
     }
     // Note codes never colour a badge: they are standing reminders, not findings.
-    const baseline=()=>all().flatMap(profile=>profile.notes.map(note=>profile.key+'-'+note.code));
+    const baseline=()=>available().flatMap(profile=>profile.notes.map(note=>profile.key+'-'+note.code));
     return {FORMAT,LIMITS,CATEGORIES,SEVERITIES,KEY,RECIPES,parseGroupList,build,
-        validate,parse,save,remove,all,get,toJSON,evaluate,baseline,
+        validate,parse,save,remove,all,available,shipped,get,toJSON,evaluate,baseline,
         refresh(){cache=null;return all();},
         use(store){backing=store;cache=null;}};
 })();
@@ -1775,14 +1801,17 @@ const DKOKTO_RULES = ((profiles) => {
     const storage=()=>backing||SHARED();
     const host=()=>{try{return typeof location!=='undefined'?location.hostname.toLowerCase().replace(/^www\./,''):'';}catch{return '';}};
     const siteFor=name=>sites().find(site=>site.hosts.some(h=>h.replace(/^www\./,'')===String(name||'').toLowerCase().replace(/^www\./,'')))||null;
-    // The two built-in sites, plus any tracker profile you have added.
+    // The two built-in sites, the rule sets that ship with the script (in force on their own
+    // trackers as they ship), and any tracker profile you have added.
     // A profile's date is whatever its source line carries: "as supplied 10 Sep 2026".
     const dateIn=text=>(String(text||'').match(/\b(\d{1,2} [A-Z][a-z]{2} 20\d{2})\b/)||[])[1]||'';
-    const added=()=>profiles.all().map(profile=>({key:profile.key,label:profile.label,hosts:profile.hosts,base:profile.base,guideDate:dateIn(profile.source)}));
+    const added=()=>profiles.available().map(profile=>({key:profile.key,label:profile.label,hosts:profile.hosts,base:profile.base,guideDate:dateIn(profile.source)}));
     const sites=()=>[...SITES,...added()];
     const list=()=>sites().map(site=>({key:site.key,label:site.label}));
     // Which set of naming templates a site follows: its own, or the one its profile names.
     const baseOf=key=>key==='zenith'?'zenith':profiles.get(key)?.base||'dp';
+    // Whether a site names books its own way (profiles.js books:"own"); the built-ins never do.
+    const booksOf=key=>profiles.get(key)?.books==='own'?'own':'base';
     const labelOf=key=>sites().find(site=>site.key===key)?.label||'DarkPeers';
     // In words, for the panel: "in hand 10 Sep 2026", or the honest absence of a date.
     const guideDate=key=>sites().find(site=>site.key===key)?.guideDate||'';
@@ -1996,7 +2025,7 @@ const DKOKTO_RULES = ((profiles) => {
     const baseline=()=>[...BUILTIN_BASELINE,...profiles.baseline()];
     // A profile may list the resolutions its tracker accepts; otherwise its base decides.
     const resolutions=site=>profiles.get(site)?.resolutions?.length?profiles.get(site).resolutions:null;
-    return {list,labelOf,guideDate,guideSince,current,choose,forget,check,books,siteFor,baseOf,baseline,resolutions,added,hasRules,settled,BASELINE,KEY,HOSTS,
+    return {list,labelOf,guideDate,guideSince,current,choose,forget,check,books,siteFor,baseOf,booksOf,baseline,resolutions,added,hasRules,settled,BASELINE,KEY,HOSTS,
         bannedAuthors:()=>[...BANNED_AUTHORS],bannedWorks:()=>[...BANNED_WORKS],use(store){backing=store;migrated=false;}};
 })(typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./profiles.js'):DKOKTO_PROFILES);
 
@@ -2196,6 +2225,7 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
         const site=options.rules||rules.current();
         // Which set of templates this site follows: its own, or the one its profile names.
         const base=rules.baseOf?rules.baseOf(site):(site==='zenith'?'zenith':'dp');
+        const ownBooks=rules.booksOf?rules.booksOf(site)==='own':false;
         if(s.length>1000)return {profile,template:'',issues:[{severity:'error',code:'length',message:'Use a title under 1,000 characters.'}],status:'Needs correction'};
         // Any well-formed resolution label is recognised, so one the guide does not list
         // is reported as the wrong value rather than as a missing resolution.
@@ -2223,6 +2253,13 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
         // Zenith's books and music follow templates of their own — an audiobook there is
         // Author - Title (Year) Language Edition {Narrator} [Source] Container Codec Bitrate —
         // so they are checked against those rather than against DarkPeers' templates.
+        if(ownBooks&&(profile==='ebook'||profile==='audiobook')){
+            // This tracker's profile says its book names are its own (profiles.js
+            // books:"own"), so neither DarkPeers' nor Zenith's book template is held against
+            // them; the profile's rules, applied in result(), are what is checked.
+            add('review','book-own',(rules.labelOf?rules.labelOf(site):site)+' names books its own way, so no shared book template is applied here: what is checked is its own rule set, below.');
+            return result('own-books');
+        }
         if(base==='zenith'&&(profile==='music'||profile==='ebook'||profile==='audiobook')){
             for(const issue of rules.books(s,profile))add(issue.severity,issue.code,issue.message);
             return result();
@@ -2713,11 +2750,187 @@ ZMNT|Quality`.split('\n').map(line=>line.split('|').map(cell=>cell.trim()));
         ]
     };
 
+    // --- HomieHelpDesk ------------------------------------------------------------------
+    // Three pieces, supplied as text on 20 Sep 2026 and kept verbatim in
+    // notes/homiehelpdesk-rules-2026-09-20.md: the Upload rules (pages/7, eleven numbered
+    // sections), the Banned Release Groups list (which pages/7 links as wikis/8) and the
+    // naming standard (which pages/7 §8 links as wikis/30). The rules page numbers only its
+    // sections, so a rule is cited by section: "§5 Encodes", not a bullet number the page
+    // does not carry. Both templates are the element order the shared templates already
+    // check — the encode template audio-then-VCodec, the remux template VCodec-then-audio,
+    // exactly as OnlyEncodes+ and LUME write them — which is why base is "dp"; every one of
+    // the five worked examples passes the shared checks unchanged (guides-check.cjs).
+    //
+    // The banned list as the page publishes it: one table headed Low-Quality Releases, which
+    // is the only reason the page gives, so every name carries it. Three names sit under the
+    // table with a qualification of their own and are written as the page states them: EVO
+    // "WEB-DLs are allowed" (conditional), HDT "(Remuxes) or similar automated remuxes"
+    // (conditional: refused where the title says REMUX, nothing else of HDT's claimed), and
+    // FGT "(unless no other encode is available)" — kept on the banned list with that
+    // condition as its reason, because whether another encode exists is not in the title.
+    // BRrip is a source marker rather than a tag, so it goes in groups.sources.
+    //
+    // Supplied later the same day: the E-book Naming Standard, the Comic, Manga and Magazine
+    // Naming Standard, and the Trumping & Quality Tiers page (all in the same notes file).
+    // HomieHelpDesk's book names are Author Name - Title.epub, with no year, format word or
+    // ISBN, so DarkPeers' book template would mark every conforming name wrong: books is
+    // "own" (profiles.js), the shared book checks stand aside for ebooks and audiobooks, and
+    // the rules below are what is checked. Comics, manga and magazines have no category of
+    // their own here and are told by their CBZ/CBR/PDF, so they land in ebook too, and the
+    // form rule accepts each of the four layouts those two pages give. The Audiobook Naming
+    // and Folder Standard both pages point to was not supplied, so nothing is claimed for it.
+    const HHD_TABLE=`aXXo BONE BRrip CM8 CrEwSaDe CTFOH dAV1nci d3g DNL FaNGDiNG0 GalaxyTV HD2DVD
+HDTime iHYTECH ION10 iPlanet KiNGDOM LAMA MeGusta mHD mSD NaNi NhaNc3 nHD
+nikt0 nSD OFT PRODJi RARBG Rifftrax SANTi SasukeducK ShAaNiG Sicario STUTTERSHIT TGALAXY
+TORRENTGALAXY TSP TSPxL ViSION VXT WAF WKS x0r YAWNiX YIFY YTS PSA`.split(/\s+/);
+    const HHD_BANNED=[...HHD_TABLE.filter(name=>name!=='BRrip').map(name=>[name,'Low-Quality Releases']),
+        ['FGT','allowed only where no other encode is available']];
+
+    const HOMIEHELPDESK={
+        format:FORMAT,version:1,key:'hhd',label:'HomieHelpDesk',base:'dp',books:'own',hosts:['homiehelpdesk.net'],
+        source:'homiehelpdesk.net/pages/7 — Upload rules, with its banned list and naming standard, as supplied 20 Sep 2026.',
+        groups:{
+            banned:HHD_BANNED,
+            conditional:[
+                {name:'EVO',allowIf:'(?:^|[ ._])WEB-?DL(?=$|[ ._-])',allowed:'WEB-DLs',
+                 otherwise:'this title does not say WEB-DL'},
+                {name:'HDT',allowIf:'^(?![\\s\\S]*(?:^|[ ._])REMUX(?=$|[ ._-]))',allowed:'anything but its remuxes — the page bans HDT (Remuxes) or similar automated remuxes',
+                 otherwise:'this title says REMUX'}
+            ],
+            sources:[{name:'BRrip',pattern:'(?:^|[ ._])BR-?rip(?=$|[ ._-])'}]
+        },
+        resolutions:['480i','480p','576i','576p','720p','1080i','1080p','2160p','4320p'],
+        rules:[
+            {code:'group-tag',severity:'review',profiles:['movie','tv','disc'],
+             require:'-\\s?[A-Za-z0-9][A-Za-z0-9._+-]{0,29}\\s*$',
+             message:'The Tag element is the release group’s tag, or your user name for a personal release, and none closes this title. Confirm the release is genuinely untagged.'},
+            {code:'single-episode',severity:'review',profiles:['tv'],
+             forbid:'(?:^|[ .])(?!S01E01(?![E-]?\\d))S\\d{2}E\\d{2}(?![E-]?\\d)',
+             message:'§6 TV-Shows: once a season has fully aired, individual episodes may be uploaded for 72 hours from the source’s release; after that the show goes up as a season pack. A pilot (S01E01) is allowed at any time.'},
+            {code:'multi-season',severity:'error',profiles:['tv'],
+             forbid:'(?:^|[ .])S\\d{2}[ .]?-[ .]?S?\\d{2}(?![ .]*COMPLETE)',
+             message:'A multi-season pack is written S##-S## COMPLETE — the range, then the word COMPLETE. (§6: a multi-season torrent must be discs from a retail box set.)'},
+            {code:'encode-sd',severity:'error',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])(?:480|576)[pi](?=[ .])[\\s\\S]*(?:^|[ .])x26[45](?=$|[ .-])',
+             message:'§4 Resolution Requirements: encodes must be at least 720p.'},
+            {code:'web-sd',severity:'review',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])(?:480|576)[pi][ .][\\s\\S]*WEB-?DL(?=$|[ .-])',
+             message:'§4: an SD WEB-DL is only allowed when the title has never had a non-upscaled HD release, or was never released in HD in its original aspect ratio, or carries features an HD source lacks (an alternative cut, subtitles, a commentary).'},
+            {code:'dvd-remux',severity:'review',profiles:['movie','tv','disc'],
+             forbid:'(?:NTSC|PAL)[ .]DVD[ .]REMUX(?=$|[ .-])',
+             message:'§4: a DVD remux is only allowed when the title has never had a non-upscaled HD release, or was never released in HD in its original aspect ratio, or carries features an HD source lacks (an alternative cut, subtitles, a commentary).'},
+            {code:'hevc-sdr',severity:'review',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])(?:720|1080)[pi][ .](?:(?!(?:^|[ .])(?:HDR|HDR10\\+|DV|HLG|PQ10)(?=$|[ .-]))[\\s\\S])*(?:^|[ .])x265(?=$|[ .-])',
+             message:'§5 Encodes: SDR live-action content at 1080p and below must use x264; HEVC needs an exception applied for by justifying it. Animation is the usual reason — and the standard’s own worked example is a 1080p x265 encode, so ask rather than assume.'},
+            {code:'acodec-ddp',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])(?:DDP\\d?(?:\\.\\d)?|E-?AC-?3)(?=$|[ .-])',
+             message:'The ACodec element is the commercial name: DD+ (or DD+ EX). DDP and E-AC-3 are not on the list.'},
+            {code:'acodec-ac3',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])AC-?3(?=$|[ .-])',
+             message:'The ACodec element writes Dolby Digital as DD (or DD EX), not AC3.'},
+            {code:'acodec-dolby',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])Dolby[ .](?:Digital|TrueHD)',
+             message:'The ACodec list uses the short names: DD, DD+, TrueHD, DTS-HD MA, DTS:X, LPCM, FLAC, ALAC, AAC, Opus.'},
+            {code:'object-atmos',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])Dolby[ .]Atmos(?=$|[ .-])',
+             message:'The Object element is Atmos on its own (the only other value is Auro3D).'},
+            {code:'hdr-vocab',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])(?:HDR10(?!\\+)|DoVi|Dolby[ .]Vision)(?=$|[ .-])',
+             message:'The HDR element is one of HDR, HDR10+, DV HDR, DV, DV HDR10+, HLG or PQ10 — HDR10 on its own is written HDR, and Dolby Vision is DV.'},
+            {code:'vcodec-dot',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])H26[45](?=$|[ .-])',
+             message:'The VCodec list writes it H.264 or H.265, with the dot.'},
+            {code:'vcodec-web',severity:'error',profiles:['movie','tv'],
+             forbid:'WEB-DL[\\s\\S]*(?:^|[ .])x26[45](?=$|[ .-])',
+             message:'For a WEB-DL the VCodec element is H.264, H.265, VP9 or MPEG-2. x264 and x265 name an encoder, and belong to encodes and WEBRips.'},
+            {code:'vcodec-webrip',severity:'error',profiles:['movie','tv'],
+             forbid:'WEBRip[\\s\\S]*(?:^|[ .])H\\.?26[45](?=$|[ .-])',
+             message:'For a WEBRip the VCodec element is x264 or x265 — it has been re-encoded, so the encoder is what is named.'},
+            {code:'vcodec-remux',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'REMUX[\\s\\S]*(?:^|[ .])(?:x26[45]|H\\.?26[45])(?=$|[ .-])',
+             message:'For a remux the VCodec element is MPEG-2, VC-1, AVC or HEVC: the stream is untouched, so the format is what is named.'},
+            {code:'type-webdl',severity:'error',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])WEBDL(?=$|[ .-])',
+             message:'The Type element is written WEB-DL, with the dash.'},
+            {code:'type-webrip',severity:'error',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])WEB-Rip(?=$|[ .-])',
+             message:'The Type element is written WEBRip, as one word.'},
+            {code:'web-service',severity:'review',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])\\d{3,4}[pi][ .]WEB-?(?:DL|Rip)(?=$|[ .-])',
+             message:'For a WEB-DL or WEBRip the Source element is the streaming service provider abbreviation, and none stands between the resolution and the type here.'},
+            {code:'remux-source',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:Blu-ray[\\s\\S]*REMUX|REMUX[\\s\\S]*Blu-ray)',
+             message:'For a remux the Source is BluRay, 3D BluRay or UHD BluRay, one word. Blu-ray with the hyphen is the disc spelling.'},
+            {code:'encode-source',severity:'error',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])(?:UHD[ .]|3D[ .])?Blu-ray(?=$|[ .-])',
+             message:'For encodes and remuxes the Source is BluRay, 3D BluRay or UHD BluRay, one word; Blu-ray with the hyphen is the disc spelling. If this is a full disc, check the category first.'},
+            {code:'dvd-resolution',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])\\d{3,4}[pi][ .](?:(?:NTSC|PAL)[ .])?DVD(?:5|9)?(?=$|[ .-])',
+             message:'The Resolution element is omitted for DVD-sourced releases.'},
+            {code:'dvd-vcodec',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:NTSC|PAL)[ .]DVD[\\s\\S]*(?:^|[ .])(?:x26[45]|H\\.?26[45]|AVC|HEVC|MPEG-2)(?=$|[ .-])',
+             message:'The VCodec element is omitted for DVD-sourced releases.'},
+            {code:'edition-name',severity:'error',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])(?:\\d+(?:th|st|nd|rd)[ .]Anniversary[ .]Edition|Anniversary[ .]Edition|4K[ .]Remaster|Remastered|Criterion[ .]Collection|Limited)(?=$|[ .-])',
+             message:'The Edition is omitted from the name and put in the description. Only a disc may carry the distributor, e.g. Criterion Collection — if this is a disc, check the category first.'},
+            {code:'dub-dual-audio',severity:'error',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])Dual[ .]Audio(?=$|[ .-])',
+             message:'The Dub element is written Dual-Audio, hyphenated (the other value is Dubbed), and only for non-discs.'},
+            {code:'repack-number',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])(?:REPACK|PROPER|RERip)[ .](?:2|3|II)(?=$|[ .-])',
+             message:'A second repack, proper or rerip is written REPACK2, PROPER2 or RERip2 — the number joined to the word.'},
+            {code:'nogroup',severity:'review',profiles:['movie','tv','disc'],
+             forbid:'-\\s?NOGRP\\s*$',
+             message:'The Tag element is the release group’s tag or a user name; NOGRP is neither. Where a release has no group, ask in a ticket rather than invent a tag.'},
+            // The E-book and the Comic, Manga and Magazine naming standards.
+            {code:'book-form',severity:'review',profiles:['ebook'],
+             require:'^\\S.+?\\s-\\s\\S|^.+?\\s(?:\\d{3,}|v\\d{2,})\\s\\((?:18|19|20)\\d{2}\\)',
+             message:'The E-book Naming Standard is Author Name - Title (a series: Author Name - [Series Name 01] - Title); a comic or manga is Series Title 001 (Year) or Series Title v01 (Year); a magazine is Publication Name - Month Year or Publication Name - YYYY-MM-DD. This name is none of those layouts.'},
+            {code:'book-underscore',severity:'error',profiles:['ebook'],
+             forbid:'_',
+             message:'The E-book Naming Standard: spaces, not underscores — Stephen King - The Stand.epub, not Stephen_King_-_The_Stand_RETAIL_v5.epub.'},
+            {code:'book-tags',severity:'error',profiles:['ebook'],
+             forbid:'(?:^|[ ._-])(?:REPACK|RETAIL|PROPER)\\d?(?=$|[ ._-])',
+             message:'The E-book Naming Standard: no REPACK, RETAIL or PROPER tags in a book, comic or magazine name.'},
+            {code:'book-url',severity:'error',profiles:['ebook'],
+             forbid:'(?:^|[ ._-])www\\.|https?://|\\.(?:com|net|org|info|cc|to)(?=$|[ /._-])',
+             message:'The E-book Naming Standard: no website URLs anywhere in a file or folder name.'},
+            {code:'book-archive',severity:'error',profiles:['ebook'],
+             forbid:'\\.(?:zip|rar|7z)\\s*$|(?:^|[ .])(?:ZIP|RAR|7z)(?=$|[ .-])',
+             message:'The E-book Naming Standard: loose files (EPUB, PDF, AZW3, MOBI, FB2, DJVU), never a ZIP, RAR or 7z. A comic is the exception — its container is CBZ (preferred) or CBR, and a renamed ZIP or RAR takes that extension.'},
+            {code:'book-group',severity:'review',profiles:['ebook'],
+             forbid:'\\S-[A-Za-z][A-Za-z0-9]+(?:\\.[a-z0-9]{2,4})?\\s*$',
+             message:'The E-book Naming Standard: no scene or release-group tags — no -RELEASEGROUP suffix. If the last word is simply hyphenated (Spider-Man), it is fine as it stands.'},
+            {code:'book-series-pad',severity:'error',profiles:['ebook'],
+             forbid:'\\[[^\\]]*\\s\\d\\]',
+             message:'A series volume is zero-padded to two digits inside the brackets: [The Stormlight Archive 02], not [The Stormlight Archive 2].'},
+            {code:'comic-pad',severity:'error',profiles:['ebook'],
+             forbid:'^.+?\\s\\d{1,2}\\s\\((?:18|19|20)\\d{2}\\)',
+             message:'The Comic, Manga and Magazine Naming Standard: a comic issue or manga chapter number is zero-padded to three digits — Saga 001 (2012).cbz — and a manga volume is v01.'}
+        ],
+        notes:[
+            {code:'naming-details',profiles:['movie','tv','disc'],
+             message:'What the naming standard states that a title alone cannot settle: the Name is the internationally recognised one (usually IMDb’s) with all its punctuation; AKA Original where the original name differs; LOCALE only to tell apart titles sharing a name and year; a TV year only where several series share a name; specials S00E## (on TVDb) or S##E00 (not on TVDb) with the special’s name; extras packs S## Extras or S00 Description; daily shows as YYYY-MM-DD; anime OVAs S## OVA; Cut assumed Theatrical and Ratio OAR when omitted; a disc carries its Region code; a FanRes carries its process word.'},
+            {code:'content',profiles:['movie','tv','disc'],
+             message:'HomieHelpDesk rules a title cannot show (§1, §2, §6): a single file is not inside a directory and several files sit in one top-level directory; no extraneous files (NFOs, samples, screenshots, subtitles); no pre-retail content; one movie per upload and one show per upload, except discs ripped from a retail box set; extras go up separately, in their own named folders; audio is the primary-language track plus at most one English dub for a non-English title, and a release modified to add tracks must not keep the group’s tag; seed until the upload has three or more seeds.'},
+            {code:'format',profiles:['movie','tv'],
+             message:'§5 Format Requirements the report can be read against: every TrueHD track needs a standalone AC-3 compatibility track; non-English content needs English subtitles; remuxes, WEB-DLs and encodes are MKV (MP4 only for Dolby Vision profile 5 WEB-DLs or stream-optimised encodes; HDTV may be .ts); encodes are x264 or x265 with the encoder settings in the MediaInfo, CRF or multi-pass, black bars cropped.'},
+            {code:'description',profiles:['movie','tv','disc'],
+             message:'§10 Description Requirements: in English; at least three screenshots (optional for a Blu-ray ISO); no advertisements, logos, recruitment or greetz; the MediaInfo of the first episode for a multi-file torrent; for a full Blu-ray the BDInfo Quick Summary, for a full DVD the .IFO MediaInfo plus the largest .VOB’s in a spoiler, for a full HD DVD the first main EVO’s.'},
+            {code:'trumping',profiles:['movie','tv','disc'],
+             message:'§9: Blu-ray remuxes, WEB-DLs and HDTV releases are one torrent per cut per resolution unless a coexistence rule applies (different masters, a different provider’s best offering, encodes with a meaningful benefit). A complete season pack trumps individual episodes; a WEB-DL trumps a WEBRip of the same source; REPACK, PROPER, RERip and RE-ISSUE trump the original; individual seasons trump a COMPLETE series pack. Its Trumping & Quality Tiers page: sources are categories, not one ladder — the detail decides, and the same tier again is not a trump.'},
+            {code:'books',profiles:['ebook','audiobook'],
+             message:'The E-book and the Comic, Manga and Magazine naming standards, beyond the name: loose files side by side where a book comes in several formats; comics CBZ (preferred) or CBR; magazines PDF; no .nfo, stray .txt or .url in the payload — the upload form has an NFO field; a cover image that belongs to the book is fine; one naming style across a pack. The Audiobook Naming and Folder Standard was not supplied, so nothing is claimed for audiobooks beyond this.'}
+        ]
+    };
+
     const ALL=[
         {profile:LUME,summary:'The LUME naming guide: both title templates and the vocabulary for every element.',
          source:'luminarr.me — Naming Guide, as supplied 10 Sep 2026.'},
         {profile:ONLYENCODES,summary:'OnlyEncodes+ upload rules: what a title can be checked for, and the rest as standing reminders.',
-         source:'onlyencodes.cc/wikis/2 — Upload Guide + Rules, as supplied 10 Sep 2026.'}
+         source:'onlyencodes.cc/wikis/2 — Upload Guide + Rules, as supplied 10 Sep 2026.'},
+        {profile:HOMIEHELPDESK,summary:'HomieHelpDesk upload rules, banned groups and naming standard: what a title can be checked for, and the rest as standing reminders.',
+         source:'homiehelpdesk.net/pages/7 — Upload rules, with its banned list and naming standard, as supplied 20 Sep 2026.'}
     ];
     // A fresh copy each time: what the caller does with it must never reach this list.
     const list=()=>ALL.map(entry=>({...entry,profile:JSON.parse(JSON.stringify(entry.profile))}));
@@ -2872,7 +3085,7 @@ const DKOKTO_PROFILES_UI = ((profiles,rules) => {
             const row=el('div',undefined,'dk-profile-installed');
             row.append(el('strong',profile.label),
                 el('small',profile.key+' · '+(profile.hosts.join(', ')||'no addresses')+' · '+profile.banned.length+' groups · '+
-                    profile.rules.length+' rules · '+(profile.base==='zenith'?'Zenith':'DarkPeers')+' templates'));
+                    profile.rules.length+' rules · '+(profile.base==='zenith'?'Zenith':'DarkPeers')+' templates'+(profile.books==='own'?' · its own book names':'')));
             const actions=el('div',undefined,'dk-row');
             actions.append(button('Copy JSON',()=>copy(JSON.stringify(profiles.toJSON(profile),null,2))));
             actions.append(button('Save as file',()=>download(profile.key+'-rules.json',JSON.stringify(profiles.toJSON(profile),null,2))));
@@ -2884,25 +3097,25 @@ const DKOKTO_PROFILES_UI = ((profiles,rules) => {
             }));
             row.append(actions);wrap.append(row);
         }
-        // Rule sets this script ships with, because their guides were supplied. Adding one
-        // is your choice: it changes which rules a badge cites, so nothing happens until
-        // Add is pressed, and what it adds is an ordinary added tracker afterwards.
+        // Rule sets this script ships with, because their guides were supplied. They are in
+        // force on their own trackers as they ship (asked 20 Sep 2026); Add copies one into
+        // your added trackers so you can edit it, and your copy then wins over the shipped one.
         const guides=(()=>{try{return typeof DKOKTO_TRACKER_GUIDES!=='undefined'?DKOKTO_TRACKER_GUIDES.list():[];}catch{return [];}})();
         if(guides.length) {
             const ready=el('fieldset');ready.append(el('legend','Rule sets that ship with this script'));
-            ready.append(el('p','Built from the guides as they were supplied. Adding one is the same as pasting its JSON: it becomes an added tracker you can edit, export or remove.'));
+            ready.append(el('p','Built from the guides as they were supplied, and already in force on their own trackers — they are in the Rules list without being added. Add copies one into your added trackers so you can edit it; your copy then applies instead, and removing it brings the shipped one back.'));
             for(const entry of guides) {
                 const row=el('div',undefined,'dk-profile-installed');
                 const held=profiles.get(entry.profile.key);
-                row.append(el('strong',entry.profile.label+(held?' — added':'')),
+                row.append(el('strong',entry.profile.label+(held&&!held.shipped?' — added, your copy applies':' — in force on '+entry.profile.hosts.join(', '))),
                     el('small',entry.summary),el('small',entry.source));
                 const actions=el('div',undefined,'dk-row');
-                actions.append(button(held?'Add again, replacing yours':'Add '+entry.profile.label,()=>{
-                    if(held&&!window.confirm('Replace your '+entry.profile.label+' rules with the shipped ones? Anything you changed is lost.'))return;
+                actions.append(button(held&&!held.shipped?'Add again, replacing yours':'Add '+entry.profile.label,()=>{
+                    if(held&&!held.shipped&&!window.confirm('Replace your '+entry.profile.label+' rules with the shipped ones? Anything you changed is lost.'))return;
                     const result=profiles.save(entry.profile);
                     if(!report(result))return;
                     onChange();say(entry.profile.label+' added: '+result.profile.rules.length+' rules, '+
-                        result.profile.notes.length+' standing notes. Pick it in the Rules list to use it.');
+                        result.profile.notes.length+' standing notes — your copy now, editable under Added trackers.');
                     draw();
                 }));
                 actions.append(button('Copy JSON',()=>copy(JSON.stringify(entry.profile,null,2))));
@@ -4038,7 +4251,7 @@ const DKOKTO_LISTING = (() => {
         if(logged){const recorded=DKOKTO_DECISIONS.count();
             const text=recorded?recorded+' decision'+(recorded===1?'':'s')+' recorded in this browser':'';
             if(logged.textContent!==text)logged.textContent=text;}
-        counts.textContent=enabled?(loading?'Checking loaded titles… ':entries.size?`${total.error} errors · ${total.pass} passed${total.mine?' ('+total.mine+' marked by you)':''} · ${total.review} need review`:'No release titles found. Use List or Card view; grouped posters may only show a show/movie name.'):'Checks disabled';}
+        counts.textContent=enabled?(!DKOKTO_RULES.hasRules()?'No rule set chosen for this tracker, so nothing is judged.':loading?'Checking loaded titles… ':entries.size?`${total.error} errors · ${total.pass} passed${total.mine?' ('+total.mine+' marked by you)':''} · ${total.review} need review`:'No release titles found. Use List or Card view; grouped posters may only show a show/movie name.'):'Checks disabled';}
     function scan(){clearTimeout(timer);timer=null;scannedAt=Date.now();forget();const run=++serial;
         const list=links(),active=listingPage()||!!list.length;
         // A row is only something you decide on while you are on a queue. Leaving one takes

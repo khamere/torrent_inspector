@@ -1,9 +1,9 @@
 # Adding a tracker
 
-Four rule sets ship with the script: **DarkPeers**, **Zenith**, **LUME** and
-**OnlyEncodes+**. The first two are built in; the other two are offered under *Added
-trackers → Rule sets that ship with this script* and become ordinary added trackers when you
-press **Add**.
+Five rule sets ship with the script: **DarkPeers**, **Zenith**, **LUME**, **OnlyEncodes+**
+and **HomieHelpDesk**. All five are in force on their own trackers as they ship. The last
+three are listed under *Added trackers → Rule sets that ship with this script*, where
+**Add** copies one into your added trackers so you can edit it.
 
 Any other tracker is added as a **profile**: a JSON object holding who the tracker is, its
 banned release group list, and its rules. Nothing in a profile is executed and nothing is
@@ -15,15 +15,17 @@ top of the naming box.
 
 ## The rule sets that ship with the script
 
-Two are built from guides supplied in full, and sit in **Added trackers** under *Rule sets
-that ship with this script*. Press **Add** and the profile becomes an ordinary added
-tracker — editable, exportable, removable — and can be picked in the *Rules* list. Nothing
-is added until you press it, because adding one changes which rules a badge cites.
+Three are built from guides supplied in full. They are the default on their own trackers
+and sit in the *Rules* list without being added. Under **Added trackers → Rule sets that
+ship with this script**, **Add** copies one into your added trackers — editable, exportable,
+removable — and your copy then applies instead of the shipped one; remove the copy and the
+shipped set is back in force.
 
 | Rule set | Built from | What it does not have |
 | --- | --- | --- |
 | **LUME** (luminarr.me) | its Naming Guide — both title templates, and the vocabulary for every element | no banned-group list: none was supplied |
 | **OnlyEncodes+** (onlyencodes.cc) | its Upload Guide + Rules (`wikis/2`), its naming standard (`wikis/18`) and its banned list (`wikis/1`) — 16 rules, 136 groups | — |
+| **HomieHelpDesk** (homiehelpdesk.net) | its Upload rules (`pages/7`), its banned list (`wikis/8`), its naming standard (`wikis/30`), its E-book and its Comic, Manga and Magazine naming standards, and its Trumping & Quality Tiers page, all supplied 20 Sep 2026 — 35 rules, 48 groups, `books: own` | its Audiobook Naming and Folder Standard was not supplied; its rules page numbers only its sections, so rules are cited by section (§4, §5, §6), not by bullet |
 
 Where a page was not supplied, the profile says so in its own standing notes rather than
 filling the gap with a guess. Paste it in and the checks can quote it instead.
@@ -86,6 +88,7 @@ point.
 | `key` | 2–24 characters, lowercase letters, digits and hyphens. Not `dp` or `zenith`. |
 | `label` | What the *Rules* list shows, and the name used in every message. |
 | `base` | `dp` or `zenith` — whose naming templates apply. See below. |
+| `books` | Optional. `own` when the tracker names books its own way (HomieHelpDesk's `Author Name - Title.epub` carries no year, format or ISBN): the shared book template then stands aside for ebooks and audiobooks and only the profile's `rules` are checked. Omitted, the base's book templates apply. |
 | `hosts` | Domains. On one of these, this tracker's rules are chosen for you. |
 | `groups.banned` | `["Name"]`, `["Name", "reason"]` or `["Name", "reason", "since"]`. The reason appears in the badge. |
 | `groups.conditional` | Allowed only for what `allowIf` matches — the EVO-for-WEB-DLs shape. |

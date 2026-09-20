@@ -40,7 +40,8 @@ Click a badge and it tells you what it found, quotes the rule it is applying, an
 
 Above the results is a bar with:
 
-- **Automatic naming checks** — the on/off switch.
+- **Automatic naming checks** — the on/off switch for the badges. The group tag in each
+  name is not a check and stays marked with the box cleared.
 - **Rules** — whose rules the badges are applying. On a tracker whose rules are not in hand
   this says so, and nothing is judged until you choose.
 - **Internal groups…** — the directory of which tracker a group is internal to. A group's tag
@@ -67,11 +68,14 @@ nothing on the tracker; it records that you looked.
 
 ### Whose rules?
 
-Four rule sets ship: **DarkPeers**, **Zenith**, **LUME** and **OnlyEncodes+**. LUME and
-OnlyEncodes+ are offered rather than applied — open *Tracker rules… → Added trackers*, and
-press **Add** beside one. Adding a rule set changes what a badge cites, so it waits to be
-asked. Once added it is an ordinary added tracker: editable, exportable, removable, and it
-selects itself on its own site.
+Five rule sets ship: **DarkPeers**, **Zenith**, **LUME**, **OnlyEncodes+** and
+**HomieHelpDesk**. Each is the default on its own tracker: the badges appear there without
+any setup, and the *Rules* list carries all five. HomieHelpDesk names books its own way
+(`Author Name - Title.epub`), so on it the naming box checks a book against its rules and
+says so, rather than against DarkPeers' book template. To change a shipped set, open
+*Tracker rules… → Added trackers* and press **Add** beside it: that copies it into your
+added trackers, where it is editable, exportable and removable, and your copy applies
+instead of the shipped one until you remove it.
 
 Every other tracker is added by pasting its rules. A profile is **data**: nothing in one is
 executed, patterns are compiled as regular expressions and matched against a title, and one
@@ -91,16 +95,35 @@ Under the release name:
 
 - **The badge**, as on the listing, with the same explanation behind it.
 - **`[ MULTIPLE FILES ]`** on a pack, or **`[ SINGLE FILE · 2449415267 B ]`** on one file.
-  Click it and the file list goes to the clipboard: the folder and its total, then every file
-  with the exact byte count the page carries. Where the page only rounded, its own wording is
-  copied rather than a number nobody printed.
-- **A lookup row** — this tracker's own search for the title, then the other trackers you are
-  a member of, then **Search all**, which opens one tab per tracker when you press it.
+  Click it and the file list goes to the clipboard: the top folder as the page's file tree
+  names it, with its total, then every file with the folders above it and the exact byte
+  count the page carries. A torrent whose files sit in no folder gets no folder line — the
+  display title is never written in place of one. Where the page only rounded, its own
+  wording is copied rather than a number nobody printed. Read on the DarkPeers-shaped dialog, on
+  upload.cx's and on OnlyEncodes+'s (each laid out differently); a tracker whose Files
+  dialog is another shape again shows no marker, and its markup is what is needed to add it.
+- **A lookup row** — this tracker's own search for the title, **Exact name** (this tracker's
+  search for the release name as it stands), then the other trackers you are a member of,
+  then **Search all**, which opens one tab per tracker when you press it. Under the
+  cross-check, **This exact name:** searches the whole release name on those same trackers,
+  with a **Search all** of its own. The **srrDB** link searches the title words and the
+  release group, which is how a scene record is found.
 - **vs** — capture this release, capture another on a second page, and compare the two side by
   side: the names, the sizes to the byte, the file counts, the MediaInfo. If one page never
   rendered its file list, it says so rather than reporting nothing as zero.
 - **From this page** — what the page itself says about the release, and where it disagrees
   with the name.
+
+The badge on a torrent page reads more than the name: the page's own heading, its original
+language, its MediaInfo — and, for a TV name, its **file list**. The `S##E##` numbers on the
+file names say which episodes the torrent holds, so *verify episode mapping and pack
+completeness* stops being a reminder and becomes a finding: a name that says **S02** over
+files E01–E10 with E04 missing gets an amber ? naming the gap; a name that says **S02E03**
+over files E03–E05 is a red ✕ (by the file list that is a season pack); a pack name over one
+episode, a numbered episode no file carries, or a file from another season is a red ✕ too.
+Specials (S00) and video files with no episode number are questions. Where the file names
+carry no `S##E##` at all, the reminder stays and says so. The dialog lists *its file list*
+among what it read only when it read one for this.
 
 ### The comment templates
 
