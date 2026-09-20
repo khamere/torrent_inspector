@@ -124,7 +124,7 @@
       group linked to where it is internal. Nothing is ever fetched, posted or changed.
     </p>
     <ul class="pills">
-      <li class="pill"><b>1.31.0</b></li>
+      <li class="pill"><b>1.34.0</b></li>
       <li class="pill"><b>43</b> trackers it runs on · <b>60</b> it can search</li>
       <li class="pill">No requests, no posting</li>
       <li class="pill">Nothing judged without that tracker’s rules</li>
@@ -248,9 +248,9 @@
         <p>A <b>Rules</b> dropdown in the bar: DarkPeers, Zenith, or a tracker you add. It changes the upload rules and the banned-group list — the naming guide itself is shared — so the same title can be clean on one tracker and rejected on another.</p>
       </div>
       <div class="card">
-        <h3>Two rule sets are already written</h3>
-        <p><b>LUME</b> and <b>OnlyEncodes+</b> ship with the script, built from their own published guides — 14 and 16 rules, and OnlyEncodes' 136 banned groups with the reasons and dates its page gives. Press <b>Add</b> once and they join the <em>Rules</em> list.</p>
-        <p>Nothing is added until you press it: adding a rule set changes which rules a badge cites, and that is your call.</p>
+        <h3>Three rule sets are already written</h3>
+        <p><b>LUME</b>, <b>OnlyEncodes+</b> and <b>HomieHelpDesk</b> ship with the script, built from their own published guides — 14, 16 and 35 rules, OnlyEncodes' 136 banned groups with the reasons and dates its page gives, and HomieHelpDesk's 48. On their own trackers they are already in force.</p>
+        <p>They are the default on their own trackers, with no setup. <b>Add</b> copies one into your added trackers so you can edit it, and your copy then applies instead.</p>
       </div>
       <div class="card">
         <h3>Add your own tracker</h3>
@@ -435,8 +435,8 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
     <p class="note">
       Writing a profile for a tracker of your own? The <a href="rules.html">rules builder</a> does it in a browser,
       with no install, and checks it before you paste it in.<br>
-      Rules it has out of the box: <b>DarkPeers</b> and <b>Zenith</b>, built in, and <b>LUME</b> and
-      <b>OnlyEncodes+</b>, one <b>Add</b> away and self-selecting on their own trackers. Anywhere else
+      Rules it has out of the box: <b>DarkPeers</b> and <b>Zenith</b>, built in, and <b>LUME</b>,
+      <b>OnlyEncodes+</b> and <b>HomieHelpDesk</b>, one <b>Add</b> away and self-selecting on their own trackers. Anywhere else
       <b>nothing is badged</b> until you choose a rule set from the <b>Rules</b> picker in the bar, or add
       that tracker under <b>Tracker rules…</b>. A red ✕ on LST citing DarkPeers’ banned list would be
       quoting a rulebook LST never wrote, so it waits to be told. Everything that
@@ -476,20 +476,19 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
       <h3>1 · Your first five minutes</h3>
       <p class="goal">From installed to badges on the page.</p>
       <ol class="steps">
-        <li><b>Install and reload.</b> On <b>DarkPeers</b> and <b>Zenith</b> the badges appear straight
-          away — those two are built in. On <b>LUME</b> and <b>OnlyEncodes+</b> they appear as soon as you
-          add that rule set (step 3): each profile names its own tracker, so on that tracker it selects
-          itself and you never touch the dropdown. Anywhere else nothing is judged yet — that is
-          deliberate.</li>
+        <li><b>Install and reload.</b> On <b>DarkPeers</b>, <b>Zenith</b>, <b>LUME</b>, <b>OnlyEncodes+</b>
+          and <b>HomieHelpDesk</b> the badges appear straight away: each rule set names its own tracker,
+          so on that tracker it selects itself and you never touch the dropdown. Anywhere else nothing
+          is judged yet — that is deliberate.</li>
         <li><b>Choose whose rules apply here.</b> The listing bar has a <b>Rules</b> dropdown. Pick the
           tracker you are actually on if it is there; otherwise pick the rule set closest to it. The
           choice is remembered <em>per tracker</em>, so choosing DarkPeers on one site does not change
           what applies on another.</li>
-        <li><b>Add a ready-made rule set if it fits.</b> <b>Tracker rules… → Added trackers</b> lists
-          <b>LUME</b> and <b>OnlyEncodes+</b> under <em>Rule sets that ship with this script</em>. Press
-          <b>Add</b> once and they join the <em>Rules</em> dropdown — and on luminarr.me or
-          onlyencodes.cc that is the whole setup, because the profile carries that tracker's address and
-          applies itself there.</li>
+        <li><b>Use a ready-made rule set elsewhere if it fits.</b> All five are in the <b>Rules</b>
+          dropdown on every tracker, so on a site whose rules are not in hand you can pick the closest
+          one. <b>Tracker rules… → Added trackers</b> lists <b>LUME</b>, <b>OnlyEncodes+</b> and
+          <b>HomieHelpDesk</b> under <em>Rule sets that ship with this script</em>; <b>Add</b> copies one
+          into your added trackers so you can edit it, and your copy then applies instead.</li>
         <li><b>Tick the trackers you are on.</b> Open <em>Is this already on your trackers?</em> and tick
           them. This list follows you to every tracker the script runs on, so you only do it once.</li>
         <li><b>Hover a badge.</b> One line tells you why. Click it for the corrections and a copyable
@@ -550,8 +549,8 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
       <h3>4 · Teaching it a tracker's rules</h3>
       <p class="goal">When you are on a tracker it does not know yet.</p>
       <ol class="steps">
-        <li><b>Try a ready-made one first.</b> <b>Tracker rules… → Added trackers</b>: LUME and
-          OnlyEncodes+ are already written from their published guides. Adding one is the same as pasting
+        <li><b>Try a ready-made one first.</b> <b>Tracker rules… → Added trackers</b>: LUME,
+          OnlyEncodes+ and HomieHelpDesk are already written from their published guides. Adding one is the same as pasting
           its JSON, and you can edit it afterwards.</li>
         <li><b>Or build one from the form.</b> The <b>Build one</b> tab takes the tracker's name and
           address, its banned list <em>pasted straight off the page</em> in whatever shape it publishes —
@@ -680,19 +679,19 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
         bytes; where a page carries none, none is worked back out of the rounded figure and presented as
         exact.</dd>
 
-      <dt>Do the shipped LUME and OnlyEncodes+ rules apply automatically?</dt>
-      <dd>No. They ship with the script but are not in use until you add them: <b>Tracker rules…</b> →
-        <b>Added trackers</b> → <em>Rule sets that ship with this script</em> → <b>Add</b>. Until you do,
-        <code>luminarr.me</code> and <code>onlyencodes.cc</code> are like any other tracker whose rules are
-        not in hand — nothing is badged there.
-        <p style="margin-top:10px">It waits because adding a rule set changes which rules a badge cites, and
-        a red ✕ quoting a rulebook that tracker never wrote is worse than no badge at all.</p>
-        <p>Once added, a shipped set is an ordinary added tracker — editable, exportable, removable — with one
-        convenience: the profile carries its own tracker's address, so on that tracker it selects itself and
-        you never touch the <b>Rules</b> dropdown. (If you have explicitly picked a different rule set for
-        that site, your pick wins.)</p>
-        <p>So <b>two trackers badge out of the box</b> — DarkPeers and Zenith — and <b>two more once you add
-        them</b>. On the other thirty-nine you choose a rule set, or add that tracker's rules yourself.</p></dd>
+      <dt>Do the shipped LUME, OnlyEncodes+ and HomieHelpDesk rules apply automatically?</dt>
+      <dd>Yes, on their own trackers (since 1.34.0). Each rule set carries its tracker's address, so on
+        <code>luminarr.me</code>, <code>onlyencodes.cc</code> and <code>homiehelpdesk.net</code> it selects
+        itself and you never touch the <b>Rules</b> dropdown — the same as DarkPeers on DarkPeers and Zenith
+        on Zenith. (If you have explicitly picked a different rule set for that site, your pick wins.)
+        <p style="margin-top:10px">Anywhere else nothing is judged until you choose a rule set, because a
+        red ✕ quoting a rulebook that tracker never wrote is worse than no badge at all. The group tags are
+        marked everywhere regardless.</p>
+        <p>To change a shipped set, <b>Tracker rules…</b> → <b>Added trackers</b> → <em>Rule sets that ship
+        with this script</em> → <b>Add</b> copies it into your added trackers, editable, exportable and
+        removable; your copy then applies instead, and removing it brings the shipped one back.</p>
+        <p>So <b>five trackers badge out of the box</b>. On the other thirty-eight you choose a rule set, or
+        add that tracker's rules yourself.</p></dd>
 
       <dt>Is it 43 trackers or 60?</dt>
       <dd>Both, counting different things. <b>43</b> is how many UNIT3D trackers the script <em>runs
@@ -721,7 +720,9 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
         fails. OnlyEncodes' banned list keeps the reasons and dates its page gives; two groups that page
         marks as <em>removed</em> are deliberately not on it, because a list that keeps refusing a group
         the tracker has un-banned is worse than no list. No LUME banned list has been published to the
-        script, so it carries none rather than inventing one.</dd>
+        script, so it carries none rather than inventing one. HomieHelpDesk's rules page numbers only its
+        sections, so its rules are cited by section — §4, §5, §6 — and never by a bullet number the page
+        does not carry; its own five worked examples pass its rules and the shared checks, as a test.</dd>
 
       <dt>Will it clash with my other userscripts?</dt>
       <dd>It tries hard not to. If another script has already turned a group tag into a link, this one leaves that tag alone entirely. If the full DKOKTO Scene Edition is present, this one stands down.</dd>
@@ -774,7 +775,7 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
 
 <footer>
   <div class="wrap">
-    <p><b>Torrent Inspector 1.31.0</b> — a personal fork, offered as-is.</p>
+    <p><b>Torrent Inspector 1.34.0</b> — a personal fork, offered as-is.</p>
     <p>Found something wrong? A screenshot with the badge's tooltip visible is the fastest fix — several bugs in this line were found exactly that way, and each one now has a test built from the row that showed it up.</p>
   </div>
 </footer>
