@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.32.1
+// @version      1.32.2
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       DKOKTO
 // This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,
@@ -4048,7 +4048,11 @@ const DKOKTO_LISTING = (() => {
         const live=new Set(active&&enabled?list:[]);
         for(const [link,e]of entries)if(!live.has(link)||!link.isConnected){e.badge.remove();entries.delete(link);}
         if(!listingPage())bar?.remove();
-        if(!active){dialog?.close();return;}ensureBar();if(!enabled){updateCounts();return;}
+        if(!active){dialog?.close();return;}ensureBar();
+        // Checks off means no badges. The group tag is not a check (see assess), so it is
+        // still marked — without it, turning the checks off on a tracker took the tags with
+        // it (OnlyEncodes+, 20 Sep 2026).
+        if(!enabled){for(const link of list){const tag=DKOKTO_GROUPS.tags(titleOf(link))[0]||'';if(tag)DKOKTO_GROUP_TAG.mark(link,tag);}updateCounts();return;}
         updateCounts(true);let index=0;const targets=list;
         function batch(){if(run!==serial||!enabled)return;
             for(let count=0;index<targets.length&&count<25;index++,count++) {
@@ -4261,11 +4265,14 @@ const DKOKTO_FILES_CORE = (() => {
         return list.reduce((sum,file)=>sum+file.bytes,0);
     }
     // One file per line, name then size, the way a torrent client prints it — which is the
-    // form it was asked for, and the form that pastes into a report without editing.
+    // form it was asked for, and the form that pastes into a report without editing. The
+    // first line is the folder the files sit in, read from their paths; where they sit in
+    // none there is no first line. The display title used to stand in for a folder — asked
+    // out on 20 Sep 2026: a title is not a folder. `name` is accepted and ignored.
     function listing(files,{name='',stated=0}={}) {
         const list=rows(files);
         if(!list.length)return '';
-        const folder=topFolder(list)||one(name,LINE);
+        const folder=topFolder(list);
         const sum=total(list,stated);
         const line=(label,bytes,size)=>label+(bytes?' '+digits(bytes)+' B':size?' '+size:'');
         const out=[];
@@ -4321,34 +4328,90 @@ const DKOKTO_FILES_UI = (() => {
         }
         return 0;
     }
-    // Where a page keeps its file list. The DarkPeers-shaped dialog puts the List tab in a
-    // .dialog__form and the tree in spans; upload.cx (markup pasted 19 Sep 2026) puts the
-    // List tab in a .data-table-wrapper and the tree in <details> with .file-tree__name and
-    // .file-tree__size, the exact count in the size's title on both tabs. A hidden tab is
-    // still in the page, so the list is read from whichever tab is found first, never both.
-    const LIST_ROWS='.dialog__form[data-tab="list"] table tbody tr,.data-table-wrapper[data-tab="list"] table tbody tr';
-    const TREE_NAMES='.dialog__form[data-tab="hierarchy"] span[style*="word-break"],.torrent__files li,.dialog__form[data-tab="hierarchy"] .file-tree__name';
-    function list() {
-        const rows=[];
-        for(const row of document.querySelectorAll(LIST_ROWS)) {
-            const cells=[...row.children];
-            const values=cells.map(textOf);
-            const path=values.find(value=>value&&!SIZE.test(value)&&!/^\d+$/.test(value));
-            if(!path||rows.some(entry=>entry.path===path))continue;
-            const at=values.lastIndexOf(values.slice().reverse().find(value=>SIZE.test(value)));
-            const size=at>=0?values[at]:'';
-            rows.push({path,size,bytes:titleBytes(at>=0?cells[at]:null)||titleBytes(row)});
+    // Where a page keeps its file list, as five sites write it (their Files dialogs pasted
+    // 19–20 Sep 2026: DarkPeers, upload.cx, Zenith, OnlyEncodes+, LUME). All five are the
+    // same UNIT3D tree: the Hierarchy tab is a .dialog__form that opens, where the torrent
+    // has a folder, with a bare <span> carrying a folder icon, the folder's name, its count
+    // and its size; then one <details><summary> per entry — a folder summary with a folder
+    // icon, a name and a count, nested <details> inside it; a file summary with a file icon,
+    // a name (a word-break span, or .file-tree__name on upload.cx) and a size whose title is
+    // the exact byte count. DarkPeers nests folders several deep (a disc set); upload.cx
+    // and OnlyEncodes+ mark the tab differently (data-tab, or x-show with none). None of
+    // that matters here: the tree is read by its icons, and every file's path is built from
+    // the folders above it, so two discs holding the same file names stay two sets of files.
+    // The List tab beside it is the same files as bare names, read only where no tree is —
+    // and only from a table headed "# / Name / Size", because a page can carry other
+    // .data-tables. The DarkPeers-shaped list tab of the fixtures is read as before.
+    const TREE_BOXES='.dialog__form';
+    const LIST_ROWS='.dialog__form[data-tab="list"] table tbody tr,.data-table-wrapper table.data-table tbody tr';
+    const TREE_NAMES='.dialog__form[data-tab="hierarchy"] span[style*="word-break"],.torrent__files li';
+    const isFileList=table=>{const heads=[...table.querySelectorAll('thead th')].map(textOf);
+        return heads.length===3&&heads[0]==='#'&&/^name$/i.test(heads[1])&&/^size$/i.test(heads[2]);};
+    // The name in a tree row: the leaf span that is not the count and not the size.
+    function nameOf(row) {
+        const named=row.querySelector('.file-tree__name');
+        if(named)return textOf(named);
+        for(const span of row.querySelectorAll('span')) {
+            if(span.children.length||span.hasAttribute('title'))continue;
+            if(/grid-area:\s*(?:count|size)/.test(span.getAttribute('style')||''))continue;
+            const text=textOf(span);
+            if(text&&!/^\(\d+\)$/.test(text))return text;
         }
+        return '';
+    }
+    const sizeOf=row=>row.querySelector('.file-tree__size,span[title]');
+    function treeRows() {
+        for(const box of document.querySelectorAll(TREE_BOXES)) {
+            const summaries=[...box.querySelectorAll('details > summary')].filter(node=>node.querySelector('i.fa-file,i.fa-folder'));
+            if(!summaries.length)continue;
+            let root='';
+            for(const child of box.children)
+                if(child.tagName==='SPAN'&&child.querySelector('i.fa-folder')){root=nameOf(child);break;}
+            const rows=[];
+            for(const summary of summaries) {
+                if(!summary.querySelector('i.fa-file'))continue;
+                const name=nameOf(summary);
+                if(!name)continue;
+                const folders=[];
+                for(let up=summary.parentElement?.parentElement;up&&up!==box;up=up.parentElement) {
+                    if(up.tagName!=='DETAILS')continue;
+                    const own=up.querySelector(':scope > summary');
+                    if(own&&own.querySelector('i.fa-folder')){const folder=nameOf(own);if(folder)folders.unshift(folder);}
+                }
+                const path=[root,...folders,name].filter(Boolean).join('/');
+                if(rows.some(entry=>entry.path===path))continue;
+                const size=sizeOf(summary);
+                rows.push({path,size:size?textOf(size):'',bytes:titleBytes(size)});
+                if(rows.length>=(core?core.MAX:2000))break;
+            }
+            if(rows.length)return rows;
+        }
+        return [];
+    }
+    function list() {
+        let rows=treeRows();
+        if(!rows.length)
+            for(const row of document.querySelectorAll(LIST_ROWS)) {
+                const table=row.closest('table');
+                if(!row.closest('.dialog__form[data-tab="list"]')&&!(table&&isFileList(table)))continue;
+                const cells=[...row.children];
+                const values=cells.map(textOf);
+                const path=values.find(value=>value&&!SIZE.test(value)&&!/^\d+$/.test(value));
+                if(!path||rows.some(entry=>entry.path===path))continue;
+                const at=values.lastIndexOf(values.slice().reverse().find(value=>SIZE.test(value)));
+                const size=at>=0?values[at]:'';
+                rows.push({path,size,bytes:titleBytes(at>=0?cells[at]:null)||titleBytes(row)});
+            }
         if(!rows.length)
             for(const node of document.querySelectorAll(TREE_NAMES)) {
                 const path=textOf(node);
                 if(!path||!/\.[a-z0-9]{2,4}$/i.test(path)||rows.some(entry=>entry.path===path))continue;
-                // A file-tree row carries its size beside the name, with the count in its title.
-                const beside=node.parentElement?.querySelector('.file-tree__size');
-                rows.push({path,size:beside?textOf(beside):'',bytes:titleBytes(beside)||nearBytes(node)});
+                rows.push({path,size:'',bytes:nearBytes(node)});
             }
         return rows.slice(0,core?core.MAX:2000);
     }
+    // How much file list the page holds, read cheaply, so a redraw can tell whether it changed.
+    const count=()=>document.querySelectorAll(TREE_BOXES+' details > summary,'+LIST_ROWS).length;
     // A byte count printed as plain text beside the rounded size, which is what DarkPeers
     // does. Believed only when it converts back to the figure the page displays, so a stray
     // number elsewhere on the page can never be mistaken for the size. Read once per size.
@@ -4454,7 +4517,7 @@ const DKOKTO_FILES_UI = (() => {
         if(!holder.isConnected)parent.insertBefore(holder,node.nextSibling);
     }
     const clear=()=>{holder?.remove();holder=null;seen='';forget();};
-    return {list,stated,clipboardText,mark,clear,CLASS,LIST_ROWS,TREE_NAMES};
+    return {list,stated,clipboardText,mark,clear,count,CLASS};
 })();
 
 // Release-notes templates: the text you paste over and over, kept once and filled in from
@@ -4519,10 +4582,12 @@ const DKOKTO_TEMPLATES_CORE = (() => {
         const rows=(files||[]).filter(row=>row&&row.path);
         if(!rows.length)return '';
         const cut=rows.slice(0,MAX_FILES);
+        // The folder the files sit in, from their paths; none means no folder line. The
+        // release name used to stand in (asked out 20 Sep 2026: a title is not a folder).
         const folder=(()=>{const first=cut[0].path.split('/');
-            if(first.length<2)return name||'';
+            if(first.length<2)return '';
             const top=first[0];
-            return cut.every(row=>row.path.startsWith(top+'/'))?top:(name||'');})();
+            return cut.every(row=>row.path.startsWith(top+'/'))?top:'';})();
         const line=row=>{const path=row.path.includes('/')?row.path.slice(row.path.lastIndexOf('/')+1):row.path;
             return path+(row.bytes>0?' '+Math.round(row.bytes)+' B':row.size?' '+row.size:'');};
         const head=folder?[folder+(total>0?' '+Math.round(total)+' B':'')]:[];
@@ -5472,22 +5537,9 @@ const DKOKTO_DETAIL = (() => {
         const match=heading.match(/^(.*?)\s*\((\d{4})\)\s*$/);
         return match?{title:match[1].trim(),year:match[2]}:{title:heading,year:''};
     }
+    // The file list, read by the one reader (files.js), so every part of the page agrees.
     function filesOf() {
-        const paths=new Set();
-        // The list tab gives whole paths; the tree gives names, which is enough for the
-        // container and for whether a pack agrees with itself.
-        // The same places the file reader looks (files.js), so the two agree on every tracker.
-        for(const row of document.querySelectorAll(DKOKTO_FILES_UI.LIST_ROWS)) {
-            const cell=row.children[1]||row.children[0];
-            const value=textOf(cell);
-            if(value&&!/^\d+(?:\.\d+)?\s*(?:[KMGT]i?B|bytes)$/i.test(value))paths.add(value);
-        }
-        if(!paths.size)
-            for(const node of document.querySelectorAll(DKOKTO_FILES_UI.TREE_NAMES+',.dialog__form table tbody tr td:first-child')) {
-                const value=textOf(node);
-                if(value&&/\.[a-z0-9]{2,4}$/i.test(value))paths.add(value);
-            }
-        return [...paths].slice(0,2000);
+        try{return DKOKTO_FILES_UI.list().map(row=>row.path).slice(0,2000);}catch{return [];}
     }
     const languagesFrom=(selector)=>[...document.querySelectorAll(selector)]
         .map(node=>node.getAttribute('alt')||node.getAttribute('title')||'')
@@ -5522,7 +5574,7 @@ const DKOKTO_DETAIL = (() => {
     let pageStamp='',pageDrew=false;
     function pageInputs(name,profile) {
         return [name,profile,
-            document.querySelectorAll(DKOKTO_FILES_UI.LIST_ROWS).length,
+            DKOKTO_FILES_UI.count(),
             document.querySelectorAll('.torrent-mediainfo-dump code,.torrent-mediainfo-dump pre,code[x-ref="mediainfo"]').length,
             fieldOf('h1.meta__title','.meta__title','.torrent__meta-title'),
             fieldOf('li.torrent__type a','.torrent__type a','.torrent__type'),
