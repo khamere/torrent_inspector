@@ -1,4 +1,4 @@
-# Torrent Inspector 1.35.0
+# Torrent Inspector 1.36.0
 
 A Tampermonkey userscript for release naming. It reads the page you are on and tells you
 whether a release name is written the way the tracker you are on says it should be — on the
@@ -12,8 +12,8 @@ key, nothing posted, submitted, uploaded or downloaded. Every link opens when yo
 not before. What it stores, it stores on your own machine.
 
 It runs on **44 UNIT3D trackers** and can search **61**. Naming rules for DarkPeers, Zenith,
-LUME, OnlyEncodes+ and HomieHelpDesk ship with it; any other tracker is added by pasting its
-rules, as data, never as code.
+LUME, OnlyEncodes+, HomieHelpDesk and MidnightScene ship with it; any other tracker is added
+by pasting its rules, as data, never as code.
 
 ## What it looks like
 
@@ -93,6 +93,39 @@ JSON somewhere before you update.
 - **CHANGES-1.12.4-to-1.22.3.md** — what changed across the older versions, grouped by what
   it does.
 - **CHANGELOG.md** — every version, newest first.
+
+## New in 1.36.0
+
+**MidnightScene's rules ship with the script.** Built from its Upload Naming Guide and its
+Banned Release Groups list, supplied as text on 21 Sep 2026, and in force on
+midnightscene.cc as it ships. Its upload rules (content, descriptions, trumping) were not
+supplied, and a standing note says so.
+
+| Rule set | Built from | What it does not have |
+| --- | --- | --- |
+| **MidnightScene** (midnightscene.cc) | its Upload Naming Guide (video and music) and its banned list — 26 rules, 62 groups, `music: own` | its upload-rules page; the banned list gives no reasons, so none are carried |
+
+Video: the element vocabulary as the guide lists it (DD+ not DDP, DD not AC3, DD-EX with the
+hyphen, Atmos alone, H.264 with the dot, WEB-DL and WEBRip spelled as written, the Service
+before WEB-DL, BluRay one word for encodes and remuxes and Blu-ray for full discs, the
+Edition kept for the description, HDR / HDR10+ / DV / DV HDR / DV HDR10+ / HLG and nothing
+else), the codec that belongs to each type, NOGROUP written out where there is no group,
+REPACK as the guide's only fix marker (PROPER and RERip are asked about), and its resolution
+list, which stops at 2160p. One thing the guide and the site disagree on: the VideoCodec
+list has no AV1, and the site's own listing carried AV1 encodes on nearly every row that
+day — so AV1 (and VP9) is a question, never a finding. The guide gives no worked video
+examples; four rows from the site's listing pass its rules and the shared checks.
+
+Music: MidnightScene names it `Artist - Title (Year) [Catalog and Edition] [Media - Format]`,
+brackets rather than DarkPeers' ` - Format`, so a profile can now say `"music": "own"` the
+same way it can say `"books": "own"`: the shared music template stands aside on that
+tracker, the panel says whose naming applies, and the profile's rules are checked — the
+three layouts the guide gives (studio, untitled live `Artist - YYYY-MM-DD Venue [Source]
+[FLAC]`, and a scene release with its hyphenated segments and underscores turned to spaces),
+no underscores, no featuring credits in the name, no CDS / CDM / maxi wording in a single's
+title, and Live only when the cover prints it. All twelve of the guide's music examples pass;
+its one "Wrong" example is caught. Five Node checks, three fixed lists moved, the listing
+fixture expects the fourth Add button.
 
 ## New in 1.35.0
 

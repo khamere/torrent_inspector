@@ -94,7 +94,7 @@
 
 <header class="top">
   <div class="wrap">
-    <p class="eyebrow">Torrent Inspector 1.35.0</p>
+    <p class="eyebrow">Torrent Inspector 1.36.0</p>
     <h1>Tracker rules</h1>
     <p class="lede">
       Build a rules profile for a tracker, check one you already have, and run a release name
@@ -210,7 +210,7 @@
 <footer>
   <div class="wrap">
     <p><a href="index.html">← Torrent Inspector</a> · profile format documented in
-      <code>TRACKER-RULES.md</code> · built from the modules of 1.35.0</p>
+      <code>TRACKER-RULES.md</code> · built from the modules of 1.36.0</p>
   </div>
 </footer>
 
@@ -762,6 +762,9 @@ const DKOKTO_PROFILES = (() => {
         // shared book checks down for ebooks and audiobooks; the profile's rules then speak.
         const books=text(input.books,10).toLowerCase()||'base';
         if(!['base','own'].includes(books))errors.push('“books” must be "base" (the base’s book templates) or "own" (this tracker names books its own way).');
+        // The same for music: MidnightScene's is Artist - Title (Year) [Catalog] [Media - Format].
+        const music=text(input.music,10).toLowerCase()||'base';
+        if(!['base','own'].includes(music))errors.push('“music” must be "base" (the base’s music template) or "own" (this tracker names music its own way).');
         const hosts=(Array.isArray(input.hosts)?input.hosts:[]).slice(0,LIMITS.hosts)
             .map(host=>text(host,80).toLowerCase().replace(/^https?:\/\//,'').replace(/\/.*$/,''))
             .filter(host=>/^[a-z0-9.-]+\.[a-z]{2,}$/.test(host));
@@ -827,11 +830,11 @@ const DKOKTO_PROFILES = (() => {
         // Optional: where these rules came from and when, as one line of text — shown at the
         // point of use so a person knows how old what they are reading against may be.
         const source=text(input.source,200);
-        return {errors,warnings,profile:{key,label,base,books,hosts,banned,conditional,sources,resolutions,rules,notes,...(source?{source}:{})}};
+        return {errors,warnings,profile:{key,label,base,books,music,hosts,banned,conditional,sources,resolutions,rules,notes,...(source?{source}:{})}};
     }
     // Back to the JSON you would paste, so a profile can be edited and shared.
     function toJSON(profile) {
-        return {format:FORMAT,version:1,key:profile.key,label:profile.label,base:profile.base,...(profile.books==='own'?{books:'own'}:{}),hosts:[...profile.hosts],
+        return {format:FORMAT,version:1,key:profile.key,label:profile.label,base:profile.base,...(profile.books==='own'?{books:'own'}:{}),...(profile.music==='own'?{music:'own'}:{}),hosts:[...profile.hosts],
             groups:{banned:profile.banned.map(entry=>[...entry]),
                 conditional:profile.conditional.map(entry=>({name:entry.name,allowIf:entry.allow.source,allowed:entry.allowed,otherwise:entry.otherwise})),
                 sources:profile.sources.map(entry=>({name:entry.name,pattern:entry.pattern.source}))},
@@ -1211,6 +1214,7 @@ const DKOKTO_RULES = ((profiles) => {
     const baseOf=key=>key==='zenith'?'zenith':profiles.get(key)?.base||'dp';
     // Whether a site names books its own way (profiles.js books:"own"); the built-ins never do.
     const booksOf=key=>profiles.get(key)?.books==='own'?'own':'base';
+    const musicOf=key=>profiles.get(key)?.music==='own'?'own':'base';
     const labelOf=key=>sites().find(site=>site.key===key)?.label||'DarkPeers';
     // In words, for the panel: "in hand 10 Sep 2026", or the honest absence of a date.
     const guideDate=key=>sites().find(site=>site.key===key)?.guideDate||'';
@@ -1424,7 +1428,7 @@ const DKOKTO_RULES = ((profiles) => {
     const baseline=()=>[...BUILTIN_BASELINE,...profiles.baseline()];
     // A profile may list the resolutions its tracker accepts; otherwise its base decides.
     const resolutions=site=>profiles.get(site)?.resolutions?.length?profiles.get(site).resolutions:null;
-    return {list,labelOf,guideDate,guideSince,current,choose,forget,check,books,siteFor,baseOf,booksOf,baseline,resolutions,added,hasRules,settled,BASELINE,KEY,HOSTS,
+    return {list,labelOf,guideDate,guideSince,current,choose,forget,check,books,siteFor,baseOf,booksOf,musicOf,baseline,resolutions,added,hasRules,settled,BASELINE,KEY,HOSTS,
         bannedAuthors:()=>[...BANNED_AUTHORS],bannedWorks:()=>[...BANNED_WORKS],use(store){backing=store;migrated=false;}};
 })(typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./profiles.js'):DKOKTO_PROFILES);
 
@@ -1627,6 +1631,7 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
         // Which set of templates this site follows: its own, or the one its profile names.
         const base=rules.baseOf?rules.baseOf(site):(site==='zenith'?'zenith':'dp');
         const ownBooks=rules.booksOf?rules.booksOf(site)==='own':false;
+        const ownMusic=rules.musicOf?rules.musicOf(site)==='own':false;
         if(s.length>1000)return {profile,template:'',issues:[{severity:'error',code:'length',message:'Use a title under 1,000 characters.'}],status:'Needs correction'};
         // Any well-formed resolution label is recognised, so one the guide does not list
         // is reported as the wrong value rather than as a missing resolution.
@@ -1660,6 +1665,10 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
             // them; the profile's rules, applied in result(), are what is checked.
             add('review','book-own',(rules.labelOf?rules.labelOf(site):site)+' names books its own way, so no shared book template is applied here: what is checked is its own rule set, below.');
             return result('own-books');
+        }
+        if(ownMusic&&profile==='music'){
+            add('review','music-own',(rules.labelOf?rules.labelOf(site):site)+' names music its own way, so no shared music template is applied here: what is checked is its own rule set, below.');
+            return result('own-music');
         }
         if(base==='zenith'&&(profile==='music'||profile==='ebook'||profile==='audiobook')){
             for(const issue of rules.books(s,profile))add(issue.severity,issue.code,issue.message);
@@ -2335,13 +2344,139 @@ TORRENTGALAXY TSP TSPxL ViSION VXT WAF WKS x0r YAWNiX YIFY YTS PSA`.split(/\s+/)
         ]
     };
 
+    // --- MidnightScene ------------------------------------------------------------------
+    // The Upload Naming Guide and the Banned Release Groups list, supplied as text on
+    // 21 Sep 2026 and kept verbatim in notes/midnightscene-naming-2026-09-21.md. No
+    // upload-rules page (content, description, trumping) was supplied, so none is claimed.
+    // The page has no section numbers: rules cite its headings. All of its video templates
+    // are the element order the shared templates check (encode: audio, Metadata, HDR,
+    // VideoCodec; remux and disc: HDR, VideoCodec, audio), so base is "dp"; the guide gives
+    // no worked video examples, so guides-check.cjs uses rows from the site's own listing
+    // (screenshot, 21 Sep 2026), which pass unchanged.
+    //
+    // Its music is Artist - Title (Year) [Catalog and Edition] [Media - Format] — brackets,
+    // not DarkPeers' " - Format" — so music is "own" (profiles.js) and the rules below carry
+    // the guide's music page; every one of its twelve examples passes them.
+    //
+    // The VideoCodec list is MPEG-2, VC-1, AVC, HEVC, x264, H.264, x265, H.265 — no AV1 —
+    // while the site's listing that day carried AV1 encodes on nearly every row. That is a
+    // question (review), not a finding: the list and the site disagree, and which one staff
+    // mean is not for this script to decide.
+    //
+    // The banned list has an empty Reason column on every row, so no reason is carried.
+    // BRrip is a source marker and goes in groups.sources; "msd" and "mSD" are one name and
+    // are kept once; EVO is a flat ban here — the page gives it no exception.
+    const MNS_BANNED=`4K4U AROMA aXXo BONE CK4 CM8 core CrEwSaDe d3g DNL EMBER EVO FaNGDiNG0 FGT FooKaS
+FRDS FROZEN GalaxyRG Grym GrymLegacy HD2DVD HDTime ION10 Judas LAMA Leffe LycanHD MeGusta MezRips
+mHD mSD NeXus NhaNc3 nHD nikt0 nSD OFT OsC PRODJi ProRes PYC QxR RARBG RCDiVX RDN SAMPA SANTi
+Sicario Silence SM737 STUTTERSHIT Tigole TSP TSPxL UTR ViSION WAF Will1869 x0r YIFY YTS ZMNT`
+        .split(/\s+/).map(name=>[name]);
+
+    const MIDNIGHTSCENE={
+        format:FORMAT,version:1,key:'mns',label:'MidnightScene',base:'dp',music:'own',hosts:['midnightscene.cc'],
+        source:'midnightscene.cc — Upload Naming Guide and Banned Release Groups, as supplied 21 Sep 2026.',
+        groups:{banned:MNS_BANNED,conditional:[],sources:[{name:'BRrip',pattern:'(?:^|[ ._])BR-?rip(?=$|[ ._-])'}]},
+        resolutions:['480i','480p','576i','576p','720p','1080i','1080p','2160p'],
+        rules:[
+            {code:'group-tag',severity:'review',profiles:['movie','tv','disc'],
+             require:'-\\s?[A-Za-z0-9][A-Za-z0-9._+-]{0,29}\\s*$',
+             message:'The Tag element is the release group’s tag, your brand for a personal release, or NOGROUP where there is no group — and none closes this title.'},
+            {code:'nogrp',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'-\\s?NOGRP\\s*$',
+             message:'In the absence of a release group the tag is NOGROUP, written out.'},
+            {code:'acodec-ddp',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])(?:DDP\\d?(?:\\.\\d)?|E-?AC-?3)(?=$|[ .-])',
+             message:'The AudioCodec element is DD+; DDP and E-AC-3 are not on the list.'},
+            {code:'acodec-ac3',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])AC-?3(?=$|[ .-])',
+             message:'The AudioCodec element writes Dolby Digital as DD (or DD-EX), not AC3.'},
+            {code:'acodec-dolby',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])Dolby[ .](?:Digital|TrueHD)',
+             message:'The AudioCodec list uses the short names: AAC, Opus, DD, DD-EX, DD+, TrueHD, DTS, DTS-ES, DTS-HD MA, DTS-HD HRA, DTS:X, FLAC.'},
+            {code:'acodec-ddex',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])DD\\+?[ .]EX(?=$|[ .-])',
+             message:'MidnightScene’s AudioCodec list writes it DD-EX, hyphenated (DD+ EX is not on the list).'},
+            {code:'object-atmos',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])Dolby[ .]Atmos(?=$|[ .-])',
+             message:'The Metadata element is Atmos on its own (the only other value is Auro3D).'},
+            {code:'hdr-vocab',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])(?:HDR10(?!\\+)|DoVi|Dolby[ .]Vision|PQ10)(?=$|[ .-])',
+             message:'The HDR element is one of HDR, HDR10+, DV, DV HDR, DV HDR10+ or HLG — HDR10 on its own is written HDR, Dolby Vision is DV, and PQ10 is not on the list.'},
+            {code:'vcodec-dot',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])H26[45](?=$|[ .-])',
+             message:'The VideoCodec list writes it H.264 or H.265, with the dot.'},
+            {code:'vcodec-list',severity:'review',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])(?:AV1|VP9)(?=$|[ .-])',
+             message:'The VideoCodec list is MPEG-2, VC-1, AVC, HEVC, x264, H.264, x265, H.265 — AV1 and VP9 are not on it. The site’s own listing carried AV1 encodes on 21 Sep 2026, so the list and the site disagree: ask rather than assume.'},
+            {code:'vcodec-web',severity:'error',profiles:['movie','tv'],
+             forbid:'WEB-DL[\\s\\S]*(?:^|[ .])x26[45](?=$|[ .-])',
+             message:'For a WEB-DL the VideoCodec is H.264 or H.265; x264 and x265 name an encoder and belong to encodes and WEBRips.'},
+            {code:'vcodec-webrip',severity:'error',profiles:['movie','tv'],
+             forbid:'WEBRip[\\s\\S]*(?:^|[ .])H\\.?26[45](?=$|[ .-])',
+             message:'For a WEBRip the VideoCodec is x264 or x265 — it has been re-encoded, so the encoder is what is named.'},
+            {code:'vcodec-remux',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'REMUX[\\s\\S]*(?:^|[ .])(?:x26[45]|H\\.?26[45])(?=$|[ .-])',
+             message:'For a remux the VideoCodec is MPEG-2, VC-1, AVC or HEVC: the stream is untouched, so the format is what is named.'},
+            {code:'type-webdl',severity:'error',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])WEBDL(?=$|[ .-])',
+             message:'The Source is written WEB-DL, with the dash.'},
+            {code:'type-webrip',severity:'error',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])WEB-Rip(?=$|[ .-])',
+             message:'The Source is written WEBRip, as one word.'},
+            {code:'web-service',severity:'review',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])\\d{3,4}[pi][ .]WEB-?(?:DL|Rip)(?=$|[ .-])',
+             message:'For web content the Service element — the streaming service abbreviation, e.g. NF — sits between the resolution and WEB-DL / WEBRip, and none does here.'},
+            {code:'remux-source',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:Blu-ray[\\s\\S]*REMUX|REMUX[\\s\\S]*Blu-ray)',
+             message:'For a remux the Source is BluRay or UHD BluRay, one word. Blu-ray with the hyphen is the full-disc spelling.'},
+            {code:'encode-source',severity:'error',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])(?:UHD[ .])?Blu-ray(?=$|[ .-])',
+             message:'For encodes and remuxes the Source is BluRay or UHD BluRay, one word; Blu-ray with the hyphen is the full-disc spelling. If this is a full disc, check the category first.'},
+            {code:'edition-name',severity:'error',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])(?:\\d+(?:th|st|nd|rd)[ .]Anniversary[ .]Edition|Anniversary[ .]Edition|4K[ .]Remaster|Remastered|Criterion(?:[ .]Collection)?|Limited)(?=$|[ .-])',
+             message:'The Edition is omitted from the torrent title and put in the description.'},
+            {code:'dub-dual-audio',severity:'error',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])Dual[ .]Audio(?=$|[ .-])',
+             message:'Dual-Audio is written hyphenated, in front of the audio codec (Dubbed where only the English dub is present). Omitted for full discs.'},
+            {code:'repack-only',severity:'review',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])(?:PROPER|RERip)\\d?(?=$|[ .-])',
+             message:'The guide’s only fix marker is REPACK, included when fixing an error in a previous release of the same source; PROPER and RERip are not on its templates.'},
+            // Music — Naming Components, Capitalization, and the Music examples.
+            {code:'music-form',severity:'review',profiles:['music'],
+             require:'^\\S.+?\\s-\\s.+?\\s\\((?:18|19|20)\\d{2}\\)\\s\\[[^\\]]+\\](?:\\s\\[[^\\]]+\\])?\\s*$|^\\S.+?\\s-\\s(?:18|19|20)\\d{2}-\\d{2}-\\d{2}\\s.+?\\s\\[[^\\]]+\\](?:\\s\\[[^\\]]+\\])?\\s*$|^[^ ]*(?:[^-]+-){2,}(?:18|19|20)\\d{2}-[A-Za-z0-9]+\\s*$',
+             message:'MidnightScene’s music is Artist - Title (Year) [Catalog and Edition] [Media - Format] (at least Artist - Title (Year) [Media - Format]); an untitled live recording is Artist - YYYY-MM-DD Venue [Source] [FLAC]; a scene release keeps its hyphenated segments with underscores turned to spaces. This name is none of those.'},
+            {code:'music-underscore',severity:'error',profiles:['music'],
+             forbid:'_',
+             message:'Underscores become spaces in the release title (the folder and files stay as released).'},
+            {code:'music-guest',severity:'error',profiles:['music'],
+             forbid:'(?:\\((?:feat|ft)\\.?[ .]|(?:^|[ .])(?:feat|ft)\\.[ .]|(?:^|[ .])featuring[ .])',
+             message:'Primary artist only: featuring and guest credits go in the site’s artist fields, not in the name.'},
+            {code:'music-single',severity:'error',profiles:['music'],
+             forbid:'^[^\\[]*(?:^|[ .(])(?:CDS|CDM|Maxi(?:[ .-]Single)?)(?=$|[ .)])',
+             message:'A single is named by its song title only — no CDS, CDM or maxi wording in the title; that belongs in [Catalog and Edition].'},
+            {code:'music-live',severity:'review',profiles:['music'],
+             forbid:'^[^\\[]*(?:^|[ .])\\(?(?:Live|LIVE)\\)?(?=$|[ .)])',
+             message:'Live or (LIVE) is only in the title when it is printed on the cover; otherwise the official title, or the date and venue where there is none.'}
+        ],
+        notes:[
+            {code:'naming-details',profiles:['movie','tv','disc'],
+             message:'What the naming guide states that a title alone cannot settle: the Title is TMDB’s name; Geographics (AU, UK, US) only to tell apart content of the same name and year; a TV year only where two series share a name or TVDB carries it; the Language only when there is no English audio, ALL UPPER CASE (a pattern cannot tell case, so that is not checked); Cut assumed Theatrical; Hybrid only where the main stream comes from more than one source; Region only on a full disc; the Service abbreviation on web content; Channels of the default track.'},
+            {code:'not-supplied',profiles:['movie','tv','disc','music'],
+             message:'Only MidnightScene’s Upload Naming Guide and its banned list are in hand (21 Sep 2026). Its upload rules — content, descriptions, trumping — were not supplied, so nothing is claimed about them.'},
+            {code:'music-details',profiles:['music'],
+             message:'Music beyond the name: the Title as on the cover, with its capitalization and Unicode; English title case for artists and titles unless an official stylization exists (non-English titles follow their own language); EP only where the word is on the artwork; Media - Format such as CD-FLAC, WEB-FLAC, Vinyl-FLAC; a scene release’s folder and files are left as released.'}
+        ]
+    };
+
     const ALL=[
         {profile:LUME,summary:'The LUME naming guide: both title templates and the vocabulary for every element.',
          source:'luminarr.me — Naming Guide, as supplied 10 Sep 2026.'},
         {profile:ONLYENCODES,summary:'OnlyEncodes+ upload rules: what a title can be checked for, and the rest as standing reminders.',
          source:'onlyencodes.cc/wikis/2 — Upload Guide + Rules, as supplied 10 Sep 2026.'},
         {profile:HOMIEHELPDESK,summary:'HomieHelpDesk upload rules, banned groups and naming standard: what a title can be checked for, and the rest as standing reminders.',
-         source:'homiehelpdesk.net/pages/7 — Upload rules, with its banned list and naming standard, as supplied 20 Sep 2026.'}
+         source:'homiehelpdesk.net/pages/7 — Upload rules, with its banned list and naming standard, as supplied 20 Sep 2026.'},
+        {profile:MIDNIGHTSCENE,summary:'MidnightScene’s Upload Naming Guide, video and music, and its banned list; its upload rules were not supplied.',
+         source:'midnightscene.cc — Upload Naming Guide and Banned Release Groups, as supplied 21 Sep 2026.'}
     ];
     // A fresh copy each time: what the caller does with it must never reach this list.
     const list=()=>ALL.map(entry=>({...entry,profile:JSON.parse(JSON.stringify(entry.profile))}));
@@ -2532,7 +2667,7 @@ const DKOKTO_LISTING_CORE = ((naming,rules) => {
     const facts=[
       ['Name',profile.label+' ('+profile.key+')'],
       ['Applies on',profile.hosts.length?profile.hosts.join(', '):'no address given — you would pick it from the Rules list'],
-      ['Templates',(profile.base==='zenith'?'Zenith':'DarkPeers')+(profile.books==='own'?' — books named this tracker’s own way':'')],
+      ['Templates',(profile.base==='zenith'?'Zenith':'DarkPeers')+(profile.books==='own'?' — books named this tracker’s own way':'')+(profile.music==='own'?' — music named its own way':'')],
       ['Rules',String(profile.rules.length)],
       ['Banned groups',String(profile.banned.length)+
         (profile.conditional.length?' (+'+profile.conditional.length+' conditional)':'')+

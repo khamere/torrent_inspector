@@ -1,8 +1,8 @@
 # Adding a tracker
 
-Five rule sets ship with the script: **DarkPeers**, **Zenith**, **LUME**, **OnlyEncodes+**
-and **HomieHelpDesk**. All five are in force on their own trackers as they ship. The last
-three are listed under *Added trackers → Rule sets that ship with this script*, where
+Six rule sets ship with the script: **DarkPeers**, **Zenith**, **LUME**, **OnlyEncodes+**,
+**HomieHelpDesk** and **MidnightScene**. All six are in force on their own trackers as they
+ship. The last four are listed under *Added trackers → Rule sets that ship with this script*, where
 **Add** copies one into your added trackers so you can edit it.
 
 Any other tracker is added as a **profile**: a JSON object holding who the tracker is, its
@@ -15,7 +15,7 @@ top of the naming box.
 
 ## The rule sets that ship with the script
 
-Three are built from guides supplied in full. They are the default on their own trackers
+Four are built from guides supplied in full. They are the default on their own trackers
 and sit in the *Rules* list without being added. Under **Added trackers → Rule sets that
 ship with this script**, **Add** copies one into your added trackers — editable, exportable,
 removable — and your copy then applies instead of the shipped one; remove the copy and the
@@ -26,6 +26,7 @@ shipped set is back in force.
 | **LUME** (luminarr.me) | its Naming Guide — both title templates, and the vocabulary for every element | no banned-group list: none was supplied |
 | **OnlyEncodes+** (onlyencodes.cc) | its Upload Guide + Rules (`wikis/2`), its naming standard (`wikis/18`) and its banned list (`wikis/1`) — 16 rules, 136 groups | — |
 | **HomieHelpDesk** (homiehelpdesk.net) | its Upload rules (`pages/7`), its banned list (`wikis/8`), its naming standard (`wikis/30`), its E-book and its Comic, Manga and Magazine naming standards, and its Trumping & Quality Tiers page, all supplied 20 Sep 2026 — 35 rules, 48 groups, `books: own` | its Audiobook Naming and Folder Standard was not supplied; its rules page numbers only its sections, so rules are cited by section (§4, §5, §6), not by bullet |
+| **MidnightScene** (midnightscene.cc) | its Upload Naming Guide (video and music) and its Banned Release Groups list, supplied 21 Sep 2026 — 26 rules, 62 groups, `music: own` | its upload rules (content, descriptions, trumping) were not supplied; the banned list gives no reasons; the VideoCodec list has no AV1 though the site's listing carries it, so AV1 is a question |
 
 Where a page was not supplied, the profile says so in its own standing notes rather than
 filling the gap with a guess. Paste it in and the checks can quote it instead.
@@ -88,6 +89,7 @@ point.
 | `key` | 2–24 characters, lowercase letters, digits and hyphens. Not `dp` or `zenith`. |
 | `label` | What the *Rules* list shows, and the name used in every message. |
 | `base` | `dp` or `zenith` — whose naming templates apply. See below. |
+| `music` | Optional. `own` when the tracker names music its own way (MidnightScene's `Artist - Title (Year) [Catalog] [Media - Format]`): the shared music template stands aside and only the profile's `rules` are checked. Omitted, the base's music template applies. |
 | `books` | Optional. `own` when the tracker names books its own way (HomieHelpDesk's `Author Name - Title.epub` carries no year, format or ISBN): the shared book template then stands aside for ebooks and audiobooks and only the profile's `rules` are checked. Omitted, the base's book templates apply. |
 | `hosts` | Domains. On one of these, this tracker's rules are chosen for you. |
 | `groups.banned` | `["Name"]`, `["Name", "reason"]` or `["Name", "reason", "since"]`. The reason appears in the badge. |

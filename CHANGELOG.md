@@ -9,6 +9,35 @@ was named until 1.25.0.
 
 ---
 
+## 1.36.0 — MidnightScene's rules ship with the script
+
+- **MidnightScene in tracker-guides.js.** Key `mns`, host midnightscene.cc, base `dp`,
+  `music: own`. Built from the Upload Naming Guide and the Banned Release Groups list,
+  supplied as text on 21 Sep 2026 and kept verbatim in `notes/midnightscene-naming-2026-09-21.md`;
+  the page has no section numbers, so rules cite its headings; no upload-rules page was
+  supplied and a `not-supplied` note says so. 21 video rules: group-tag (review), nogrp
+  (error — NOGROUP is the guide's word), acodec-ddp, acodec-ac3, acodec-dolby, acodec-ddex
+  (DD-EX hyphenated), object-atmos, hdr-vocab (PQ10 not on its list), vcodec-dot,
+  vcodec-list (review: AV1/VP9 not on the list while the site's listing carries AV1),
+  vcodec-web, vcodec-webrip, vcodec-remux, type-webdl, type-webrip, web-service,
+  remux-source, encode-source, edition-name, dub-dual-audio, repack-only (review: PROPER /
+  RERip are not on its templates). 5 music rules: music-form (review; the three layouts),
+  music-underscore, music-guest, music-single, music-live (review). Three notes. Banned:
+  the page's 64 rows less BRrip (to `groups.sources`) and the msd/mSD duplicate, 62 names,
+  no reasons because the page gives none; EVO is a flat ban here. Resolutions to 2160p.
+  A Language-case rule was tried and dropped: profile patterns match case-insensitively, so
+  FRENCH and French cannot be told apart; the note says so.
+- **`music: own` in the profile format**, the twin of `books: own` (1.33.0): profiles.js
+  validates base/own and round-trips it; rules.js `musicOf()`; naming.js adds a review
+  note `music-own`, shows no template, and applies only the profile's rules; the profile
+  dialog and the site's validator say "its own music names". TRACKER-RULES.md documents it.
+- **Checks.** guides-check.cjs: three new tests (the four listing rows and the twelve music
+  examples pass, AV1 is a question, the "Wrong" example is caught; every rule fires on the
+  form the guide does not use and none on what it allows; the banned list is the page's,
+  no reason invented, EVO flat, BRrip a source marker, no 4320p). profiles-check.cjs: a
+  `music:"own"` profile. Three fixed lists gain `mns`. Listing fixture: the fourth Add button
+  and 21 Sep 2026. Node 888 (880); listing 209 unchanged.
+
 ## 1.35.0 — MidnightScene
 
 - trackers.js: `unit('mns','MidnightScene','midnightscene.cc','general')`. Address from

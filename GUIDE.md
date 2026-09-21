@@ -68,11 +68,12 @@ nothing on the tracker; it records that you looked.
 
 ### Whose rules?
 
-Five rule sets ship: **DarkPeers**, **Zenith**, **LUME**, **OnlyEncodes+** and
-**HomieHelpDesk**. Each is the default on its own tracker: the badges appear there without
+Six rule sets ship: **DarkPeers**, **Zenith**, **LUME**, **OnlyEncodes+**, **HomieHelpDesk**
+and **MidnightScene**. Each is the default on its own tracker: the badges appear there without
 any setup, and the *Rules* list carries all five. HomieHelpDesk names books its own way
 (`Author Name - Title.epub`), so on it the naming box checks a book against its rules and
-says so, rather than against DarkPeers' book template. To change a shipped set, open
+says so, rather than against DarkPeers' book template; MidnightScene names music its own
+way, and its music is checked the same way. To change a shipped set, open
 *Tracker rules… → Added trackers* and press **Add** beside it: that copies it into your
 added trackers, where it is editable, exportable and removable, and your copy applies
 instead of the shipped one until you remove it.
