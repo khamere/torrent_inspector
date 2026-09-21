@@ -9,6 +9,28 @@ was named until 1.25.0.
 
 ---
 
+## 1.35.0 — MidnightScene
+
+- trackers.js: `unit('mns','MidnightScene','midnightscene.cc','general')`. Address from
+  Khamere, 21 Sep 2026, with a screenshot of the site's /torrents page (UNIT3D's search
+  page); the `/torrents?name={q}` path is UNIT3D's, as on every unit() entry. Not on the
+  9 Sep 2026 HDVinnie list. The @match line comes from the catalogue at build, so the script
+  runs there; the cross-check searches it. No rule set is claimed for it. Catalogue 60 → 61,
+  @match hosts 43 → 44; README, GUIDE, dk/README, the site's pill, "Which trackers it runs
+  on" and FAQ updated, and PENDING-NEXT-VERSION.txt records where the address came from.
+- Checks: links-check.cjs — the entry, its label, its search address and the built header's
+  @match line (red before the entry); the coverage-claim check went red on its own at 43/60
+  until the documents moved. Node 880.
+
+## 1.34.1 — Dual-Audio with two default tracks
+
+- naming.js `default-audio`: where the title carries Dual-Audio and every default audio
+  track shares a format and channel count, the first stands for all of them and the review
+  is not raised; the audio-conflict / channel-conflict comparisons still run against it.
+  Different shapes, or no Dual-Audio in the title, are unchanged. Seen on a HomieHelpDesk
+  anime pack with Japanese and English both `Default: Yes` (20 Sep 2026). One Node check in
+  naming-check.cjs (red before: the review fired); Node 878.
+
 ## 1.34.0 — a tracker's own rules are the default on that tracker
 
 - Asked 20 Sep 2026: "if we have rules for the site, those rules are the default … and if

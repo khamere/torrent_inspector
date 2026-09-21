@@ -1,4 +1,4 @@
-# Torrent Inspector 1.34.0
+# Torrent Inspector 1.35.0
 
 A Tampermonkey userscript for release naming. It reads the page you are on and tells you
 whether a release name is written the way the tracker you are on says it should be — on the
@@ -11,7 +11,7 @@ by torrent ID.
 key, nothing posted, submitted, uploaded or downloaded. Every link opens when you click it and
 not before. What it stores, it stores on your own machine.
 
-It runs on **43 UNIT3D trackers** and can search **60**. Naming rules for DarkPeers, Zenith,
+It runs on **44 UNIT3D trackers** and can search **61**. Naming rules for DarkPeers, Zenith,
 LUME, OnlyEncodes+ and HomieHelpDesk ship with it; any other tracker is added by pasting its
 rules, as data, never as code.
 
@@ -68,7 +68,7 @@ checks for a new version on its own schedule and offers it.
 
 It was called *DarkPeers - Torrent Inspector* and its file was
 `DarkPeers-Torrent-Inspector.user.js`. From 1.26.0 it is just **Torrent Inspector**, because it
-is not DarkPeers' script and never was — it runs on 43 trackers.
+is not DarkPeers' script and never was — it runs on 44 trackers.
 
 Tampermonkey identifies an installed script by what is in its header, so the rename can land
 as a **second entry in your script list** rather than as an update to the first. If you see
@@ -93,6 +93,28 @@ JSON somewhere before you update.
 - **CHANGES-1.12.4-to-1.22.3.md** — what changed across the older versions, grouped by what
   it does.
 - **CHANGELOG.md** — every version, newest first.
+
+## New in 1.35.0
+
+**MidnightScene.** midnightscene.cc joins the catalogue as a UNIT3D tracker (address given
+21 Sep 2026, with a screenshot of its `/torrents` page — UNIT3D's search page — so the
+name-search path is UNIT3D's, as on every other entry). The script now runs there — badges,
+the Inspector, the group tags, **vs** — and the cross-check can search it. It is not in the
+9 Sep 2026 spreadsheet the rest of the UNIT3D list was read from. 44 trackers it runs on,
+61 it can search. No rule set: nothing is judged there until you choose one, as on any
+tracker whose rules are not in hand. One Node check; the coverage claims in the README,
+GUIDE and site moved with the catalogue, as the check requires.
+
+## Fixed in 1.34.1
+
+**A Dual-Audio release with both tracks flagged default is no longer asked about.** The
+*MediaInfo does not identify exactly one default audio track* question fired on a
+HomieHelpDesk anime pack whose Japanese and English tracks were both `Default: Yes`
+(20 Sep 2026). Where the title says Dual-Audio and the default tracks share a format and
+channel count, the title's codec and channels describe either, so there is nothing to
+confirm; the first stands for both and the codec/channel comparisons still run against it.
+Two defaults of different shapes, or two defaults on a title that does not say Dual-Audio,
+are still a question. One Node check.
 
 ## New in 1.34.0
 
@@ -1114,7 +1136,7 @@ The naming rules are a snapshot of the supplied guide (`NAMING-GUIDE-REFERENCE.t
 
 Private notes are per torrent ID in browser storage, not account-wide or public.
 
-The userscript matches HTTPS only, and only the 43 trackers whose addresses are in its own
+The userscript matches HTTPS only, and only the 44 trackers whose addresses are in its own
 catalogue — that list is written into the header at build time from the catalogue itself, so
 the two cannot drift apart, and there is a check for it. It asks for `GM_setValue`,
 `GM_getValue` and `GM_deleteValue`, which are storage on your machine rather than network, and

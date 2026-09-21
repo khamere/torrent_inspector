@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.34.0
+// @version      1.35.0
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       DKOKTO
 // This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,
@@ -37,6 +37,7 @@
 // @match        https://*.lst.gg/*
 // @match        https://*.luminarr.me/*
 // @match        https://*.malayabits.cc/*
+// @match        https://*.midnightscene.cc/*
 // @match        https://*.nordicq.org/*
 // @match        https://*.oldtoons.world/*
 // @match        https://*.onlyencodes.cc/*
@@ -2412,7 +2413,15 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
         const vtrack=file?.video?.[0],depth=Number.parseInt(field(vtrack,'bitdepth')),transfer=field(vtrack,'transfercharacteristics'),vfmt=field(vtrack,'format');
         if(vtrack){if(hi&&Number.isFinite(depth)&&depth!==10)add('error','hi-depth','Hi10P conflicts with the reported '+depth+'-bit video.');
             if(/AVC/i.test(vfmt)&&depth===10&&/709/.test(transfer)&&!hi)add('error','hi-required','Reported 10-bit SDR AVC requires Hi10P.');}
-        const tracks=file?.audio||[],defaults=tracks.filter(t=>/^(yes|true|1)$/i.test(field(t,'default')));
+        const tracks=file?.audio||[];let defaults=tracks.filter(t=>/^(yes|true|1)$/i.test(field(t,'default')));
+        // A Dual-Audio release often flags both languages as default (a HomieHelpDesk anime
+        // pack, 20 Sep 2026: Japanese and English, both Default: Yes). Where they share a
+        // format and channel count the title's ACodec and Channels describe either, so
+        // there is nothing to confirm and the first stands for both. Different shapes are
+        // still a question, and so are two defaults on a title that does not say so.
+        if(defaults.length>1&&has('Dual[ .-]?Audio')
+            &&defaults.every(t=>field(t,'format')===field(defaults[0],'format')&&field(t,'channels')===field(defaults[0],'channels')))
+            defaults=[defaults[0]];
         if(tracks.length&&defaults.length!==1)add('review','default-audio','MediaInfo does not identify exactly one default audio track. Confirm which track supplies the title’s audio codec, channels and object tag.');
         if(defaults.length===1){const t=defaults[0],f=field(t,'format'),expected=/^E-?AC-?3$/i.test(f)?'DD+':/^AC-?3$/i.test(f)?'DD':/^AAC/i.test(f)?'AAC':/^FLAC$/i.test(f)?'FLAC':/^MLP FBA|TrueHD/i.test(f)?'TrueHD':'';
             if(expected&&audioLabel&&!new RegExp('^'+expected.replace('+','\\+')+'(?: EX)?$','i').test(audioLabel)&&!(expected==='DD+'&&audioLabel==='DDP'))add('error','audio-conflict','Default audio reports '+f+'; expected title label '+expected+'.');
@@ -5903,6 +5912,10 @@ const DKOKTO_TRACKERS = (() => {
         unit('ldu','Last Digital Underground','theldu.to'),
         unit('stc','SkipTheCommercials','skipthecommercials.xyz','tv'),
         unit('hhd','HomieHelpDesk','homiehelpdesk.net','general'),
+        // Address given 21 Sep 2026 with a screenshot of its /torrents page, which is UNIT3D's
+        // search page; the name-search path is UNIT3D's, as on every entry here. Not on the
+        // 9 Sep 2026 spreadsheet read above.
+        unit('mns','MidnightScene','midnightscene.cc','general'),
         unit('concertos','Concertos','concertos.live','music'),
         unit('acm','AsianCinema','eiga.moi','video','Asian'),
         unit('aw','AnimeWorld','animeworld.cx','anime','German'),
