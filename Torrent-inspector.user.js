@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.36.0
+// @version      1.39.2
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       DKOKTO
 // This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,
@@ -59,6 +59,8 @@
 // @match        https://*.upscalevault.com/*
 // @match        https://*.utp.to/*
 // @match        https://*.yu-scene.net/*
+// @match        https://*.filelist.io/*
+// @match        https://*.torrentleech.org/*
 // @run-at       document-idle
 // @noframes
 // @updateURL    https://raw.githubusercontent.com/khamere/torrent_inspector/main/Torrent-inspector.user.js
@@ -72,7 +74,7 @@
 
 (function () {
     'use strict';
-    const DPTI_CSS = "/* Standalone Torrent Inspector styling. Scoped to this script's own dialog,\n   launcher and listing badges; site theming is left untouched. */\n#dp-inspector-tools { position:fixed; right:14px; bottom:14px; z-index:2147482000; display:flex; gap:8px; }\n#dp-inspector-tools button { font:600 14px/1.2 \"Segoe UI\",system-ui,sans-serif; color:#f4e8ff; background:#3d2551; border:1px solid #a97fc6; border-radius:5px; padding:10px 14px; cursor:pointer; box-shadow:0 2px 10px #0009; }\n#dp-inspector-tools button:hover { background:#643784; }\n#dp-inspector-tools button:focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n\n.dk-hub { box-sizing:border-box; width:min(940px,calc(100vw - 24px)); max-height:88dvh; padding:0; overflow:auto; background:#15101d; color:#f0e9f6; border:1px solid #af83c8; border-radius:6px; font:15px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-hub::backdrop { background:#07040bcc; }\n.dk-hub header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 20px; background:linear-gradient(#392447,#20152b); }\n.dk-hub h2 { margin:0; font:600 22px Consolas,monospace; }\n.dk-hub-content { padding:16px 20px; }\n.dk-hub :is(button,input,select,textarea) { box-sizing:border-box; font:inherit; color:#f4e8ff; background:#24182f; border:1px solid #9873b0; border-radius:3px; padding:8px 10px; min-width:0; }\n.dk-hub button { cursor:pointer; }\n.dk-hub button:hover,.dk-hub button[aria-pressed=true] { background:#643784; }\n.dk-hub button:disabled { opacity:.5; cursor:default; }\n.dk-hub input:not([type=checkbox]),.dk-hub textarea { width:100%; }\n.dk-hub input[type=checkbox] { width:20px; height:20px; accent-color:#ad71d1; }\n.dk-hub label { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin:12px 0; }\n.dk-hub a { color:#e0b6ff; overflow-wrap:anywhere; }\n.dk-hub :is(button,a,input,textarea,select,summary):focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n.dk-hub .dk-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:10px 0; }\n.dk-hub .dk-row a { flex:1; min-width:140px; }\n.dk-hub pre { background:#0c0811; padding:12px; max-height:45dvh; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; font:13px/1.5 Consolas,monospace; }\n.dk-hub table { width:100%; border-collapse:collapse; }\n.dk-hub th,.dk-hub td { text-align:left; padding:6px; border-bottom:1px solid #493357; }\n.dk-hub td label { font-size:0; margin:0; }\n.dk-hub td select { font-size:14px; width:100%; }\n.dk-hub-message { padding:0 20px 16px; color:#e2bcfc; white-space:pre-wrap; }\n.dk-hub details { padding:12px 0; border-top:1px solid #624771; }\n.dk-hub summary { cursor:pointer; }\n\n.dk-inspector-table { overflow-x:auto; max-width:100%; }\n.dk-hub .dk-inspector-table table { min-width:640px; font-size:13px; }\n.dk-hub .dk-inspector-table td { vertical-align:top; overflow-wrap:anywhere; max-width:240px; }\n.dk-inspector-checks { padding:10px 14px; background:#25182f; border-left:3px solid #bd91d9; }\n.dk-naming { border:1px solid #725587; padding:12px; margin:12px 0 20px; background:#1c1425; }\n.dk-naming .dk-naming-status { font-weight:700; color:#ead7ff; }\n.dk-naming .dk-naming-errors { border-left:3px solid #e9ad71; padding-left:24px; }\n.dk-naming li { margin:8px 0; }\n.dk-naming details { margin:12px 0; }\n.dk-naming summary { cursor:pointer; color:#dabcdf; }\n\n.dk-listing-bar { display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; padding:12px; margin:8px 0; background:#21162b; border:1px solid #725587; color:#f0e9f6; font:14px/1.5 'Segoe UI',sans-serif; }\n.dk-listing-bar label { display:flex; gap:8px; align-items:center; cursor:pointer; }\n.dk-listing-bar .dk-listing-rules,.dk-hub .dk-naming-site { display:flex; gap:8px; align-items:center; }\n.dk-listing-bar .dk-listing-rules select,.dk-hub .dk-naming-site select { padding:3px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-hub .dk-naming-site { margin:0 0 10px; font-weight:600; color:#d9c4e8; }\n.dk-listing-bar .dk-listing-rules-edit,.dk-hub .dk-naming-site button { padding:3px 9px; border:1px solid #6d5280; border-radius:3px; background:#2b1d36; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-listing-bar .dk-listing-rules-edit:hover,.dk-hub .dk-naming-site button:hover { background:#3a2748; }\n.dk-profile-dialog { max-width:760px; width:92vw; }\n.dk-profile-tabs { display:flex; gap:8px; margin:0 0 14px; flex-wrap:wrap; }\n.dk-profile-tabs button { padding:6px 12px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-profile-tabs button[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-profile-form { display:flex; flex-direction:column; gap:14px; }\n.dk-profile-field { display:flex; flex-direction:column; gap:5px; font-weight:600; color:#d9c4e8; }\n.dk-profile-field :is(input,textarea,select) { padding:7px 9px; border:1px solid #6d5280; border-radius:3px; background:#1b1222; color:#efe4f7; font:inherit; }\n.dk-profile-field textarea,.dk-profile-json { font:13px/1.5 Consolas,'Courier New',monospace; width:100%; box-sizing:border-box; }\n.dk-profile-json { padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#dcc9ec; }\n.dk-profile-field small,.dk-profile-recipes small,.dk-profile-count { font-weight:400; color:#b9a6c9; font-size:12px; }\n.dk-profile-count { color:#a9e3c0; }\n.dk-profile-recipes { border:1px solid #56406a; border-radius:4px; padding:12px; display:flex; flex-direction:column; gap:7px; }\n.dk-profile-recipes legend { padding:0 6px; color:#d9c4e8; font-weight:600; }\n.dk-profile-recipes label { display:flex; gap:9px; align-items:center; font-size:14px; }\n.dk-profile-installed { border:1px solid #56406a; border-radius:4px; padding:12px; display:flex; flex-direction:column; gap:7px; }\n.dk-profile-installed small { color:#b9a6c9; font-size:12px; }\n.dk-profile-file { display:inline-flex; align-items:center; gap:8px; font-size:13px; color:#d9c4e8; }\n.dk-profile-status:not(:empty) { padding:9px 11px; border-left:3px solid #7d5c96; background:#20152a; color:#e6d6f2; }\n.dk-profile-status[data-tone=bad] { border-color:#e07a7a; }\n.dk-profile-status[data-tone=good] { border-color:#7ad39a; }\n.dk-profile-status[data-tone=warn] { border-color:#e0c07a; }\n.dk-listing-decision { display:inline-flex; gap:6px; align-items:center; margin-left:8px; font-size:12px; }\n.dk-listing-decision select { padding:2px 5px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-listing-decision[data-state=approved] select { border-color:#5fa87a; }\n.dk-listing-decision[data-state=rejected] select { border-color:#c97a7a; }\n.dk-listing-decision[data-state=asked] select { border-color:#c9b07a; }\n.dk-decision-mark { color:#b9a6c9; white-space:nowrap; }\n.dk-listing-badge[data-lead=yes] { margin:0 6px 0 0; }\n.dk-detail-page { display:block; padding:12px 14px; margin:10px 0; border:1px solid #5b406d; border-radius:4px; background:#1c1426; }\n.dk-detail-page ul { margin:8px 0 0; padding-left:20px; }\n.dk-detail-page li { margin:4px 0; color:#e0d2ec; font-size:13px; line-height:1.55; }\n.dk-detail-page li[data-severity=error] { color:#f0b5b5; }\n.dk-detail-page li[data-severity=error]::marker { color:#e07a7a; }\n.dk-detail-page li[data-severity=review]::marker { color:#e0c07a; }\n.dk-detail-page small { display:block; margin-top:9px; color:#a493b4; font-size:11.5px; }\n.dk-reply { margin-top:14px; border:1px solid #56406a; border-radius:4px; padding:10px 12px; }\n.dk-reply summary { cursor:pointer; font-weight:600; color:#d9c4e8; }\n.dk-reply p { color:#b9a6c9; font-size:13px; }\n.dk-reply-choice { padding:5px 11px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-reply-choice[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-reply-text { width:100%; box-sizing:border-box; margin:10px 0; padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#efe4f7; font:13px/1.6 Consolas,'Courier New',monospace; }\n.dk-reply { margin-top:14px; border:1px solid #56406a; border-radius:4px; padding:10px 12px; }\n.dk-reply summary { cursor:pointer; font-weight:600; color:#d9c4e8; }\n.dk-reply p { color:#b9a6c9; font-size:13px; }\n.dk-reply-choice { padding:5px 11px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-reply-choice[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-reply-text { width:100%; box-sizing:border-box; margin:10px 0; padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#efe4f7; font:13px/1.6 Consolas,'Courier New',monospace; }\n.dk-listing-log { display:inline-flex; gap:8px; align-items:center; }\n.dk-compare-sides { display:grid; grid-template-columns:1fr 1fr; gap:12px; }\n.dk-compare-side { display:flex; flex-direction:column; gap:5px; font-weight:600; color:#d9c4e8; }\n.dk-compare-side textarea { font:13px/1.5 Consolas,'Courier New',monospace; padding:8px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#dcc9ec; width:100%; box-sizing:border-box; }\n.dk-compare-table { display:flex; flex-direction:column; border:1px solid #56406a; border-radius:4px; overflow:hidden; margin:10px 0; }\n.dk-compare-row { display:grid; grid-template-columns:minmax(120px,1fr) minmax(0,1.2fr) minmax(0,1.2fr); gap:10px; padding:7px 10px; border-bottom:1px solid #3d2c4c; font-size:13px; }\n.dk-compare-row:last-child { border-bottom:none; }\n.dk-compare-row:nth-child(odd) { background:#1d1426; }\n.dk-compare-row [data-larger=yes] { color:#a9e3c0; }\n@media (max-width:700px){ .dk-compare-sides,.dk-compare-row { grid-template-columns:1fr; } }\n.dk-listing-bar input[type=checkbox] { width:18px; height:18px; accent-color:#ad71d1; }\n.dk-listing-bar small { flex-basis:100%; color:#d2bedf; }\n.dk-listing-bar [role=status] { font-weight:600; }\nbutton.dk-listing-badge { display:inline-flex !important; align-items:center; justify-content:center; vertical-align:middle; flex-shrink:0; width:22px; height:22px; min-width:22px; padding:0 !important; margin:0 0 0 6px !important; border:1px solid currentColor !important; border-radius:4px !important; background:#160f1e !important; font:bold 15px/1 'Segoe UI',sans-serif !important; cursor:pointer; box-shadow:none !important; }\nbutton.dk-listing-badge[data-state=error] { color:#ff666d !important; }\nbutton.dk-listing-badge[data-state=pass] { color:#67df99 !important; }\nbutton.dk-listing-badge[data-state=review] { color:#f1c15b !important; }\nbutton.dk-listing-badge:focus-visible { outline:3px solid #eee !important; outline-offset:2px; }\n.dk-listing-dialog li { margin-block:8px; }\n.dk-listing-dialog h3 { overflow-wrap:anywhere; }\n\n@media(max-width:700px) {\n  #dp-inspector-tools { left:8px; right:8px; bottom:max(8px,env(safe-area-inset-bottom)); justify-content:center; }\n  #dp-inspector-tools button { min-height:44px; width:100%; }\n  .dk-hub { max-height:90dvh; }\n  .dk-hub header,.dk-hub-content { padding:12px; }\n  .dk-hub button { min-height:44px; }\n  .dk-hub input,.dk-hub select,.dk-hub textarea { font-size:16px; }\n  .dk-hub table tr { display:grid; grid-template-columns:1fr 1fr; padding:8px 0; }\n  .dk-hub table tr:first-child { display:none; }\n  .dk-hub table td { border:0; }\n  .dk-hub table td:first-child { grid-column:1/-1; }\n  .dk-hub .dk-inspector-table table tr { display:table-row; }\n  .dk-hub .dk-inspector-table table tr:first-child { display:table-row; }\n  .dk-hub .dk-inspector-table table td { border-bottom:1px solid #493357; }\n  button.dk-listing-badge { width:26px; height:26px; min-width:26px; font-size:17px !important; }\n}\n@media print { .dk-hub,#dp-inspector-tools { display:none !important; } }\n.dk-naming .dk-service-list { max-height:280px; overflow:auto; padding:6px 10px; background:#140e1c; border:1px solid #4b3559; border-radius:3px; }\n.dk-naming .dk-service-list p { margin:5px 0; overflow-wrap:anywhere; }\n.dk-naming .dk-service-list code { display:inline-block; min-width:96px; color:#e2bcfc; font:13px Consolas,monospace; }\n.dk-naming .dk-naming-service { margin:4px 0 8px; color:#cbb0e4; font:13px Consolas,monospace; }\nbutton.dk-listing-badge.dk-detail-badge { width:24px; height:24px; min-width:24px; font-size:16px !important; margin:0 0 0 8px !important; vertical-align:middle; }\n.dk-detail-links { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:10px 0 14px; font:14px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-detail-links .dk-detail-links-label { color:#c0adce; margin-right:2px; }\n.dk-detail-links a { padding:4px 9px; color:#e6cbff !important; background:#22162c; border:1px solid #6d5280; border-radius:3px; text-decoration:none; }\n.dk-detail-links a:hover { background:#3d2451; border-color:#c193e6; }\n.dk-detail-links a[data-exact=yes] { border-color:#9fdcb6; box-shadow:inset 0 0 0 1px #67df9933; }\n.dk-detail-links a:focus-visible,.dk-detail-links button:focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n.dk-detail-links .dk-detail-copy { padding:4px 9px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-detail-links .dk-detail-copy:hover { background:#563173; }\n@media print { .dk-detail-links,.dk-detail-badge { display:none !important; } }\n.dk-detail-links .dk-detail-vs { padding:4px 11px; color:#ffe6b8; background:#3d2a17; border:1px solid #a8813f; border-radius:3px; cursor:pointer; font:inherit; font-weight:600; }\n.dk-detail-links .dk-detail-vs:hover { background:#5a3d1f; border-color:#e0b464; }\n/* [ MULTIPLE FILES ]: a pack says so under its name, and copies its list on click. */\n.dk-detail-files { margin:4px 0 2px; text-align:center; }\n.dk-detail-files-copy { padding:2px 8px; color:#b9a7c6; background:none; border:1px solid transparent; border-radius:4px; cursor:pointer; font:inherit; font-size:13px; letter-spacing:.08em; }\n.dk-detail-files-copy:hover, .dk-detail-files-copy:focus-visible { color:#f0e4ff; border-color:#8a6aa3; background:#2a1b38; }\n.dk-detail-files-copy[data-copied] { color:#9fe0a4; border-color:#4f8a56; }\n/* Release notes templates: the button beside the comment box, and its editor. */\n.dk-template-insert { display:inline-flex; align-items:center; gap:6px; margin:0 0 0 8px; vertical-align:middle; list-style:none; }\n.dk-template-insert-button { min-width:26px; padding:1px 7px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; font-size:14px; line-height:1.4; }\n.dk-template-insert-button:hover { background:#563173; border-color:#c193e6; }\n.dk-template-insert-button:focus-visible, .dk-template-edit:focus-visible { outline:2px solid #e0bdff; outline-offset:2px; }\n.dk-template-edit { padding:1px 8px; color:#b9a7c6; background:none; border:1px solid transparent; border-radius:3px; cursor:pointer; font:inherit; font-size:12px; }\n.dk-template-edit:hover { color:#f0e4ff; border-color:#8a6aa3; background:#2a1b38; }\n.dk-template-slot { margin:0 0 14px; padding:10px 12px; background:#1a1223; border:1px solid #6d5280; border-radius:4px; }\n.dk-template-slot-head { display:flex; align-items:center; gap:8px; font-weight:600; color:#e6cbff; }\n.dk-template-slot-head label { display:flex; align-items:center; gap:6px; cursor:pointer; }\n.dk-template-caption { display:block; margin:8px 0 4px; color:#b9a7c7; font-size:12px; }\n.dk-template-uses { display:block; margin:6px 0 8px; color:#b9a7c7; font-size:12px; }\n.dk-template-copy { padding:3px 10px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-template-copy:hover { background:#563173; border-color:#c193e6; }\n.dk-template-actions { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 6px; }\n.dk-template-status { min-height:1.2em; margin:4px 0 0; color:#d5c2e6; }\n.dk-detail-compare { margin:0 0 16px; padding:12px 14px; background:#1a1223; border:1px solid #6d5280; border-radius:4px; font:14px/1.6 \"Segoe UI\",system-ui,sans-serif; color:#e4d5f2; }\n.dk-detail-compare h3 { margin:12px 0 6px; font-size:15px; color:#e6cbff; }\n.dk-detail-compare h3:first-child { margin-top:0; }\n.dk-detail-compare p { margin:4px 0 8px; }\n.dk-detail-compare small { display:block; margin-top:10px; color:#b9a7c7; font-size:12px; }\n.dk-detail-compare .dk-compare-note { color:#ffe6b8; }\n.dk-compare-slot { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:5px 0; }\n.dk-compare-slot > span { flex:1 1 220px; min-width:0; overflow-wrap:anywhere; color:#cdb8e0; }\n.dk-detail-compare button { padding:4px 10px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-detail-compare button:hover { background:#563173; border-color:#c193e6; }\n.dk-detail-compare button:focus-visible { outline:2px solid #e0bdff; outline-offset:2px; }\n.dk-detail-compare .dk-compare-drop { background:#2a1a22; border-color:#8a5a6a; }\n.dk-detail-compare .dk-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }\n.dk-detail-compare .dk-compare-verdict { margin:10px 0 14px; padding:10px 12px; border-radius:4px; border:1px solid #8a6aa3; background:#241730; }\n.dk-detail-compare .dk-compare-verdict strong { display:block; margin-bottom:4px; font-size:15px; }\n.dk-detail-compare .dk-compare-verdict p { margin:0; }\n.dk-detail-compare .dk-compare-verdict[data-state=differs] { border-color:#d08a6a; background:#2c1a18; }\n.dk-detail-compare .dk-compare-verdict[data-state=differs] strong { color:#ffc9a8; }\n.dk-detail-compare .dk-compare-verdict[data-state=matches] { border-color:#6ea87f; background:#16241b; }\n.dk-detail-compare .dk-compare-verdict[data-state=matches] strong { color:#a9e3c0; }\n@media print { .dk-detail-compare { display:none !important; } }\n.dk-listing-bar .dk-listing-audit { padding:5px 11px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-listing-bar .dk-listing-audit:hover { background:#563173; border-color:#c193e6; }\n.dk-hub .dk-listing-copy { margin-top:12px; }\n.dk-listing-dialog pre { max-height:50dvh; }\n.dk-listing-dialog pre { max-height:50dvh; }\n.dk-request-open { margin-left:6px; padding:2px 8px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:12px/1.5 \"Segoe UI\",system-ui,sans-serif; vertical-align:middle; }\n.dk-request-open:hover { background:#563173; border-color:#c193e6; }\n.dk-request-open:focus-visible { outline:2px solid #e0bdff; outline-offset:2px; }\n.dk-hub .dk-tracker-find { display:block; width:100%; box-sizing:border-box; margin:10px 0 4px; padding:7px 10px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:4px; font:inherit; }\n.dk-hub .dk-tracker-find:focus-visible { outline:2px solid #e0bdff; outline-offset:1px; }\n.dk-hub details.dk-tracker-group { padding:0; }\n.dk-hub details.dk-tracker-group > summary { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 12px; color:#d9c4e8; font-weight:600; cursor:pointer; list-style:none; }\n.dk-hub details.dk-tracker-group > summary::-webkit-details-marker { display:none; }\n.dk-hub details.dk-tracker-group > summary::before { content:'▸'; margin-right:6px; color:#a98cc4; }\n.dk-hub details.dk-tracker-group[open] > summary::before { content:'▾'; }\n.dk-hub details.dk-tracker-group > summary:hover { background:#241730; }\n.dk-hub details.dk-tracker-group > summary:focus-visible { outline:2px solid #e0bdff; outline-offset:-2px; }\n.dk-hub .dk-tracker-count { padding:1px 8px; color:#cdb8e0; background:#2c1d3a; border-radius:10px; font:12px/1.6 inherit; font-weight:400; }\n.dk-hub details.dk-tracker-group > .dk-tracker-row { padding:0 12px 0 26px; }\n.dk-hub details.dk-tracker-group > .dk-tracker-row:last-child { padding-bottom:10px; }\n.dk-hub .dk-tracker-tag { margin-left:6px; padding:1px 6px; color:#c9b3dc; background:#2a1c37; border:1px solid #4b3a5c; border-radius:9px; font-size:11px; font-weight:400; }\n.dk-hub .dk-tracker-address-toggle { padding:3px 9px; color:#e6cbff; background:#2a1a38; border:1px solid #6d5280; border-radius:3px; cursor:pointer; font:12px inherit; }\n.dk-hub .dk-tracker-address-toggle:hover { background:#3d2451; }\n.dk-hub .dk-tracker-address-toggle[aria-expanded=true] { background:#482b60; border-color:#c193e6; }\n.dk-hub details.dk-tracker-group .dk-tracker-row label { flex:0 0 auto; min-width:260px; justify-content:flex-start; text-align:left; }\n.dk-hub details.dk-tracker-group .dk-tracker-row label > span.dk-tracker-tag { flex:0 0 auto; }\n.dk-hub .dk-tracker-group { margin:12px 0; padding:8px 12px 10px; border:1px solid #6d5280; border-radius:4px; }\n.dk-hub .dk-tracker-group legend { padding:0 6px; color:#d9c4e8; font-weight:600; }\n.dk-hub .dk-tracker-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:6px 0; }\n.dk-hub .dk-tracker-row label { display:flex; align-items:center; gap:6px; min-width:190px; margin:0; cursor:pointer; }\n.dk-hub .dk-tracker-row input[type=checkbox] { width:16px; height:16px; accent-color:#ad71d1; }\n.dk-hub .dk-tracker-url,.dk-hub .dk-tracker-row input[type=text] { flex:1; min-width:230px; padding:4px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:12px/1.5 ui-monospace,Consolas,monospace; }\n.dk-hub .dk-tracker-row select { padding:4px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n@media print { .dk-request-open,.dk-request-bar,.dk-request-links { display:none !important; } }\n.dk-request-seen { margin-left:6px; color:#9fdcb6; font:12px/1.5 \"Segoe UI\",system-ui,sans-serif; white-space:nowrap; }\n.dk-request-float { position:absolute; z-index:2147483000; box-shadow:0 3px 10px #0009; }\n.dk-hub .dk-request-term { display:flex; flex-direction:column; gap:4px; margin:8px 0 4px; color:#d9c4e8; }\n.dk-hub .dk-request-term input { padding:6px 8px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:14px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-listing-badge[data-state=error][data-banned=yes] { box-shadow:0 0 0 2px #ff6b6b88; }\n@media print { .dk-request-seen,.dk-request-float { display:none !important; } }\n.dk-hub .dk-request-step { min-width:220px; }\n.dk-hub .dk-request-step[disabled] { opacity:.6; cursor:default; }\n\n/* A badge rides beside the title without adding height to the row: in grouped and\n   compact listing views a taller badge overflowed onto the title below it. */\nbutton.dk-listing-badge { line-height:0 !important; max-height:22px; box-sizing:border-box; position:relative; top:-1px; }\nbutton.dk-listing-badge.dk-detail-badge { max-height:24px; top:0; }\n@media(max-width:700px) { button.dk-listing-badge { width:26px; height:26px; min-width:26px; font-size:17px !important; max-height:26px; } }\n.dk-listing-bar .dk-listing-rules,.dk-hub .dk-naming-site { display:flex; gap:8px; align-items:center; }\n.dk-listing-bar .dk-listing-rules select,.dk-hub .dk-naming-site select { padding:3px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-hub .dk-naming-site { margin:0 0 10px; font-weight:600; color:#d9c4e8; }\n\n.dk-group-tag { color:#ffb454 !important; cursor:pointer; border-bottom:1px dotted currentColor; }\n.dk-group-tag:hover, .dk-group-tag:focus-visible { color:#ffd08a !important; outline:none; border-bottom-style:solid; }\n.dk-group-menu { position:absolute; z-index:2147483000; max-width:min(360px,92vw); padding:12px 14px; border:1px solid #7b5792; border-radius:8px; background:#160f1e; color:#eee; box-shadow:0 10px 30px #000a; font:14px/1.5 'Segoe UI',sans-serif; }\n.dk-group-menu strong { display:block; margin-bottom:6px; color:#ffb454; }\n.dk-group-menu ul { margin:0 0 10px; padding-left:18px; }\n.dk-group-menu li { margin-block:6px; }\n.dk-group-menu a { color:#dbc0ef; }\n.dk-group-menu small { display:block; color:#c8b9d2; }\n.dk-group-menu small.dk-group-source { color:#a89bb5; font-size:12px; }\n.dk-group-menu button { padding:5px 10px; border:1px solid #7b5792; border-radius:6px; background:#22162c; color:#eee; cursor:pointer; }\n.dk-listing-bar .dk-listing-groups-edit { padding:3px 9px; border:1px solid #6d5280; border-radius:3px; background:#2b1d36; color:#e6d6f2; cursor:pointer; font:inherit; }\n\n.dk-group-add { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:10px 0 6px; }\n.dk-group-add label { flex-basis:100%; color:#c8b9d2; font-size:12.5px; }\n.dk-group-add input { flex:1 1 130px; min-width:0; padding:5px 8px; border:1px solid #6d5280; border-radius:5px; background:#0f0a15; color:#eee; font:inherit; font-size:13px; }\n.dk-group-add small { flex-basis:100%; color:#f1c15b; font-size:12.5px; }\n\n/* The torrent navigation panel. Same rules as the Scene Edition's, because it is the\n   same module: the addresses it works on are UNIT3D's own, so it runs wherever this\n   script does. Anchored above the launcher bar, which sits at bottom:14px. */\n#dkokto-nav-dialog { position:fixed; inset:auto 16px 68px auto; z-index:2147482900; box-sizing:border-box; width:min(330px,calc(100vw - 24px)); padding:0; margin:0; background:#15101d; color:#f0e9f6; border:1px solid #9973b1; border-radius:6px; box-shadow:0 8px 30px #000a; font:14px \"Segoe UI\",system-ui,sans-serif; }\n#dkokto-nav-dialog[hidden] { display:none !important; }\n#dkokto-nav-dialog .dk-nav-head { display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:linear-gradient(#382546,#23182d); border-bottom:1px solid #624575; }\n#dkokto-nav-dialog .dk-nav-head strong { font:600 15px Consolas,monospace; letter-spacing:.06em; }\n#dkokto-nav-dialog .dk-nav-head button { padding:1px 9px; font-size:20px; }\n#dkokto-nav-dialog .dk-nav-body { padding:12px; display:grid; gap:10px; }\n#dkokto-nav-dialog .dk-nav-row { display:flex; align-items:center; gap:8px; }\n#dkokto-nav-dialog .dk-nav-label { flex:0 0 46px; color:#c9b5d7; }\n#dkokto-nav-dialog .dk-nav-mode { display:flex; align-items:center; gap:6px; padding:5px 10px; border:1px solid #7c5f8f; border-radius:4px; background:#1d1428; cursor:pointer; }\n#dkokto-nav-dialog .dk-nav-mode:has(input:checked) { background:#3b2450; border-color:#c092e0; }\n#dkokto-nav-dialog input[type=radio] { accent-color:#b07bd8; width:14px; height:14px; }\n#dkokto-nav-dialog :is(input[type=text],input[type=number]) { flex:1; min-width:0; border:1px solid #8b729a; background:#110a19; color:#e9dcf5; padding:7px; font:inherit; border-radius:3px; }\n#dkokto-nav-dialog button { padding:6px 11px; border:1px solid #9973b1; background:#382044; color:#fff; border-radius:3px; cursor:pointer; font:inherit; }\n#dkokto-nav-dialog button:hover:not(:disabled) { background:#56316e; border-color:#d2a2f1; }\n#dkokto-nav-dialog button:disabled { opacity:.5; cursor:default; }\n#dkokto-nav-dialog :is(button,input):focus-visible { outline:2px solid #e0bdff; outline-offset:2px; }\n#dkokto-nav-dialog .dk-nav-status { padding:6px 9px; background:#110a19; border:1px solid #4b3559; border-radius:3px; font:600 14px Consolas,monospace; color:#d9b8f5; }\n#dkokto-nav-dialog .dk-nav-message { color:#c9b5d7; line-height:1.45; min-height:1.2em; overflow-wrap:anywhere; }\n@media(max-width:500px) { #dkokto-nav-dialog { right:12px; left:12px; width:auto; bottom:110px; } }\n@media print { #dkokto-nav-dialog { display:none !important; } }\n\n/* A green tick that is YOUR verdict, not the check's: dotted ring, so it never passes for\n   the tool's own. The dialog says when you marked it and offers Undo. */\nbutton.dk-listing-badge[data-reviewed=yes] { outline:2px dotted #67df99 !important; outline-offset:2px; }\n.dk-reviewed { margin:14px 0; padding:10px 12px; border:1px solid #56406a; border-radius:4px; }\n.dk-reviewed h3 { margin:0 0 6px; font-size:14px; }\n.dk-reviewed p { margin:0 0 10px; color:#c8b9d2; font-size:13px; line-height:1.55; }\n";
+    const DPTI_CSS = "/* Standalone Torrent Inspector styling. Scoped to this script's own dialog,\n   launcher and listing badges; site theming is left untouched. */\n#dp-inspector-tools { position:fixed; right:14px; bottom:14px; z-index:2147482000; display:flex; gap:8px; }\n#dp-inspector-tools button { font:600 14px/1.2 \"Segoe UI\",system-ui,sans-serif; color:#f4e8ff; background:#3d2551; border:1px solid #a97fc6; border-radius:5px; padding:10px 14px; cursor:pointer; box-shadow:0 2px 10px #0009; }\n#dp-inspector-tools button:hover { background:#643784; }\n#dp-inspector-tools button:focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n\n.dk-hub { box-sizing:border-box; width:min(940px,calc(100vw - 24px)); max-height:88dvh; padding:0; overflow:auto; background:#15101d; color:#f0e9f6; border:1px solid #af83c8; border-radius:6px; font:15px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-hub::backdrop { background:#07040bcc; }\n.dk-hub header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 20px; background:linear-gradient(#392447,#20152b); }\n.dk-hub h2 { margin:0; font:600 22px Consolas,monospace; }\n.dk-hub-content { padding:16px 20px; }\n.dk-hub :is(button,input,select,textarea) { box-sizing:border-box; font:inherit; color:#f4e8ff; background:#24182f; border:1px solid #9873b0; border-radius:3px; padding:8px 10px; min-width:0; }\n.dk-hub button { cursor:pointer; }\n.dk-hub button:hover,.dk-hub button[aria-pressed=true] { background:#643784; }\n.dk-hub button:disabled { opacity:.5; cursor:default; }\n.dk-hub input:not([type=checkbox]),.dk-hub textarea { width:100%; }\n.dk-hub input[type=checkbox] { width:20px; height:20px; accent-color:#ad71d1; }\n.dk-hub label { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin:12px 0; }\n.dk-hub a { color:#e0b6ff; overflow-wrap:anywhere; }\n.dk-hub :is(button,a,input,textarea,select,summary):focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n.dk-hub .dk-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:10px 0; }\n.dk-hub .dk-row a { flex:1; min-width:140px; }\n.dk-hub pre { background:#0c0811; padding:12px; max-height:45dvh; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; font:13px/1.5 Consolas,monospace; }\n.dk-hub table { width:100%; border-collapse:collapse; }\n.dk-hub th,.dk-hub td { text-align:left; padding:6px; border-bottom:1px solid #493357; }\n.dk-hub td label { font-size:0; margin:0; }\n.dk-hub td select { font-size:14px; width:100%; }\n.dk-hub-message { padding:0 20px 16px; color:#e2bcfc; white-space:pre-wrap; }\n.dk-hub details { padding:12px 0; border-top:1px solid #624771; }\n.dk-hub summary { cursor:pointer; }\n\n.dk-inspector-table { overflow-x:auto; max-width:100%; }\n.dk-hub .dk-inspector-table table { min-width:640px; font-size:13px; }\n.dk-hub .dk-inspector-table td { vertical-align:top; overflow-wrap:anywhere; max-width:240px; }\n.dk-inspector-checks { padding:10px 14px; background:#25182f; border-left:3px solid #bd91d9; }\n.dk-naming { border:1px solid #725587; padding:12px; margin:12px 0 20px; background:#1c1425; }\n.dk-naming .dk-naming-status { font-weight:700; color:#ead7ff; }\n.dk-naming .dk-naming-errors { border-left:3px solid #e9ad71; padding-left:24px; }\n.dk-naming li { margin:8px 0; }\n.dk-naming details { margin:12px 0; }\n.dk-naming summary { cursor:pointer; color:#dabcdf; }\n\n.dk-listing-bar { display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; padding:12px; margin:8px 0; background:#21162b; border:1px solid #725587; color:#f0e9f6; font:14px/1.5 'Segoe UI',sans-serif; }\n.dk-listing-bar label { display:flex; gap:8px; align-items:center; cursor:pointer; }\n.dk-listing-bar .dk-listing-rules,.dk-hub .dk-naming-site { display:flex; gap:8px; align-items:center; }\n.dk-listing-bar .dk-listing-rules select,.dk-hub .dk-naming-site select { padding:3px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-hub .dk-naming-site { margin:0 0 10px; font-weight:600; color:#d9c4e8; }\n.dk-listing-bar .dk-listing-rules-edit,.dk-hub .dk-naming-site button { padding:3px 9px; border:1px solid #6d5280; border-radius:3px; background:#2b1d36; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-listing-bar .dk-listing-rules-edit:hover,.dk-hub .dk-naming-site button:hover { background:#3a2748; }\n.dk-profile-dialog { max-width:760px; width:92vw; }\n.dk-profile-tabs { display:flex; gap:8px; margin:0 0 14px; flex-wrap:wrap; }\n.dk-profile-tabs button { padding:6px 12px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-profile-tabs button[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-profile-form { display:flex; flex-direction:column; gap:14px; }\n.dk-profile-field { display:flex; flex-direction:column; gap:5px; font-weight:600; color:#d9c4e8; }\n.dk-profile-field :is(input,textarea,select) { padding:7px 9px; border:1px solid #6d5280; border-radius:3px; background:#1b1222; color:#efe4f7; font:inherit; }\n.dk-profile-field textarea,.dk-profile-json { font:13px/1.5 Consolas,'Courier New',monospace; width:100%; box-sizing:border-box; }\n.dk-profile-json { padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#dcc9ec; }\n.dk-profile-field small,.dk-profile-recipes small,.dk-profile-count { font-weight:400; color:#b9a6c9; font-size:12px; }\n.dk-profile-count { color:#a9e3c0; }\n.dk-profile-recipes { border:1px solid #56406a; border-radius:4px; padding:12px; display:flex; flex-direction:column; gap:7px; }\n.dk-profile-recipes legend { padding:0 6px; color:#d9c4e8; font-weight:600; }\n.dk-profile-recipes label { display:flex; gap:9px; align-items:center; font-size:14px; }\n.dk-profile-installed { border:1px solid #56406a; border-radius:4px; padding:12px; display:flex; flex-direction:column; gap:7px; }\n.dk-profile-installed small { color:#b9a6c9; font-size:12px; }\n.dk-profile-file { display:inline-flex; align-items:center; gap:8px; font-size:13px; color:#d9c4e8; }\n.dk-profile-status:not(:empty) { padding:9px 11px; border-left:3px solid #7d5c96; background:#20152a; color:#e6d6f2; }\n.dk-profile-status[data-tone=bad] { border-color:#e07a7a; }\n.dk-profile-status[data-tone=good] { border-color:#7ad39a; }\n.dk-profile-status[data-tone=warn] { border-color:#e0c07a; }\n.dk-listing-decision { display:inline-flex; gap:6px; align-items:center; margin-left:8px; font-size:12px; }\n.dk-listing-decision select { padding:2px 5px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-listing-decision[data-state=approved] select { border-color:#5fa87a; }\n.dk-listing-decision[data-state=rejected] select { border-color:#c97a7a; }\n.dk-listing-decision[data-state=asked] select { border-color:#c9b07a; }\n.dk-decision-mark { color:#b9a6c9; white-space:nowrap; }\n.dk-listing-badge[data-lead=yes] { margin:0 6px 0 0; }\n.dk-detail-page { display:block; padding:12px 14px; margin:10px 0; border:1px solid #5b406d; border-radius:4px; background:#1c1426; }\n.dk-detail-page ul { margin:8px 0 0; padding-left:20px; }\n.dk-detail-page li { margin:4px 0; color:#e0d2ec; font-size:13px; line-height:1.55; }\n.dk-detail-page li[data-severity=error] { color:#f0b5b5; }\n.dk-detail-page li[data-severity=error]::marker { color:#e07a7a; }\n.dk-detail-page li[data-severity=review]::marker { color:#e0c07a; }\n.dk-detail-page small { display:block; margin-top:9px; color:#a493b4; font-size:11.5px; }\n.dk-reply { margin-top:14px; border:1px solid #56406a; border-radius:4px; padding:10px 12px; }\n.dk-reply summary { cursor:pointer; font-weight:600; color:#d9c4e8; }\n.dk-reply p { color:#b9a6c9; font-size:13px; }\n.dk-reply-choice { padding:5px 11px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-reply-choice[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-reply-text { width:100%; box-sizing:border-box; margin:10px 0; padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#efe4f7; font:13px/1.6 Consolas,'Courier New',monospace; }\n.dk-reply { margin-top:14px; border:1px solid #56406a; border-radius:4px; padding:10px 12px; }\n.dk-reply summary { cursor:pointer; font-weight:600; color:#d9c4e8; }\n.dk-reply p { color:#b9a6c9; font-size:13px; }\n.dk-reply-choice { padding:5px 11px; border:1px solid #6d5280; border-radius:3px; background:#241730; color:#e6d6f2; cursor:pointer; font:inherit; }\n.dk-reply-choice[aria-pressed=true] { background:#5b3d75; border-color:#a97fc9; }\n.dk-reply-text { width:100%; box-sizing:border-box; margin:10px 0; padding:9px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#efe4f7; font:13px/1.6 Consolas,'Courier New',monospace; }\n.dk-listing-log { display:inline-flex; gap:8px; align-items:center; }\n.dk-compare-sides { display:grid; grid-template-columns:1fr 1fr; gap:12px; }\n.dk-compare-side { display:flex; flex-direction:column; gap:5px; font-weight:600; color:#d9c4e8; }\n.dk-compare-side textarea { font:13px/1.5 Consolas,'Courier New',monospace; padding:8px; border:1px solid #6d5280; border-radius:3px; background:#150e1d; color:#dcc9ec; width:100%; box-sizing:border-box; }\n.dk-compare-table { display:flex; flex-direction:column; border:1px solid #56406a; border-radius:4px; overflow:hidden; margin:10px 0; }\n.dk-compare-row { display:grid; grid-template-columns:minmax(120px,1fr) minmax(0,1.2fr) minmax(0,1.2fr); gap:10px; padding:7px 10px; border-bottom:1px solid #3d2c4c; font-size:13px; }\n.dk-compare-row:last-child { border-bottom:none; }\n.dk-compare-row:nth-child(odd) { background:#1d1426; }\n.dk-compare-row [data-larger=yes] { color:#a9e3c0; }\n@media (max-width:700px){ .dk-compare-sides,.dk-compare-row { grid-template-columns:1fr; } }\n.dk-listing-bar input[type=checkbox] { width:18px; height:18px; accent-color:#ad71d1; }\n.dk-listing-bar small { flex-basis:100%; color:#d2bedf; }\n.dk-listing-bar [role=status] { font-weight:600; }\nbutton.dk-listing-badge { display:inline-flex !important; align-items:center; justify-content:center; vertical-align:middle; flex-shrink:0; width:22px; height:22px; min-width:22px; padding:0 !important; margin:0 0 0 6px !important; border:1px solid currentColor !important; border-radius:4px !important; background:#160f1e !important; font:bold 15px/1 'Segoe UI',sans-serif !important; cursor:pointer; box-shadow:none !important; }\nbutton.dk-listing-badge[data-state=error] { color:#ff666d !important; }\nbutton.dk-listing-badge[data-state=pass] { color:#67df99 !important; }\nbutton.dk-listing-badge[data-state=review] { color:#f1c15b !important; }\nbutton.dk-listing-badge:focus-visible { outline:3px solid #eee !important; outline-offset:2px; }\n.dk-listing-dialog li { margin-block:8px; }\n.dk-listing-dialog h3 { overflow-wrap:anywhere; }\n\n@media(max-width:700px) {\n  #dp-inspector-tools { left:8px; right:8px; bottom:max(8px,env(safe-area-inset-bottom)); justify-content:center; }\n  #dp-inspector-tools button { min-height:44px; width:100%; }\n  .dk-hub { max-height:90dvh; }\n  .dk-hub header,.dk-hub-content { padding:12px; }\n  .dk-hub button { min-height:44px; }\n  .dk-hub input,.dk-hub select,.dk-hub textarea { font-size:16px; }\n  .dk-hub table tr { display:grid; grid-template-columns:1fr 1fr; padding:8px 0; }\n  .dk-hub table tr:first-child { display:none; }\n  .dk-hub table td { border:0; }\n  .dk-hub table td:first-child { grid-column:1/-1; }\n  .dk-hub .dk-inspector-table table tr { display:table-row; }\n  .dk-hub .dk-inspector-table table tr:first-child { display:table-row; }\n  .dk-hub .dk-inspector-table table td { border-bottom:1px solid #493357; }\n  button.dk-listing-badge { width:26px; height:26px; min-width:26px; font-size:17px !important; }\n}\n@media print { .dk-hub,#dp-inspector-tools { display:none !important; } }\n.dk-naming .dk-service-list { max-height:280px; overflow:auto; padding:6px 10px; background:#140e1c; border:1px solid #4b3559; border-radius:3px; }\n.dk-naming .dk-service-list p { margin:5px 0; overflow-wrap:anywhere; }\n.dk-naming .dk-service-list code { display:inline-block; min-width:96px; color:#e2bcfc; font:13px Consolas,monospace; }\n.dk-naming .dk-naming-service { margin:4px 0 8px; color:#cbb0e4; font:13px Consolas,monospace; }\nbutton.dk-listing-badge.dk-detail-badge { width:24px; height:24px; min-width:24px; font-size:16px !important; margin:0 0 0 8px !important; vertical-align:middle; }\n.dk-detail-links { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:10px 0 14px; font:14px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-detail-links .dk-detail-links-label { color:#c0adce; margin-right:2px; }\n.dk-detail-links a { padding:4px 9px; color:#e6cbff !important; background:#22162c; border:1px solid #6d5280; border-radius:3px; text-decoration:none; }\n.dk-detail-links a:hover { background:#3d2451; border-color:#c193e6; }\n.dk-detail-links a[data-exact=yes] { border-color:#9fdcb6; box-shadow:inset 0 0 0 1px #67df9933; }\n.dk-detail-links a:focus-visible,.dk-detail-links button:focus-visible { outline:2px solid #e8ceff; outline-offset:2px; }\n.dk-detail-links .dk-detail-copy { padding:4px 9px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-detail-links .dk-detail-copy:hover { background:#563173; }\n@media print { .dk-detail-links,.dk-detail-badge { display:none !important; } }\n.dk-detail-links .dk-detail-vs { padding:4px 11px; color:#ffe6b8; background:#3d2a17; border:1px solid #a8813f; border-radius:3px; cursor:pointer; font:inherit; font-weight:600; }\n.dk-detail-links .dk-detail-vs:hover { background:#5a3d1f; border-color:#e0b464; }\n/* [ MULTIPLE FILES ]: a pack says so under its name, and copies its list on click. */\n.dk-detail-files { margin:4px 0 2px; text-align:center; }\n.dk-detail-files-copy { padding:2px 8px; color:#b9a7c6; background:none; border:1px solid transparent; border-radius:4px; cursor:pointer; font:inherit; font-size:13px; letter-spacing:.08em; }\n.dk-detail-files-copy:hover, .dk-detail-files-copy:focus-visible { color:#f0e4ff; border-color:#8a6aa3; background:#2a1b38; }\n.dk-detail-files-copy[data-copied] { color:#9fe0a4; border-color:#4f8a56; }\n/* Release notes templates: the button beside the comment box, and its editor. */\n.dk-template-insert { display:inline-flex; align-items:center; gap:6px; margin:0 0 0 8px; vertical-align:middle; list-style:none; }\n.dk-template-insert-button { min-width:26px; padding:1px 7px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; font-size:14px; line-height:1.4; }\n.dk-template-insert-button:hover { background:#563173; border-color:#c193e6; }\n.dk-template-insert-button:focus-visible, .dk-template-edit:focus-visible { outline:2px solid #e0bdff; outline-offset:2px; }\n.dk-template-edit { padding:1px 8px; color:#b9a7c6; background:none; border:1px solid transparent; border-radius:3px; cursor:pointer; font:inherit; font-size:12px; }\n.dk-template-edit:hover { color:#f0e4ff; border-color:#8a6aa3; background:#2a1b38; }\n.dk-template-slot { margin:0 0 14px; padding:10px 12px; background:#1a1223; border:1px solid #6d5280; border-radius:4px; }\n.dk-template-slot-head { display:flex; align-items:center; gap:8px; font-weight:600; color:#e6cbff; }\n.dk-template-slot-head label { display:flex; align-items:center; gap:6px; cursor:pointer; }\n.dk-template-caption { display:block; margin:8px 0 4px; color:#b9a7c7; font-size:12px; }\n.dk-template-uses { display:block; margin:6px 0 8px; color:#b9a7c7; font-size:12px; }\n.dk-template-copy { padding:3px 10px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-template-copy:hover { background:#563173; border-color:#c193e6; }\n.dk-template-actions { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 6px; }\n.dk-template-status { min-height:1.2em; margin:4px 0 0; color:#d5c2e6; }\n.dk-detail-compare { margin:0 0 16px; padding:12px 14px; background:#1a1223; border:1px solid #6d5280; border-radius:4px; font:14px/1.6 \"Segoe UI\",system-ui,sans-serif; color:#e4d5f2; }\n.dk-detail-compare h3 { margin:12px 0 6px; font-size:15px; color:#e6cbff; }\n.dk-detail-compare h3:first-child { margin-top:0; }\n.dk-detail-compare p { margin:4px 0 8px; }\n.dk-detail-compare small { display:block; margin-top:10px; color:#b9a7c7; font-size:12px; }\n.dk-detail-compare .dk-compare-note { color:#ffe6b8; }\n.dk-compare-slot { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:5px 0; }\n.dk-compare-slot > span { flex:1 1 220px; min-width:0; overflow-wrap:anywhere; color:#cdb8e0; }\n.dk-detail-compare button { padding:4px 10px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-detail-compare button:hover { background:#563173; border-color:#c193e6; }\n.dk-detail-compare button:focus-visible { outline:2px solid #e0bdff; outline-offset:2px; }\n.dk-detail-compare .dk-compare-drop { background:#2a1a22; border-color:#8a5a6a; }\n.dk-detail-compare .dk-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }\n.dk-detail-compare .dk-compare-verdict { margin:10px 0 14px; padding:10px 12px; border-radius:4px; border:1px solid #8a6aa3; background:#241730; }\n.dk-detail-compare .dk-compare-verdict strong { display:block; margin-bottom:4px; font-size:15px; }\n.dk-detail-compare .dk-compare-verdict p { margin:0; }\n.dk-detail-compare .dk-compare-verdict[data-state=differs] { border-color:#d08a6a; background:#2c1a18; }\n.dk-detail-compare .dk-compare-verdict[data-state=differs] strong { color:#ffc9a8; }\n.dk-detail-compare .dk-compare-verdict[data-state=matches] { border-color:#6ea87f; background:#16241b; }\n.dk-detail-compare .dk-compare-verdict[data-state=matches] strong { color:#a9e3c0; }\n@media print { .dk-detail-compare { display:none !important; } }\n.dk-listing-bar .dk-listing-audit { padding:5px 11px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-listing-bar .dk-listing-audit:hover { background:#563173; border-color:#c193e6; }\n.dk-hub .dk-listing-copy { margin-top:12px; }\n.dk-listing-dialog pre { max-height:50dvh; }\n.dk-listing-dialog pre { max-height:50dvh; }\n.dk-request-open { margin-left:6px; padding:2px 8px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:12px/1.5 \"Segoe UI\",system-ui,sans-serif; vertical-align:middle; }\n.dk-request-open:hover { background:#563173; border-color:#c193e6; }\n.dk-request-open:focus-visible { outline:2px solid #e0bdff; outline-offset:2px; }\n.dk-hub .dk-tracker-find { display:block; width:100%; box-sizing:border-box; margin:10px 0 4px; padding:7px 10px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:4px; font:inherit; }\n.dk-hub .dk-tracker-find:focus-visible { outline:2px solid #e0bdff; outline-offset:1px; }\n.dk-hub details.dk-tracker-group { padding:0; }\n.dk-hub details.dk-tracker-group > summary { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 12px; color:#d9c4e8; font-weight:600; cursor:pointer; list-style:none; }\n.dk-hub details.dk-tracker-group > summary::-webkit-details-marker { display:none; }\n.dk-hub details.dk-tracker-group > summary::before { content:'▸'; margin-right:6px; color:#a98cc4; }\n.dk-hub details.dk-tracker-group[open] > summary::before { content:'▾'; }\n.dk-hub details.dk-tracker-group > summary:hover { background:#241730; }\n.dk-hub details.dk-tracker-group > summary:focus-visible { outline:2px solid #e0bdff; outline-offset:-2px; }\n.dk-hub .dk-tracker-count { padding:1px 8px; color:#cdb8e0; background:#2c1d3a; border-radius:10px; font:12px/1.6 inherit; font-weight:400; }\n.dk-hub details.dk-tracker-group > .dk-tracker-row { padding:0 12px 0 26px; }\n.dk-hub details.dk-tracker-group > .dk-tracker-row:last-child { padding-bottom:10px; }\n.dk-hub .dk-tracker-tag { margin-left:6px; padding:1px 6px; color:#c9b3dc; background:#2a1c37; border:1px solid #4b3a5c; border-radius:9px; font-size:11px; font-weight:400; }\n.dk-hub .dk-tracker-address-toggle { padding:3px 9px; color:#e6cbff; background:#2a1a38; border:1px solid #6d5280; border-radius:3px; cursor:pointer; font:12px inherit; }\n.dk-hub .dk-tracker-address-toggle:hover { background:#3d2451; }\n.dk-hub .dk-tracker-address-toggle[aria-expanded=true] { background:#482b60; border-color:#c193e6; }\n.dk-hub details.dk-tracker-group .dk-tracker-row label { flex:0 0 auto; min-width:260px; justify-content:flex-start; text-align:left; }\n.dk-hub details.dk-tracker-group .dk-tracker-row label > span.dk-tracker-tag { flex:0 0 auto; }\n.dk-hub .dk-tracker-group { margin:12px 0; padding:8px 12px 10px; border:1px solid #6d5280; border-radius:4px; }\n.dk-hub .dk-tracker-group legend { padding:0 6px; color:#d9c4e8; font-weight:600; }\n.dk-hub .dk-tracker-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:6px 0; }\n.dk-hub .dk-tracker-row label { display:flex; align-items:center; gap:6px; min-width:190px; margin:0; cursor:pointer; }\n.dk-hub .dk-tracker-row input[type=checkbox] { width:16px; height:16px; accent-color:#ad71d1; }\n.dk-hub .dk-tracker-url,.dk-hub .dk-tracker-row input[type=text] { flex:1; min-width:230px; padding:4px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:12px/1.5 ui-monospace,Consolas,monospace; }\n.dk-hub .dk-tracker-row select { padding:4px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n@media print { .dk-request-open,.dk-request-bar,.dk-request-links { display:none !important; } }\n.dk-request-seen { margin-left:6px; color:#9fdcb6; font:12px/1.5 \"Segoe UI\",system-ui,sans-serif; white-space:nowrap; }\n.dk-request-float { position:absolute; z-index:2147483000; box-shadow:0 3px 10px #0009; }\n.dk-hub .dk-request-term { display:flex; flex-direction:column; gap:4px; margin:8px 0 4px; color:#d9c4e8; }\n.dk-hub .dk-request-term input { padding:6px 8px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:14px/1.5 \"Segoe UI\",system-ui,sans-serif; }\n.dk-listing-badge[data-state=error][data-banned=yes] { box-shadow:0 0 0 2px #ff6b6b88; }\n@media print { .dk-request-seen,.dk-request-float { display:none !important; } }\n.dk-hub .dk-request-step { min-width:220px; }\n.dk-hub .dk-request-step[disabled] { opacity:.6; cursor:default; }\n\n/* A badge rides beside the title without adding height to the row: in grouped and\n   compact listing views a taller badge overflowed onto the title below it. */\nbutton.dk-listing-badge { line-height:0 !important; max-height:22px; box-sizing:border-box; position:relative; top:-1px; }\nbutton.dk-listing-badge.dk-detail-badge { max-height:24px; top:0; }\n@media(max-width:700px) { button.dk-listing-badge { width:26px; height:26px; min-width:26px; font-size:17px !important; max-height:26px; } }\n.dk-listing-bar .dk-listing-rules,.dk-hub .dk-naming-site { display:flex; gap:8px; align-items:center; }\n.dk-listing-bar .dk-listing-rules select,.dk-hub .dk-naming-site select { padding:3px 6px; color:#efe4f7; background:#1b1222; border:1px solid #6d5280; border-radius:3px; font:inherit; }\n.dk-hub .dk-naming-site { margin:0 0 10px; font-weight:600; color:#d9c4e8; }\n\n.dk-group-tag { color:#ffb454 !important; cursor:pointer; border-bottom:1px dotted currentColor; }\n.dk-group-tag:hover, .dk-group-tag:focus-visible { color:#ffd08a !important; outline:none; border-bottom-style:solid; }\n.dk-group-menu { position:absolute; z-index:2147483000; max-width:min(360px,92vw); padding:12px 14px; border:1px solid #7b5792; border-radius:8px; background:#160f1e; color:#eee; box-shadow:0 10px 30px #000a; font:14px/1.5 'Segoe UI',sans-serif; }\n.dk-group-menu strong { display:block; margin-bottom:6px; color:#ffb454; }\n.dk-group-menu ul { margin:0 0 10px; padding-left:18px; }\n.dk-group-menu li { margin-block:6px; }\n.dk-group-menu a { color:#dbc0ef; }\n.dk-group-menu small { display:block; color:#c8b9d2; }\n.dk-group-menu small.dk-group-source { color:#a89bb5; font-size:12px; }\n.dk-group-menu button { padding:5px 10px; border:1px solid #7b5792; border-radius:6px; background:#22162c; color:#eee; cursor:pointer; }\n.dk-listing-bar .dk-listing-groups-edit { padding:3px 9px; border:1px solid #6d5280; border-radius:3px; background:#2b1d36; color:#e6d6f2; cursor:pointer; font:inherit; }\n\n.dk-group-add { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:10px 0 6px; }\n.dk-group-add label { flex-basis:100%; color:#c8b9d2; font-size:12.5px; }\n.dk-group-add input { flex:1 1 130px; min-width:0; padding:5px 8px; border:1px solid #6d5280; border-radius:5px; background:#0f0a15; color:#eee; font:inherit; font-size:13px; }\n.dk-group-add small { flex-basis:100%; color:#f1c15b; font-size:12.5px; }\n\n/* The torrent navigation panel. Same rules as the Scene Edition's, because it is the\n   same module: the addresses it works on are UNIT3D's own, so it runs wherever this\n   script does. Anchored above the launcher bar, which sits at bottom:14px. */\n#dkokto-nav-dialog { position:fixed; inset:auto 16px 68px auto; z-index:2147482900; box-sizing:border-box; width:min(330px,calc(100vw - 24px)); padding:0; margin:0; background:#15101d; color:#f0e9f6; border:1px solid #9973b1; border-radius:6px; box-shadow:0 8px 30px #000a; font:14px \"Segoe UI\",system-ui,sans-serif; }\n#dkokto-nav-dialog[hidden] { display:none !important; }\n#dkokto-nav-dialog .dk-nav-head { display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:linear-gradient(#382546,#23182d); border-bottom:1px solid #624575; }\n#dkokto-nav-dialog .dk-nav-head strong { font:600 15px Consolas,monospace; letter-spacing:.06em; }\n#dkokto-nav-dialog .dk-nav-head button { padding:1px 9px; font-size:20px; }\n#dkokto-nav-dialog .dk-nav-body { padding:12px; display:grid; gap:10px; }\n#dkokto-nav-dialog .dk-nav-row { display:flex; align-items:center; gap:8px; }\n#dkokto-nav-dialog .dk-nav-label { flex:0 0 46px; color:#c9b5d7; }\n#dkokto-nav-dialog .dk-nav-mode { display:flex; align-items:center; gap:6px; padding:5px 10px; border:1px solid #7c5f8f; border-radius:4px; background:#1d1428; cursor:pointer; }\n#dkokto-nav-dialog .dk-nav-mode:has(input:checked) { background:#3b2450; border-color:#c092e0; }\n#dkokto-nav-dialog input[type=radio] { accent-color:#b07bd8; width:14px; height:14px; }\n#dkokto-nav-dialog :is(input[type=text],input[type=number]) { flex:1; min-width:0; border:1px solid #8b729a; background:#110a19; color:#e9dcf5; padding:7px; font:inherit; border-radius:3px; }\n#dkokto-nav-dialog button { padding:6px 11px; border:1px solid #9973b1; background:#382044; color:#fff; border-radius:3px; cursor:pointer; font:inherit; }\n#dkokto-nav-dialog button:hover:not(:disabled) { background:#56316e; border-color:#d2a2f1; }\n#dkokto-nav-dialog button:disabled { opacity:.5; cursor:default; }\n#dkokto-nav-dialog :is(button,input):focus-visible { outline:2px solid #e0bdff; outline-offset:2px; }\n#dkokto-nav-dialog .dk-nav-status { padding:6px 9px; background:#110a19; border:1px solid #4b3559; border-radius:3px; font:600 14px Consolas,monospace; color:#d9b8f5; }\n#dkokto-nav-dialog .dk-nav-message { color:#c9b5d7; line-height:1.45; min-height:1.2em; overflow-wrap:anywhere; }\n@media(max-width:500px) { #dkokto-nav-dialog { right:12px; left:12px; width:auto; bottom:110px; } }\n@media print { #dkokto-nav-dialog { display:none !important; } }\n\n/* A green tick that is YOUR verdict, not the check's: dotted ring, so it never passes for\n   the tool's own. The dialog says when you marked it and offers Undo. */\nbutton.dk-listing-badge[data-reviewed=yes] { outline:2px dotted #67df99 !important; outline-offset:2px; }\n.dk-reviewed { margin:14px 0; padding:10px 12px; border:1px solid #56406a; border-radius:4px; }\n.dk-checklist label { display:flex; gap:8px; align-items:flex-start; cursor:pointer; }\n.dk-checklist input[type=checkbox] { margin-top:4px; flex:none; }\n.dk-checklist-hide, .dk-checklist-hidden button { margin-left:8px; font-size:12px; padding:1px 6px; }\n.dk-checklist-note { display:block; margin:6px 0 10px; opacity:.8; }\n.dk-checklist-hidden { margin-top:8px; }\n.dk-checklist-hidden li { opacity:.75; }\n.dk-source { margin:14px 0; padding:10px 12px; border:1px solid #56406a; border-radius:4px; }\n.dk-source h3 { margin:0 0 6px; font-size:14px; }\n.dk-source p { margin:0 0 8px; color:#c8b9d2; font-size:13px; line-height:1.55; }\n.dk-source-banner { position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:99999; max-width:min(92vw,760px); padding:10px 14px; background:#1a1020; color:#eee; border:1px solid #76548c; border-radius:6px; font:13px/1.5 system-ui,sans-serif; box-shadow:0 8px 24px rgba(0,0,0,.45); }\n.dk-source-row { margin:0 0 8px; padding-bottom:8px; border-bottom:1px solid #3a2a48; }\n.dk-source-row strong { display:block; }\n.dk-source-row[data-state=error] strong { color:#ff8a8a; }\n.dk-source-row[data-state=pass] strong { color:#7fe0a0; }\n.dk-source-row[data-state=review] strong { color:#ffd166; }\n.dk-source-title { display:block; color:#c8b9d2; overflow-wrap:anywhere; }\n.dk-source-file { display:block; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; white-space:pre-wrap; overflow-wrap:anywhere; }\n.dk-source-spaces { display:block; color:#ffd166; font-size:12px; }\n.dk-source-ids { display:block; color:#c8b9d2; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; overflow-wrap:anywhere; }\n.dk-source-what { display:grid; grid-template-columns:max-content 1fr; gap:2px 10px; margin:0 0 8px; font-size:12px; }\n.dk-source-what dt { color:#a893b8; }\n.dk-source-what dd { margin:0; font-family:ui-monospace,Menlo,Consolas,monospace; overflow-wrap:anywhere; }\n.dk-source-bits { display:block; }\n.dk-source-row a { color:#dbc0ef; }\n.dk-source-banner small { display:block; margin:4px 0 6px; opacity:.75; }\n.dk-reviewed h3 { margin:0 0 6px; font-size:14px; }\n.dk-reviewed p { margin:0 0 10px; color:#c8b9d2; font-size:13px; line-height:1.55; }\n\n/* TorrentLeech and FileList torrent pages (elsewhere.js): one panel under the name. */\n.dk-elsewhere { margin:12px 0 16px; padding:10px 14px; border:1px solid #6d5280; border-radius:6px; background:#1a1020; color:#eee; font:14px/1.5 \"Segoe UI\",system-ui,sans-serif; text-align:left; }\n.dk-elsewhere .dk-elsewhere-heading { margin:0 0 4px; font-size:15px; color:#e6cbff; }\n.dk-elsewhere .dk-elsewhere-note, .dk-elsewhere .dk-elsewhere-report { margin:0 0 8px; color:#c8b9d2; font-size:13px; }\n.dk-elsewhere-row { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:6px 0 10px; }\n.dk-elsewhere-row .dk-detail-links-label { color:#c0adce; margin-right:2px; }\n.dk-elsewhere-row a { padding:4px 9px; color:#e6cbff !important; background:#22162c; border:1px solid #6d5280; border-radius:3px; text-decoration:none; }\n.dk-elsewhere-row a:hover { background:#3d2451; border-color:#c193e6; }\n.dk-elsewhere-row a[data-exact=yes] { border-color:#9fdcb6; }\n.dk-elsewhere .dk-detail-copy { padding:4px 9px; color:#f0e4ff; background:#3a2350; border:1px solid #8a6aa3; border-radius:3px; cursor:pointer; font:inherit; }\n.dk-elsewhere .dk-source { margin:10px 0 6px; }\n.dk-elsewhere .dk-source p { color:#c8b9d2; }\n";
 
 // Where the settings live, so that they are the same settings on every tracker.
 //
@@ -943,7 +945,16 @@ const DKOKTO_RELEASE_TITLE = (() => {
     const SKIP='.dk-detail-links,.dk-detail-compare,.dk-detail-page,.dk-detail-files,.dk-template-insert,.dk-group-menu,.dk-listing-decision,'
         +'.dk-request-links,.dk-request-bar,.dk-request-page,.dk-listing-dialog,.dk-listing-bar,.dk-hub,'
         +'#dkokto-hub,#dkokto-tools,#dkokto-game-dialog,#dkokto-nav-dialog,#dkokto-request-dialog,'
-        +'#dp-inspector-hub,#dp-inspector-tools,.torrent-mediainfo-dump,textarea,input,pre,code,nav,footer';
+        +'#dp-inspector-hub,#dp-inspector-tools,.torrent-mediainfo-dump,textarea,input,pre,code,nav,footer,'
+        // The description is the uploader's text, not the page's own name: an NFO quoted in it
+        // names the file, which reads like a release and can be shorter than the real name.
+        // UNIT3D renders it as .bbcode-rendered (HomieHelpDesk torrent 78628, saved
+        // 22 Sep 2026: the badge landed on the NFO's file name in Release Notes).
+        +'.bbcode-rendered';
+    // The page's own name element, where a site has one (UNIT3D's h1.torrent__name holds the
+    // release name on HomieHelpDesk and OnlyEncodes, the media title on DarkPeers-shaped
+    // pages): when it reads like a release it wins a tie against anything else.
+    const OWN_NAME='.torrent__name';
     // The element's own text, without this script's badge or lookup row.
     // Cloning is only worth it when there is something of ours inside: on a page with three
     // thousand candidates, cloning every one costs six times what checking first does.
@@ -979,7 +990,7 @@ const DKOKTO_RELEASE_TITLE = (() => {
             if(raw.length>TOO_LONG||raw.length<TOO_SHORT)continue;
             if(node.closest?.(SKIP))continue;
             const text=textOf(node),value=score(text);
-            if(value)hits.push({node,title:text,score:value});
+            if(value)hits.push({node,title:text,score:value+(node.matches?.(OWN_NAME)?1:0)});
             if(hits.length>=SCORED)break;
         }
         for(const hit of hits) {
@@ -1818,6 +1829,7 @@ const DKOKTO_RULES = ((profiles) => {
     const booksOf=key=>profiles.get(key)?.books==='own'?'own':'base';
     const musicOf=key=>profiles.get(key)?.music==='own'?'own':'base';
     const labelOf=key=>sites().find(site=>site.key===key)?.label||'DarkPeers';
+    const hostsOf=key=>(sites().find(site=>site.key===key)?.hosts||[]).filter(host=>!/^www\./.test(host));
     // In words, for the panel: "in hand 10 Sep 2026", or the honest absence of a date.
     const guideDate=key=>sites().find(site=>site.key===key)?.guideDate||'';
     const guideSince=key=>{const date=guideDate(key);return date?'in hand '+date:'as supplied; the date it was supplied was not recorded';};
@@ -2023,20 +2035,233 @@ const DKOKTO_RULES = ((profiles) => {
         return issues;
     }
     // These are standing notes, not findings against this title: a badge stays green.
-    const BUILTIN_BASELINE=['zenith-standing','zenith-episode','zenith-ab-check','zenith-eb-check','zenith-mu-files'];
+    // book-own and music-own are naming.js saying whose book / music naming applies on a
+    // tracker whose profile names them its own way: information, never a finding.
+    const BUILTIN_BASELINE=['zenith-standing','zenith-episode','zenith-ab-check','zenith-eb-check','zenith-mu-files','book-own','music-own'];
     const BASELINE=BUILTIN_BASELINE;
     // Everything that is a standing note rather than a finding: the built-ins, plus the
     // notes each added profile carries.
     const baseline=()=>[...BUILTIN_BASELINE,...profiles.baseline()];
     // A profile may list the resolutions its tracker accepts; otherwise its base decides.
     const resolutions=site=>profiles.get(site)?.resolutions?.length?profiles.get(site).resolutions:null;
-    return {list,labelOf,guideDate,guideSince,current,choose,forget,check,books,siteFor,baseOf,booksOf,musicOf,baseline,resolutions,added,hasRules,settled,BASELINE,KEY,HOSTS,
+    return {list,labelOf,hostsOf,guideDate,guideSince,current,choose,forget,check,books,siteFor,baseOf,booksOf,musicOf,baseline,resolutions,added,hasRules,settled,BASELINE,KEY,HOSTS,
         bannedAuthors:()=>[...BANNED_AUTHORS],bannedWorks:()=>[...BANNED_WORKS],use(store){backing=store;migrated=false;}};
 })(typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./profiles.js'):DKOKTO_PROFILES);
 
+// Does the report belong to this file, and is this the release the source tracker has?
+//
+// Two page-local questions, answered from text already on the torrent page: the
+// MediaInfo report's Unique ID (a Matroska report writes it as a decimal and the same
+// number in hex — halves that disagree were typed by hand), the report's file size and
+// Complete name against the page's own file list (the page's Type field against the name
+// is page-core.js's job already). Plus the pieces of a cross-tracker check: a fingerprint of
+// an upload (its Unique ID, file names, folder, sizes) and a comparison of that fingerprint
+// with the plain text of another tracker's torrent page, so that opening the same release
+// where it was first published says whether it is the same file. Nothing here reads the
+// DOM or the network: text in, findings out. source.js does the page work.
+//
+// The shape of the checks follows the "MidnightScene Mod Helper" userscript Khamere
+// supplied on 22 Sep 2026; the code is this project's own.
+const DKOKTO_SOURCE_CORE = (() => {
+    const key=s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'');
+    const field=(t,...names)=>names.map(n=>t?.fields?.[key(n)]).find(Boolean)||'';
+    // Unique ID → 32 hex characters. {bad:true} where the decimal and the hex disagree.
+    function uniqueId(raw) {
+        const s=String(raw||'').trim();
+        if(!s)return null;
+        const hex=s.match(/0x([0-9a-f]{8,40})\b/i);
+        const dec=s.match(/^(\d{10,40})(?=\s|$|\()/);
+        try{
+            if(hex&&dec&&BigInt('0x'+hex[1])!==BigInt(dec[1]))return {bad:true};
+            const value=hex?BigInt('0x'+hex[1]):dec?BigInt(dec[1]):null;
+            if(value===null||value===0n||value>=2n**128n)return null;
+            return {hex:value.toString(16).toUpperCase().padStart(32,'0')};
+        }catch{return null;}
+    }
+    // "20.4 GiB" / "21 904 512 000 bytes" → bytes, or 0.
+    function bytesOf(text) {
+        const s=String(text||'').replace(/[\s\u00a0\u202f]/g,'');
+        const plain=s.match(/^(\d{4,})(?:bytes)?$/i);
+        if(plain)return Number(plain[1]);
+        const m=s.match(/([\d.,]+)(B|KiB|MiB|GiB|TiB|KB|MB|GB|TB)$/i);
+        if(!m)return 0;
+        const n=parseFloat(m[1].replace(',','.'));
+        const pow={B:0,KIB:1,KB:1,MIB:2,MB:2,GIB:3,GB:3,TIB:4,TB:4}[m[2].toUpperCase()];
+        return Number.isFinite(n)?n*Math.pow(1024,pow):0;
+    }
+    const base=name=>String(name||'').replace(/\\/g,'/').split('/').pop();
+    const stem=name=>base(name).replace(/\.[^.]+$/,'');
+    const VIDEO=/\.(?:mkv|mp4|m2ts|avi|ts|m4v|wmv|mov|mpg|vob|iso)$/i;
+    // The report against the page's file rows ({path,bytes}). Matched by the report's
+    // Complete name, or the only video file where there is just one.
+    function reportAgainstFiles(file,rows) {
+        const general=file?.general?.[0];
+        const list=(Array.isArray(rows)?rows:[]).filter(row=>row&&row.path);
+        const out={name:{report:'',found:null},size:{report:0,file:0,match:null}};
+        if(!general||!list.length)return out;
+        const complete=base(field(general,'Complete name','CompleteName'));
+        out.name.report=complete;
+        const videos=list.filter(row=>VIDEO.test(row.path));
+        const byName=complete?list.find(row=>base(row.path)===complete):null;
+        if(complete)out.name.found=!!byName;
+        const target=byName||(videos.length===1?videos[0]:null);
+        const reported=bytesOf(field(general,'File size','FileSize'));
+        const actual=target?Number(target.bytes)||0:0;
+        out.size.report=reported;out.size.file=actual;
+        if(reported&&actual)out.size.match=Math.abs(reported-actual)/actual<=0.02;
+        return out;
+    }
+    // Every Unique ID on a page, as 32 hex characters.
+    function idsIn(text) {
+        const ids=new Set();
+        const rx=/(?:Unique ID|Identifiant unique)\s*:\s*(0x[0-9A-F]+|[0-9]{1,40}(?:\s*\(0x[0-9A-F]+\))?)/gi;
+        let m;
+        while((m=rx.exec(text))){const n=uniqueId(m[1]);if(n&&n.hex)ids.add(n.hex);}
+        return ids;
+    }
+    // An upload's fingerprint against another page's text.
+    function compare(pageText,entry) {
+        const text=String(pageText||'');
+        const ids=idsIn(text);
+        // No ID on the page is no answer, not a wrong one: null, and idsOnPage says why.
+        const idMatch=entry.uidHex&&ids.size?ids.has(String(entry.uidHex).toUpperCase()):null;
+        // A page that prints file names in lower case (TorrentLeech does) still names the
+        // file; caseOnly says the match needed that allowance.
+        const lower=text.toLowerCase();
+        let caseOnly=false;
+        const has=needle=>{if(!needle)return false;if(text.includes(needle))return true;if(lower.includes(String(needle).toLowerCase())){caseOnly=true;return true;}return false;};
+        const nameMatch=entry.fileBase?has(entry.fileBase):null;
+        const folderMatch=entry.folder?has(entry.folder):null;
+        const files=Array.isArray(entry.files)?entry.files:[];
+        const filesFound=files.filter(name=>has(name)).length;
+        const wanted=[entry.bytes,entry.totalBytes].map(Number).filter(b=>b>1e6);
+        let sizeMatch=wanted.length?false:null,sizesOnPage=0;
+        for(const b of wanted) {
+            const digits=String(Math.round(b)).split('').join('[,.\\s\\u00a0\\u202f]?');
+            if(new RegExp('(?:^|[^\\d])'+digits+'(?:[^\\d]|$)').test(text))sizeMatch=true;
+        }
+        const sizeRx=/(\d+(?:[.,]\d+)?)\s*(KiB|MiB|GiB|TiB|KB|MB|GB|TB)\b/gi;
+        let sm;
+        while((sm=sizeRx.exec(text))) {
+            const b=bytesOf(sm[0]);
+            if(b<1e6)continue;
+            sizesOnPage++;
+            if(wanted.some(w=>Math.abs(b-w)/w<0.005))sizeMatch=true;
+        }
+        const mentioned=!!(idMatch||nameMatch||folderMatch||(entry.title&&text.includes(entry.title)));
+        return {ids,idsOnPage:ids.size,idMatch,nameMatch,folderMatch,filesFound,filesTotal:files.length,sizeMatch,sizesOnPage,mentioned,caseOnly};
+    }
+    return {uniqueId,bytesOf,reportAgainstFiles,idsIn,compare,base,stem};
+})();
+
+// Torrent pages on trackers that are not UNIT3D: where a release is, and what its page
+// says about the file. One entry per site, read from pages Khamere saved and sent on
+// 22 Sep 2026 — a TorrentLeech torrent page (torrent 241837762) and two FileList details
+// pages (975915, a one-file movie; 976307, a ten-file season) with their Media Info pages.
+// Nothing here is guessed from a site's reputation: every selector is one those pages had.
+//
+// Pure where it can be: `where()` takes an address, `read()` takes a document. Nothing is
+// fetched; the Media Info page on FileList is a page you open yourself.
+const DKOKTO_ELSEWHERE_CORE = (() => {
+    const core=typeof DKOKTO_SOURCE_CORE!=='undefined'?DKOKTO_SOURCE_CORE:(typeof require==='function'?require('./source-core.js'):null);
+    const text=node=>String(node?.textContent||'').replace(/\s+/g,' ').trim();
+    // A block of lines the site wrote with <br />: textContent runs them together, so the
+    // breaks are put back as newlines before the report is parsed.
+    function lines(node) {
+        if(!node)return '';
+        const out=[];
+        const walk=n=>{for(const child of n.childNodes){if(child.nodeType===3)out.push(child.nodeValue);else if(child.nodeName==='BR')out.push('\n');else walk(child);}};
+        walk(node);
+        return out.join('').replace(/\u00a0/g,' ');
+    }
+    const SITES={
+        // TorrentLeech. The page: <h2 id="torrentnameid"> for the name; a "Torrent Info"
+        // table whose "Size" row holds the total; #fileListTable (Filename, Size) with the
+        // file names in lower case, as the site prints them; an NFO but no MediaInfo, so
+        // there is no Unique ID to read here.
+        'torrentleech.org':{
+            key:'tl',label:'TorrentLeech',
+            where(at){const m=at.pathname.match(/^\/torrent\/(\d{1,12})(?:\/|$)/);return m?{id:m[1],page:'torrent'}:null;},
+            url(id){return 'https://www.torrentleech.org/torrent/'+id;},
+            title(doc){return text(doc.querySelector('#torrentnameid'));},
+            files(doc){return [...doc.querySelectorAll('#fileListTable tbody tr')].map(row=>{const cells=row.querySelectorAll('td');
+                return cells.length>=2?{path:text(cells[0]),bytes:core?core.bytesOf(text(cells[1])):0}:null;}).filter(row=>row&&row.path);},
+            total(doc){const row=[...doc.querySelectorAll('.torrent_info_details td.description')].find(td=>text(td)==='Size');
+                return row&&core?core.bytesOf(text(row.nextElementSibling)):0;},
+            report(){return '';},
+            reportLink(){return '';},
+            lowercases:true,
+        },
+        // FileList. details.php?id=N: the name in .cblock-header h4; "Size" under a <b> in
+        // the details block; the file list only in the title attribute of the "Files"
+        // tooltip (HTML, name and size in alternating divs); "Media Info … View" linking to
+        // mediainfo.php?id=N. That page carries the whole report in a monospace <font>
+        // block with <br /> line breaks and &nbsp; padding, Unique ID included, and links
+        // back to details.php?id=N. Both addresses are the same torrent here.
+        'filelist.io':{
+            key:'fl',label:'FileList',
+            where(at){const m=at.pathname.match(/^\/(details|mediainfo)\.php$/);const id=at.searchParams.get('id');
+                return m&&/^\d{1,12}$/.test(id||'')?{id,page:m[1]==='details'?'torrent':'report'}:null;},
+            url(id){return 'https://filelist.io/details.php?id='+id;},
+            title(doc){const h=doc.querySelector('.cblock-header h4');if(!h)return '';const a=h.querySelector('a[href*="details.php?id="]');return text(a||h);},
+            files(doc){
+                const span=[...doc.querySelectorAll('span[data-toggle="tooltip"][title]')].find(s=>/\bFiles\b/.test(text(s)));
+                if(!span)return [];
+                const holder=doc.createElement('div');holder.innerHTML=span.getAttribute('title')||'';
+                const cells=[...holder.querySelectorAll('div')].filter(d=>!d.classList.contains('clearfix')).map(text);
+                const out=[];
+                for(let i=0;i+1<cells.length;i+=2)if(cells[i])out.push({path:cells[i],bytes:core?core.bytesOf(cells[i+1]):0});
+                return out;
+            },
+            total(doc){const b=[...doc.querySelectorAll('b')].find(n=>text(n)==='Size');
+                if(!b||!core)return 0;const m=(b.parentElement?.textContent||'').match(/Size\s*([\d.,]+\s*[KMGT]i?B)/i);return m?core.bytesOf(m[1]):0;},
+            report(doc){const font=[...doc.querySelectorAll('.cblock-innercontent font')].find(f=>/^General\b/.test(lines(f).trim()));return font?lines(font):'';},
+            reportLink(doc){const a=doc.querySelector('a[href*="mediainfo.php?id="]');return a?a.getAttribute('href'):'';},
+            lowercases:false,
+        },
+    };
+    const hosts=()=>Object.keys(SITES);
+    const site=hostname=>SITES[String(hostname||'').toLowerCase().replace(/^www\./,'')]||null;
+    // Which torrent an address is about, on a site listed here.
+    function where(url) {
+        try{
+            const at=new URL(String(url));
+            const host=at.hostname.toLowerCase().replace(/^www\./,'');
+            const s=SITES[host];if(!s)return null;
+            const hit=s.where(at);
+            return hit?{host,id:hit.id,page:hit.page,site:s}:null;
+        }catch{return null;}
+    }
+    // Everything the page says about the release, in the shape source.js remembers.
+    function read(doc,url) {
+        const place=where(url);
+        if(!place||!doc)return null;
+        const s=place.site;
+        const files=s.files(doc).map(row=>({path:row.path,bytes:Math.round(Number(row.bytes)||0)})),reportText=s.report(doc);
+        let uidHex='',complete='';
+        if(reportText&&typeof DKOKTO_INSPECTOR!=='undefined') {
+            try{const general=DKOKTO_INSPECTOR.parse(reportText)[0]?.general?.[0];
+                const id=general?core.uniqueId(general.fields?.uniqueid||''):null;uidHex=id?.hex||'';
+                complete=general?core.base(general.fields?.completename||''):'';}catch{}
+        }
+        const videos=files.filter(row=>/\.(?:mkv|mp4|m2ts|avi|ts|m4v|wmv|mov|mpg|vob|iso)$/i.test(row.path));
+        // The main file: the report's Complete name; else the one video that is not a
+        // sample (TorrentLeech lists Sample/…-sample.mkv beside the episode); a pack has none.
+        const feature=videos.filter(row=>!/sample/i.test(row.path));
+        const main=(complete&&files.find(row=>core.base(row.path).toLowerCase()===complete.toLowerCase()))||(feature.length===1?feature[0]:null);
+        const fileBase=complete?core.stem(complete):main?core.stem(main.path):'';
+        const folder=(()=>{const first=files[0]?.path.split('/');if(!first||first.length<2)return '';const top=first[0];return files.every(row=>row.path.startsWith(top+'/'))?top:'';})();
+        return {host:place.host,id:place.id,page:place.page,url:s.url(place.id),title:s.title(doc),uidHex,fileBase,folder,
+            files:files.map(row=>core.base(row.path)),bytes:main?Number(main.bytes)||0:0,
+            totalBytes:files.reduce((n,row)=>n+(Number(row.bytes)||0),0)||Math.round(s.total(doc)||0),
+            reportLink:s.reportLink(doc),hasReport:!!reportText,lowercases:!!s.lowercases};
+    }
+    return {hosts,site,where,read,lines};
+})();
+
 // Local checks against the naming guide of whichever tracker's rules are in use.
 // A title/report is evidence, not proof of source history or upload compliance.
-const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
+const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
     const templates={
         movie:'Name AKA Original LOCALE Year [Cut / Ratio / Hybrid / REPACK] Resolution [Edition] SOURCE TYPE [Dub] Acodec Channels [Object / Hi10P / HDR] Vcodec-Tag',
         tv:'Name [disambiguating year] S## / S##E## / S##E##E## / S##E##-## Resolution SOURCE TYPE [Dub] Acodec Channels [Object / Hi10P / HDR] Vcodec-Tag',
@@ -2316,6 +2541,27 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
             return result();
         }
         if(file)for(const [index,warning]of inspector.warnings(s,file).entries())add(/^Naming conflict: (?:(?:AVC|HEVC|AV1) in the name|progressive\/interlaced)/.test(warning)?'error':'review','media-'+index,warning);
+        // Does the report belong to this file? source-core.js answers from the report and the
+        // page's file rows (options.fileRows, handed in by the torrent page).
+        if(file) {
+            const general=file.general?.[0];
+            const rawId=general?.fields?.uniqueid||'';
+            const id=source.uniqueId(rawId);
+            // A report with no Unique ID is not asked about here: many pages trim the General
+            // section, and the badge would be amber on every one of them. The Source check
+            // section of the dialog says when there is none to compare.
+            if(id&&id.bad)add('error','unique-id-bad','The report’s Unique ID reads “'+String(rawId).slice(0,80)+'”: its decimal and hex halves are different numbers, which MediaInfo never writes. The report was edited by hand — ask for the complete, unedited report from the file.');
+            if(Array.isArray(options.fileRows)&&options.fileRows.length) {
+                const against=source.reportAgainstFiles(file,options.fileRows);
+                const gib=b=>(b/1073741824).toFixed(2)+' GiB';
+                if(against.size.match===false)add('error','report-size','The report says the file is '+gib(against.size.report)+' and the file on this page is '+gib(against.size.file)+' (more than 2% apart): the report is from a different file. Ask for the report of the file that was uploaded.');
+                if(against.name.found===false)add('review','report-name','The report’s Complete name, “'+against.name.report.slice(0,80)+'”, is not among the files on this page. Confirm the report is from this upload.');
+            }
+        }
+        // Findings the page kept from elsewhere (source.js: the source tracker's answer).
+        for(const extra of (Array.isArray(options.sourceIssues)?options.sourceIssues:[]).slice(0,10))
+            if(extra&&/^(?:error|review)$/.test(extra.severity)&&/^[a-z0-9-]{1,40}$/.test(String(extra.code||''))&&typeof extra.message==='string')add(extra.severity,extra.code,extra.message.slice(0,600));
+
         // Scope technical matching to the suffix, so title words like Life / Core / Hybrid are not tags.
         const firstTech=resolution?pos(resolution):hit(s,'WEB-DL|WEBRip|REMUX|BluRay|Blu-ray|NTSC|PAL|HDTV|UHDTV|SDTV|HDDVD|HD DVD')?.index??s.length;
         const before=s.slice(0,ep?pos(ep):date?date.index:firstTech);
@@ -2334,7 +2580,14 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
             if(rawEpisode&&!/^S\d{2}(?:E\d{2}(?:E\d{2}|-\d{2})?)?$/i.test(rawEpisode))add('error','episode-syntax','Episode token does not follow the guide. Use S01, S01E02, S01E02E03 or S01E02-04.');
             const range=s.match(/S(\d{2})E(\d{2})(?:E|-)(\d{2})(?!\d)/i);
             if(range&&Number(range[3])<=Number(range[2]))add('error','episode-order','The final episode must be after the first episode.');
-            if(/S00E\d{2}|S\d{2}E00/i.test(s))add('review','special','Specials require the special name after numbering. Verify S00E## against TVDB, or use S##E00 for specials not on TVDB.');
+            // A special carries its name after the number. Only a bare S00E## / S##E00 —
+            // nothing but a year or the technical elements after it — is asked for one; a
+            // named special (seen 22 Sep 2026: "S00E01 After Woodside: A Look Back …") is not.
+            {const special=s.match(/(?:^|\s)(S00E\d{2}|S\d{2}E00)(?=\s|$)(.*)$/i);
+             if(special){const after=special[2];
+                const stop=after.search(/(?:^|\s)(?:\d{3,4}[pi]|REPACK\d?|PROPER\d?|RERip\d?|Hybrid|NTSC|PAL|DVD\S*|(?:UHD\s)?Blu-?Ray|WEB-?DL|WEBRip|HDTV|UHDTV|REMUX)(?=\s|$)/i);
+                const name=(stop<0?after:after.slice(0,stop)).replace(/(?:^|\s)(?:18|19|20)\d{2}(?=\s|$)/g,' ').trim();
+                if(!/[A-Za-z]/.test(name))add('review','special',special[1]+' carries no special name. Specials require the special name after the number — verify S00E## against TVDB, or use S##E00 for a special not on TVDB.');}}
             if(date){const parts=date[1].split('-').map(Number);if(parts[1]<1||parts[1]>12||parts.length===3&&(parts[2]<1||parts[2]>new Date(Date.UTC(parts[0],parts[1],0)).getUTCDate()))add('error','date','Daily-show date is not a valid calendar date.');}
             // Which episodes the files hold is read from the file list where a page hands one
             // in (a torrent page does; the listing and the Inspector do not). Without one, or
@@ -2460,7 +2713,8 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules) => {
 })(typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./inspector.js'):DKOKTO_INSPECTOR,
    typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./services.js'):DKOKTO_SERVICES,
    typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./groups.js'):DKOKTO_GROUPS,
-   typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./rules.js'):DKOKTO_RULES);
+   typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./rules.js'):DKOKTO_RULES,
+   typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./source-core.js'):DKOKTO_SOURCE_CORE);
 
 // Rule sets for trackers whose guides are in hand, in the same profile format you would
 // paste in yourself — data, not code. Nothing here is fetched: each one is the guide as it
@@ -3221,58 +3475,67 @@ const DKOKTO_PROFILES_UI = ((profiles,rules) => {
     }
 
     // --- What is installed -------------------------------------------------------------
+    // Two parts. "Your trackers": what you added yourself, including any edited copy of a
+    // built-in. "Built into the script": all six rule sets that come with it, each saying
+    // where it is in force — nothing here needs adding (asked 20 Sep 2026; the wording
+    // reworked 22 Sep 2026 after the old "ship with this script / Add" read as if nothing
+    // applied until added). The four with a profile behind them offer an editable copy; the
+    // copy then applies instead of the built-in until it is removed.
     function installedTab() {
         const wrap=el('div',undefined,'dk-profile-form');
+        const guides=(()=>{try{return typeof DKOKTO_TRACKER_GUIDES!=='undefined'?DKOKTO_TRACKER_GUIDES.list():[];}catch{return [];}})();
+        const builtIn=key=>guides.find(entry=>entry.profile.key===key);
+        const summarise=profile=>profile.key+' · '+(profile.hosts.join(', ')||'no addresses')+' · '+profile.banned.length+' groups · '+
+            profile.rules.length+' rules · '+(profile.base==='zenith'?'Zenith':'DarkPeers')+' templates'+(profile.books==='own'?' · its own book names':'')+(profile.music==='own'?' · its own music names':'');
+        const mine=el('fieldset');mine.append(el('legend','Your trackers'));
         const list=profiles.all();
-        if(!list.length)wrap.append(el('p','No trackers added yet. Build one, or start from a built-in below.'));
+        if(!list.length)mine.append(el('p','Nothing added yet. Build one, paste one, or take an editable copy of a built-in below.'));
         for(const profile of list) {
+            const copyOf=builtIn(profile.key);
             const row=el('div',undefined,'dk-profile-installed');
-            row.append(el('strong',profile.label),
-                el('small',profile.key+' · '+(profile.hosts.join(', ')||'no addresses')+' · '+profile.banned.length+' groups · '+
-                    profile.rules.length+' rules · '+(profile.base==='zenith'?'Zenith':'DarkPeers')+' templates'+(profile.books==='own'?' · its own book names':'')+(profile.music==='own'?' · its own music names':'')));
+            row.append(el('strong',profile.label+(copyOf?' — your edited copy of the built-in':'')),el('small',summarise(profile)));
+            if(copyOf)row.append(el('small','This copy applies on '+profile.hosts.join(', ')+' instead of the built-in '+copyOf.profile.label+'. Remove it and the built-in is back.'));
             const actions=el('div',undefined,'dk-row');
             actions.append(button('Copy JSON',()=>copy(JSON.stringify(profiles.toJSON(profile),null,2))));
             actions.append(button('Save as file',()=>download(profile.key+'-rules.json',JSON.stringify(profiles.toJSON(profile),null,2))));
-            actions.append(button('Remove',()=>{
-                if(!window.confirm('Remove '+profile.label+'? Its rules stop being offered.'))return;
+            actions.append(button(copyOf?'Remove your copy':'Remove',()=>{
+                if(!window.confirm(copyOf?'Remove your copy of '+profile.label+'? The built-in '+copyOf.profile.label+' rules apply again.':'Remove '+profile.label+'? Its rules stop being offered.'))return;
                 profiles.remove(profile.key);
-                if(rules.current()===profile.key)rules.forget();
-                onChange();say(profile.label+' removed.');draw();
+                if(!copyOf&&rules.current()===profile.key)rules.forget();
+                onChange();say(copyOf?'Your copy of '+profile.label+' removed; the built-in applies.':profile.label+' removed.');draw();
             }));
-            row.append(actions);wrap.append(row);
+            row.append(actions);mine.append(row);
         }
-        // Rule sets this script ships with, because their guides were supplied. They are in
-        // force on their own trackers as they ship (asked 20 Sep 2026); Add copies one into
-        // your added trackers so you can edit it, and your copy then wins over the shipped one.
-        const guides=(()=>{try{return typeof DKOKTO_TRACKER_GUIDES!=='undefined'?DKOKTO_TRACKER_GUIDES.list():[];}catch{return [];}})();
-        if(guides.length) {
-            const ready=el('fieldset');ready.append(el('legend','Rule sets that ship with this script'));
-            ready.append(el('p','Built from the guides as they were supplied, and already in force on their own trackers — they are in the Rules list without being added. Add copies one into your added trackers so you can edit it; your copy then applies instead, and removing it brings the shipped one back.'));
-            for(const entry of guides) {
-                const row=el('div',undefined,'dk-profile-installed');
-                const held=profiles.get(entry.profile.key);
-                row.append(el('strong',entry.profile.label+(held&&!held.shipped?' — added, your copy applies':' — in force on '+entry.profile.hosts.join(', '))),
-                    el('small',entry.summary),el('small',entry.source));
-                const actions=el('div',undefined,'dk-row');
-                actions.append(button(held&&!held.shipped?'Add again, replacing yours':'Add '+entry.profile.label,()=>{
-                    if(held&&!held.shipped&&!window.confirm('Replace your '+entry.profile.label+' rules with the shipped ones? Anything you changed is lost.'))return;
-                    const result=profiles.save(entry.profile);
-                    if(!report(result))return;
-                    onChange();say(entry.profile.label+' added: '+result.profile.rules.length+' rules, '+
-                        result.profile.notes.length+' standing notes — your copy now, editable under Added trackers.');
-                    draw();
-                }));
-                actions.append(button('Copy JSON',()=>copy(JSON.stringify(entry.profile,null,2))));
-                row.append(actions);ready.append(row);
-            }
-            wrap.append(ready);
+        wrap.append(mine);
+
+        const ready=el('fieldset');ready.append(el('legend','Built into the script'));
+        ready.append(el('p','These come with the script and are already in force on their own trackers — nothing needs adding, and they are in the Rules list everywhere. To change one, take an editable copy: it then applies instead of the built-in until you remove it. DarkPeers and Zenith are built into the code itself, so they can only be copied out as JSON to start a new tracker from.'));
+        for(const key of ['dp','zenith']) {
+            const row=el('div',undefined,'dk-profile-installed');
+            row.append(el('strong',rules.labelOf(key)+' — built in, in force on '+rules.hostsOf(key).join(', ')),
+                el('small','Its naming guide, as supplied '+(rules.guideDate(key)||'(date not recorded)')+', and its own lists.'));
+            const actions=el('div',undefined,'dk-row');
+            actions.append(button('Copy '+rules.labelOf(key)+' as JSON',()=>copy(JSON.stringify(starter(key),null,2))));
+            row.append(actions);ready.append(row);
         }
-        const starters=el('fieldset');starters.append(el('legend','Start from a built-in'));
-        starters.append(el('p','A copy of DarkPeers’ or Zenith’s own profile, as JSON, to edit into a new tracker. Change the key and name — the built-ins themselves are not editable.'));
-        const row=el('div',undefined,'dk-row');
-        for(const key of ['dp','zenith'])
-            row.append(button('Copy '+rules.labelOf(key)+'’s profile',()=>copy(JSON.stringify(starter(key),null,2))));
-        starters.append(row);wrap.append(starters);
+        for(const entry of guides) {
+            const row=el('div',undefined,'dk-profile-installed');
+            const held=profiles.get(entry.profile.key),copied=!!(held&&!held.shipped);
+            row.append(el('strong',entry.profile.label+(copied?' — your edited copy is in force on '+entry.profile.hosts.join(', ')+' (see Your trackers)':' — in force on '+entry.profile.hosts.join(', '))),
+                el('small',entry.summary),el('small',entry.source));
+            const actions=el('div',undefined,'dk-row');
+            actions.append(button(copied?'Reset your copy to the built-in':'Edit a copy of '+entry.profile.label,()=>{
+                if(copied&&!window.confirm('Replace your copy of '+entry.profile.label+' with the built-in rules? Anything you changed is lost.'))return;
+                const result=profiles.save(entry.profile);
+                if(!report(result))return;
+                onChange();say(copied?entry.profile.label+': your copy is the built-in again.':entry.profile.label+': a copy is yours now, under Your trackers — '+result.profile.rules.length+' rules, '+
+                    result.profile.notes.length+' standing notes. Copy JSON, edit, and paste it back to change it.');
+                draw();
+            }));
+            actions.append(button('Copy JSON',()=>copy(JSON.stringify(entry.profile,null,2))));
+            row.append(actions);ready.append(row);
+        }
+        wrap.append(ready);
         return wrap;
     }
     // The built-in lists, expressed in the profile format so they can be a starting point.
@@ -3362,7 +3625,7 @@ const DKOKTO_NAMING_UI = (() => {
             if(result.service)output.append(el('p','Service: '+result.service,'dk-naming-service'));
             const errors=result.issues.filter(i=>i.severity==='error'),reviews=result.issues.filter(i=>i.severity==='review');
             if(errors.length){const list=el('ul',undefined,'dk-naming-errors');errors.forEach(i=>list.append(el('li',i.message)));output.append(list);}
-            if(reviews.length){const detail=el('details');detail.append(el('summary','Manual checks ('+reviews.length+')'));const list=el('ul');reviews.forEach(i=>list.append(el('li',i.message)));detail.append(list);output.append(detail);}
+            if(reviews.length){const detail=el('details'),heading=el('summary');detail.append(heading,DKOKTO_CHECKLIST_UI.section({issues:reviews,site:options.rules||DKOKTO_RULES.current(),place:DKOKTO_CHECKLIST.where(),heading}));output.append(detail);}
             if(result.template){const detail=el('details');detail.append(el('summary','Template · '+result.profile),el('p',result.template),el('p','Bracketed elements are conditional. A release group is omitted if none exists. Full disc/REMUX and encode/WEB ordering differ.'));output.append(detail);}
             drawDupes(result);
         }
@@ -3976,6 +4239,140 @@ const DKOKTO_REVIEWED_UI = (() => {
     return {section};
 })();
 
+// Ticking off the manual checks, and hiding a standing note you have read.
+//
+// The badge's dialog and the naming panel list the checks a person still has to make. A
+// tick records that you looked at one, on this torrent, under this rule set — nothing more.
+// It verifies nothing, never colours a badge, and is never sent anywhere. Ticks are kept
+// per torrent (the tracker's host and the torrent number, read from the address) and per
+// rule set, because having checked a name against HomieHelpDesk's rules says nothing about
+// Zenith's. A standing note — a rule set's "what a title cannot show" reminder — is the
+// same text on every torrent, so it is hidden once per rule set rather than ticked per
+// torrent, and can be brought back from the same list.
+//
+// Bounded: at most MAX torrents (the oldest by day recorded go first), CODES ticks per
+// torrent, HIDDEN notes per rule set. Everything read back is validated. Carried by Backup….
+const DKOKTO_CHECKLIST = (() => {
+    const KEY='dkokto_checklist_v1',MAX=500,CODES=60,HIDDEN=200;
+    const CODE=/^[A-Za-z0-9._-]{1,60}$/,SITE=/^[a-z0-9_-]{1,40}$/,ID=/^[a-z0-9.-]{1,80}\|\d{1,12}\|[a-z0-9_-]{1,40}$/;
+    let backing=null;
+    const storage=()=>{if(backing)return backing;try{return typeof DKOKTO_STORE!=='undefined'?DKOKTO_STORE.open():localStorage;}catch{try{return localStorage;}catch{return null;}}};
+    const today=()=>{try{return new Date().toISOString().slice(0,10);}catch{return '';}};
+    // The torrent an address names: its tracker and its number. Nothing for a listing, a
+    // queue or anything that is not a torrent page.
+    function where(url) {
+        try{
+            const at=new URL(String(url??(typeof location!=='undefined'?location.href:'')));
+            const match=at.pathname.match(/^\/torrents\/(\d{1,12})\/?$/);
+            if(!match)return null;
+            const host=at.hostname.toLowerCase().replace(/^www\./,'');
+            return host?{host,id:match[1]}:null;
+        }catch{return null;}
+    }
+    const idOf=(place,site)=>String(place?.host||'').toLowerCase().replace(/^www\./,'')+'|'+String(place?.id||'')+'|'+String(site||'dp');
+    function read() {
+        const store=storage();if(!store)return {ticks:{},hidden:{}};
+        try{
+            const parsed=JSON.parse(store.getItem(KEY)||'null');
+            const out={ticks:{},hidden:{}};
+            if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)||parsed.v!==1)return out;
+            for(const [id,record] of Object.entries(parsed.ticks&&typeof parsed.ticks==='object'?parsed.ticks:{}).slice(0,MAX)) {
+                if(!ID.test(id)||!record||typeof record!=='object'||!/^\d{4}-\d{2}-\d{2}$/.test(String(record.on||'')))continue;
+                const codes=[...new Set((Array.isArray(record.codes)?record.codes:[]).filter(code=>typeof code==='string'&&CODE.test(code)))].slice(0,CODES);
+                if(codes.length)out.ticks[id]={on:record.on,codes};
+            }
+            for(const [site,codes] of Object.entries(parsed.hidden&&typeof parsed.hidden==='object'?parsed.hidden:{})) {
+                if(!SITE.test(site)||!Array.isArray(codes))continue;
+                const kept=[...new Set(codes.filter(code=>typeof code==='string'&&CODE.test(code)))].slice(0,HIDDEN);
+                if(kept.length)out.hidden[site]=kept;
+            }
+            return out;
+        }catch{return {ticks:{},hidden:{}};}
+    }
+    function write(data) {
+        const store=storage();if(!store)return false;
+        const ticks=Object.entries(data.ticks).sort((a,b)=>String(a[1].on).localeCompare(String(b[1].on))).slice(-MAX);
+        try{store.setItem(KEY,JSON.stringify({v:1,ticks:Object.fromEntries(ticks),hidden:data.hidden}));return true;}catch{return false;}
+    }
+    const ticked=(place,site)=>new Set(read().ticks[idOf(place,site)]?.codes||[]);
+    function tick(place,site,code,on=true) {
+        if(!place||!CODE.test(String(code||'')))return false;
+        const data=read(),id=idOf(place,site);
+        if(!ID.test(id))return false;
+        const held=new Set(data.ticks[id]?.codes||[]);
+        if(on)held.add(code);else held.delete(code);
+        if(held.size)data.ticks[id]={on:today(),codes:[...held].slice(-CODES)};
+        else delete data.ticks[id];
+        return write(data);
+    }
+    const hidden=site=>new Set(read().hidden[String(site||'dp')]||[]);
+    function hide(site,code,on=true) {
+        const key=String(site||'dp');
+        if(!SITE.test(key)||!CODE.test(String(code||'')))return false;
+        const data=read(),held=new Set(data.hidden[key]||[]);
+        if(on)held.add(code);else held.delete(code);
+        if(held.size)data.hidden[key]=[...held].slice(-HIDDEN);else delete data.hidden[key];
+        return write(data);
+    }
+    const unhide=(site,code)=>hide(site,code,false);
+    return {KEY,MAX,CODES,HIDDEN,where,ticked,tick,hidden,hide,unhide,use(store){backing=store;}};
+})();
+
+// The manual-checks list with a tick beside each check and a Hide beside each standing
+// note. Shared by the torrent-page dialog, the listing dialog and the naming panel, so the
+// wording and the rule are one thing. Data and bounds live in checklist.js; this only draws.
+const DKOKTO_CHECKLIST_UI = (() => {
+    const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
+    const button=(label,onClick,cls)=>{const b=el('button',label,cls);b.type='button';b.onclick=onClick;return b;};
+    // A standing note is a rule set's reminder rather than a finding about this title: the
+    // built-in ones and every added profile's notes, as rules.js lists them.
+    const standing=code=>{try{return DKOKTO_RULES.baseline().includes(code);}catch{return false;}};
+    // The line for the heading: "Manual checks (9) · 3 done · 1 hidden".
+    function summary({issues,site,place}) {
+        const hiddenSet=DKOKTO_CHECKLIST.hidden(site),tickedSet=place?DKOKTO_CHECKLIST.ticked(place,site):new Set();
+        const shown=issues.filter(issue=>!hiddenSet.has(issue.code));
+        const tickable=shown.filter(issue=>!standing(issue.code));
+        const done=tickable.filter(issue=>tickedSet.has(issue.code)).length;
+        const hidden=issues.length-shown.length;
+        return 'Manual checks ('+shown.length+')'+(place&&tickable.length?' · '+done+' done':'')+(hidden?' · '+hidden+' hidden':'');
+    }
+    // Returns the list element. `heading` is an element whose text is kept as the summary;
+    // `place` is the torrent (checklist.where) or null, in which case there are no ticks.
+    function section({issues,site,place,heading}) {
+        const wrap=el('div',undefined,'dk-checklist');
+        const draw=()=>{
+            wrap.replaceChildren();
+            const hiddenSet=DKOKTO_CHECKLIST.hidden(site),tickedSet=place?DKOKTO_CHECKLIST.ticked(place,site):new Set();
+            const list=el('ul'),hiddenOnes=[];
+            for(const issue of issues) {
+                if(hiddenSet.has(issue.code)){hiddenOnes.push(issue);continue;}
+                const item=el('li');
+                if(standing(issue.code)) {
+                    item.append(el('span',issue.message));
+                    item.append(button('Hide this note',()=>{DKOKTO_CHECKLIST.hide(site,issue.code);draw();},'dk-checklist-hide'));
+                } else if(place) {
+                    const label=el('label'),box=el('input');box.type='checkbox';box.checked=tickedSet.has(issue.code);
+                    box.onchange=()=>{DKOKTO_CHECKLIST.tick(place,site,issue.code,box.checked);if(heading)heading.textContent=summary({issues,site,place});};
+                    label.append(box,document.createTextNode(' '+issue.message));item.append(label);
+                } else item.append(document.createTextNode(issue.message));
+                list.append(item);
+            }
+            wrap.append(list);
+            if(place)wrap.append(el('small','A tick records that you looked at that check on this torrent, under these rules. It verifies nothing and never colours the badge.','dk-checklist-note'));
+            if(hiddenOnes.length) {
+                const back=el('details',undefined,'dk-checklist-hidden');back.append(el('summary','Hidden notes ('+hiddenOnes.length+') — hidden for this rule set until restored'));
+                const rest=el('ul');
+                for(const issue of hiddenOnes){const item=el('li');item.append(el('span',issue.message),button('Restore',()=>{DKOKTO_CHECKLIST.unhide(site,issue.code);draw();}));rest.append(item);}
+                back.append(rest);wrap.append(back);
+            }
+            if(heading)heading.textContent=summary({issues,site,place});
+        };
+        draw();
+        return wrap;
+    }
+    return {section,summary};
+})();
+
 // Read loaded torrent titles only. No requests, crawling, downloads or tracker writes.
 const DKOKTO_LISTING = (() => {
     const selector='a.torrent-search--list__name,a.torrent-card__link,.torrent-card__title a';
@@ -4115,7 +4512,10 @@ const DKOKTO_LISTING = (() => {
         const body=el('section',undefined,'dk-hub-content'),r=entry.result;body.append(el('h3',entry.title),el('p',r.label),
             ...(entry.composed?[el('p','This page lists the release without the media title, so “'+entry.composed+'” was taken from the page heading and checked with it.')]:[]),el('p','Loaded title only · '+(entry.category||'category inferred from title')+'. Green means supported title checks passed, not verified media or tracker approval.'));
         if(!r.confident)body.append(el('p','The category is uncertain. Open the torrent and choose the correct naming category in Inspector before treating any finding as an error.'));
-        for(const [kind,title]of [['error','Corrections'],['review','Manual checks']]){const issues=r.review.issues.filter(i=>i.severity===kind);if(issues.length){body.append(el('h3',title));const list=el('ul');for(const issue of issues)list.append(el('li',issue.message.replace('Add a reference title below to compare spelling.','Open Inspector to add a reference title and compare spelling.')));body.append(list);}}
+        {const errors=r.review.issues.filter(i=>i.severity==='error');if(errors.length){body.append(el('h3','Corrections'));const list=el('ul');for(const issue of errors)list.append(el('li',issue.message));body.append(list);}}
+        // The manual checks, ticked per torrent where the row links to one (checklist.js).
+        {const reviews=r.review.issues.filter(i=>i.severity==='review').map(i=>({...i,message:i.message.replace('Add a reference title below to compare spelling.','Open Inspector to add a reference title and compare spelling.')}));
+         if(reviews.length){const heading=el('h3');body.append(heading,DKOKTO_CHECKLIST_UI.section({issues:reviews,site:DKOKTO_RULES.current(),place:DKOKTO_CHECKLIST.where(entry.link.href||''),heading}));}}
         if(r.review.template)body.append(el('h3','Template'),el('p',r.review.template));
         // A pending row is often not a link yet, so there is nothing to open.
         const url=entry.link.href||'';
@@ -5295,6 +5695,8 @@ const DKOKTO_BACKUP_CORE = (() => {
         {key:'dkokto_audit_v1',           label:'The audit of what you looked at',         kind:'record'},
         {key:'dkokto_decisions_v1',       label:'The decision log',                        kind:'record'},
         {key:'dkokto_reviewed_v1',        label:'Amber badges you marked as conforming',   kind:'record'},
+        {key:'dkokto_checklist_v1',       label:'Manual checks you ticked, and notes you hid',kind:'record'},
+        {key:'dkokto_source_v1',          label:'Uploads remembered for the source check, and what the source said',kind:'record'},
         {key:'dkokto_requests_seen_v1',   label:'Requests you have checked',               kind:'record'},
         {key:'dkokto_compare_slots_v1',   label:'The two comparison slots',                kind:'record'},
         // Scene Edition only: the chat games and their helper.
@@ -5729,6 +6131,226 @@ const DKOKTO_CAPTURE_UI = (() => {
     return {mount,read,close};
 })();
 
+// Is this the same release the source tracker has? The cross-tracker half of source-core.
+//
+// On a torrent page this remembers a fingerprint of the upload — the tracker and torrent
+// number, the name, the report's Unique ID, the main file's name, the top folder, the file
+// names and the sizes — in the shared store. Open the same release on another tracker the
+// script runs on, and that page's plain text is compared with every recent fingerprint from
+// elsewhere: a banner says whether the Unique ID, the file name, the folder, the files and
+// the size are there. The result is kept under the fingerprint, and back on the first page
+// the badge's dialog shows it, with a red finding where the Unique ID on the source differs.
+//
+// Nothing is fetched and nothing is opened: you go to the other page yourself, through the
+// lookup links or on your own, and this reads what is already on it. Bounded: PENDING
+// fingerprints at most, three days old at most, RESULTS kept results; everything read back
+// is validated. One key, carried by Backup….
+const DKOKTO_SOURCE = (() => {
+    const KEY='dkokto_source_v1',PENDING=25,RESULTS=100,DAYS=3,FILES=300;
+    const core=typeof DKOKTO_SOURCE_CORE!=='undefined'?DKOKTO_SOURCE_CORE:(typeof require==='function'?require('./source-core.js'):null);
+    let backing=null;
+    const storage=()=>{if(backing)return backing;try{return typeof DKOKTO_STORE!=='undefined'?DKOKTO_STORE.open():localStorage;}catch{try{return localStorage;}catch{return null;}}};
+    const HOST=/^[a-z0-9.-]{1,80}$/,HEX=/^[0-9A-F]{32}$/,ID=/^\d{1,12}$/;
+    const text=(v,cap)=>typeof v==='string'?v.slice(0,cap):'';
+    const cleanEntry=e=>{
+        if(!e||typeof e!=='object')return null;
+        const host=text(e.host,80).toLowerCase(),id=text(e.id,12);
+        if(!HOST.test(host)||!ID.test(id))return null;
+        const uidHex=text(e.uidHex,32).toUpperCase();
+        return {host,id,url:text(e.url,300),title:text(e.title,300),uidHex:HEX.test(uidHex)?uidHex:'',fileBase:text(e.fileBase,300),
+            folder:text(e.folder,300),files:(Array.isArray(e.files)?e.files:[]).filter(f=>typeof f==='string').map(f=>f.slice(0,300)).slice(0,FILES),
+            bytes:Number(e.bytes)||0,totalBytes:Number(e.totalBytes)||0,t:Number(e.t)||0};
+    };
+    const cleanResult=r=>{
+        if(!r||typeof r!=='object')return null;
+        const host=text(r.host,80).toLowerCase();
+        if(!HOST.test(host))return null;
+        const tri=v=>v===true||v===false?v:null;
+        const idFound=text(r.idFound,32).toUpperCase();
+        return {host,url:text(r.url,300),on:/^\d{4}-\d{2}-\d{2}$/.test(String(r.on||''))?r.on:'',t:Number(r.t)||0,caseOnly:r.caseOnly===true,
+            idMatch:tri(r.idMatch),idFound:HEX.test(idFound)?idFound:'',idsOnPage:Number(r.idsOnPage)||0,nameMatch:tri(r.nameMatch),folderMatch:tri(r.folderMatch),
+            sizeMatch:tri(r.sizeMatch),sizesOnPage:Number(r.sizesOnPage)||0,filesFound:Number(r.filesFound)||0,filesTotal:Number(r.filesTotal)||0};
+    };
+    function read() {
+        const store=storage();if(!store)return {pending:[],results:{}};
+        try{
+            const parsed=JSON.parse(store.getItem(KEY)||'null');
+            if(!parsed||typeof parsed!=='object'||parsed.v!==1)return {pending:[],results:{}};
+            const pending=(Array.isArray(parsed.pending)?parsed.pending:[]).map(cleanEntry).filter(Boolean).slice(0,PENDING);
+            const results={};
+            for(const [k,v] of Object.entries(parsed.results&&typeof parsed.results==='object'?parsed.results:{}).slice(0,RESULTS)) {
+                const r=cleanResult(v);if(r&&/^[a-z0-9.-]{1,80}\|\d{1,12}$/.test(k))results[k]=r;
+            }
+            return {pending,results};
+        }catch{return {pending:[],results:{}};}
+    }
+    function write(data) {
+        const store=storage();if(!store)return false;
+        const results=Object.entries(data.results).sort((a,b)=>(a[1].t||0)-(b[1].t||0)).slice(-RESULTS);
+        try{store.setItem(KEY,JSON.stringify({v:1,pending:data.pending.slice(0,PENDING),results:Object.fromEntries(results)}));return true;}catch{return false;}
+    }
+    const keyOf=e=>e.host+'|'+e.id;
+    const today=()=>{try{return new Date().toISOString().slice(0,10);}catch{return '';}};
+    const fresh=e=>Date.now()-(e.t||0)<DAYS*86400000;
+    // Remember this page's upload. Nothing is remembered without a Unique ID or a file name
+    // to look for.
+    // A torrent seen twice fills in rather than starts over: FileList's details page has
+    // the files and size, its Media Info page the Unique ID, and both are one torrent.
+    function remember(entry) {
+        const fresh=cleanEntry({...entry,t:Date.now()});
+        if(!fresh)return false;
+        const data=read();
+        const old=data.pending.find(p=>keyOf(p)===keyOf(fresh));
+        const e=old?cleanEntry({...old,...Object.fromEntries(Object.entries(fresh).filter(([k,v])=>k==='t'||(Array.isArray(v)?v.length:v)))}):fresh;
+        if(!e||(!e.uidHex&&!e.fileBase&&!e.files.length))return false;
+        data.pending=[e,...data.pending.filter(p=>keyOf(p)!==keyOf(e))].slice(0,PENDING);
+        return write(data);
+    }
+    const pending=()=>read().pending.filter(fresh);
+    const resultFor=entry=>{const e=cleanEntry(entry);return e?read().results[keyOf(e)]||null:null;};
+    // The upload as remembered — with whatever an earlier visit filled in.
+    const entryFor=entry=>{const e=cleanEntry(entry);return e?read().pending.find(p=>keyOf(p)===keyOf(e))||null:null;};
+    // Compare this page's text with every recent fingerprint from another tracker; keep and
+    // return what was found for those the page is about.
+    // What the last check on this page looked for, for the dialog to explain itself.
+    let last=null;
+    function check(pageText,here) {
+        if(!core)return [];
+        const host=String(here?.host||'').toLowerCase().replace(/^www\./,'');
+        const data=read(),found=[];
+        const others=data.pending.filter(fresh).filter(e=>e.host!==host);
+        last={host,looked:others.length,hosts:[...new Set(others.map(e=>e.host))].sort(),found:0,hasId:/Unique ID\s*:/i.test(String(pageText||''))};
+        for(const e of others) {
+            const v=core.compare(pageText,e);
+            if(!v.mentioned)continue;
+            const ids=[...v.ids];
+            // The first ID the page shows is kept, so the upload's own page can show what the
+            // source had instead.
+            const result={host,url:text(here?.url,300),on:today(),t:Date.now(),idMatch:v.idMatch,idFound:v.idMatch===false&&ids.length?ids[0]:'',idsOnPage:v.idsOnPage,nameMatch:v.nameMatch,
+                folderMatch:v.folderMatch,sizeMatch:v.sizeMatch,sizesOnPage:v.sizesOnPage,filesFound:v.filesFound,filesTotal:v.filesTotal,caseOnly:v.caseOnly===true};
+            data.results[keyOf(e)]=result;
+            found.push({entry:e,result,ids});
+        }
+        last.found=found.length;
+        if(found.length)write(data);
+        return found;
+    }
+    // Findings for the badge, from a kept result: a differing Unique ID is a red finding; a
+    // file name the source page does not show is a question; a match is a note.
+    function issues(entry) {
+        const r=resultFor(entry);
+        if(!r)return [];
+        const out=[];
+        if(r.idMatch===false&&r.idsOnPage)out.push({severity:'error',code:'source-id',message:'The Unique ID on '+r.host+' is not this one ('+(r.idFound?'that page’s is '+r.idFound+'; ':'')+r.idsOnPage+' on that page, none matching). The report here is not from the file the source tracker has — ask for the complete, unedited report.'});
+        if(r.nameMatch===false)out.push({severity:'review',code:'source-name',message:'The file name was not found on '+r.host+'. That page may show only the release name, so compare the file names by hand.'});
+        if(r.folderMatch===false)out.push({severity:'review',code:'source-folder',message:'The top folder was not found on '+r.host+'. Compare the folder name by hand.'});
+        if(r.sizeMatch===false&&r.sizesOnPage)out.push({severity:'review',code:'source-size',message:'No size on '+r.host+' matched this upload. Compare the sizes by hand.'});
+        if(r.filesTotal>1&&r.filesFound<r.filesTotal)out.push({severity:'review',code:'source-files',message:r.filesFound+' of '+r.filesTotal+' file names were found on '+r.host+'. That page may not list them all, so compare the file list by hand.'});
+        return out;
+    }
+    // One line for the dialog and the banner. A dash on the Unique ID is either this upload
+    // having none (entry.uidHex empty) or the other page printing none; `page` names it.
+    function summary(r,entry,page) {
+        const mark=v=>v===true?'✓':v===false?'✗':'–';
+        const noId=entry&&!entry.uidHex?'– (none here)':'– (none on '+(page||'this page')+')';
+        const bits=['Unique ID '+(r.idMatch===null?noId:mark(r.idMatch)),'file name '+mark(r.nameMatch)+(r.nameMatch&&r.caseOnly?' (case differs there)':'')];
+        if(r.folderMatch!==null)bits.push('folder '+mark(r.folderMatch));
+        if(r.filesTotal>1)bits.push('files '+r.filesFound+'/'+r.filesTotal);
+        if(r.sizeMatch!==null)bits.push('size '+(r.sizeMatch?'✓':r.sizesOnPage?'✗':'– (none shown)'));
+        return bits.join(' · ');
+    }
+    // Without a Unique ID on either side (TorrentLeech prints none), a matching name and
+    // size is as good as it gets, and the banner says that is all it is.
+    const byNameOnly=r=>r.idMatch===null&&r.nameMatch===true&&r.sizeMatch===true;
+    const allGood=r=>(r.idMatch===true||byNameOnly(r))&&r.nameMatch!==false&&r.folderMatch!==false&&(r.filesTotal<2||r.filesFound===r.filesTotal)&&(r.sizeMatch!==false||!r.sizesOnPage);
+    return {KEY,PENDING,RESULTS,DAYS,remember,pending,resultFor,entryFor,check,issues,summary,allGood,byNameOnly,last:()=>last,use(store){backing=store;last=null;}};
+})();
+
+// What source.js found, drawn: the banner on the source tracker's page, and the section in
+// the badge's dialog back on the upload's page. Data and rules live in source.js and
+// source-core.js; this only draws, and opens nothing.
+const DKOKTO_SOURCE_UI = (() => {
+    const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
+    const button=(label,onClick,cls)=>{const b=el('button',label,cls);b.type='button';b.onclick=onClick;return b;};
+    // On the source tracker's page: one banner per upload this page is about.
+    const gib=b=>b>0?(b/1073741824).toFixed(2)+' GiB':'';
+    // What was remembered, spelled out so it can be compared by eye.
+    function remembered(entry) {
+        const dl=el('dl',undefined,'dk-source-what');
+        const row=(k,v)=>{if(!v)return;dl.append(el('dt',k),el('dd',v));};
+        row('Unique ID',entry.uidHex||'none in the report');
+        row('File name',entry.fileBase);
+        row('Folder',entry.folder);
+        row('Size',gib(entry.bytes)||gib(entry.totalBytes));
+        return dl;
+    }
+    // Redrawn only when what it would say changes, so it neither flickers nor reorders as
+    // other tabs touch the store; once closed it stays closed for that answer.
+    let shown='';const closed=new Set();
+    const keyOf=found=>found.map(({entry,result})=>entry.host+'|'+entry.id+'|'+result.idMatch+result.nameMatch+result.folderMatch+result.sizeMatch+result.filesFound).join(';');
+    function banner(found) {
+        const rows=(Array.isArray(found)?found.slice():[]).sort((a,b)=>a.entry.host.localeCompare(b.entry.host)||a.entry.id.localeCompare(b.entry.id));
+        const key=keyOf(rows);
+        if(key&&key===shown&&document.querySelector('.dk-source-banner'))return;
+        for(const node of document.querySelectorAll('.dk-source-banner'))node.remove();
+        shown=key;
+        if(!rows.length||closed.has(key))return;
+        const wrap=el('div',undefined,'dk-source-banner');wrap.setAttribute('role','status');
+        for(const {entry,result,ids} of rows) {
+            const good=DKOKTO_SOURCE.allGood(result);
+            const row=el('div',undefined,'dk-source-row');row.dataset.state=result.idMatch===false&&result.idsOnPage?'error':good?'pass':'review';
+            row.append(el('strong',(result.idMatch===false&&result.idsOnPage?'✕ Not the same file as ':good&&result.idMatch===true?'✓ Same release as ':good?'✓ Same name and size as ':'? Compared with ')+entry.host+'’s upload'+(good&&result.idMatch!==true?' (no Unique ID to compare)':'')),
+                el('span',entry.title,'dk-source-title'));
+            // The file as it is named, under the release title, so spaces and dots show.
+            const fileName=(Array.isArray(entry.files)&&entry.files.length===1?entry.files[0]:'')||entry.fileBase;
+            if(fileName)row.append(el('span',fileName,'dk-source-file'));
+            if(fileName&&/ /.test(fileName))row.append(el('span','The file name has spaces in it.','dk-source-spaces'));
+            row.append(el('span',DKOKTO_SOURCE.summary(result,entry),'dk-source-bits'));
+            const here=Array.isArray(ids)?ids:[];
+            if(entry.uidHex)row.append(el('span','Unique ID remembered from '+entry.host+': '+entry.uidHex+(result.idMatch?' — the same one is on this page':here.length?' — this page has '+here.slice(0,3).join(', '):' — this page shows none'),'dk-source-ids'));
+            else if(here.length)row.append(el('span','No Unique ID was in the report on '+entry.host+'; this page has '+here.slice(0,3).join(', '),'dk-source-ids'));
+            if(entry.url){const back=el('a','Back to that torrent');back.href=entry.url;row.append(back);}
+            wrap.append(row);
+        }
+        wrap.append(el('small','Read from this page’s text and the upload remembered from the other tracker. Nothing was fetched or opened.'),
+            button('Close',()=>{closed.add(key);wrap.remove();}));
+        document.body.append(wrap);
+        // A site that drops the script's stylesheet would leave this as plain text under the
+        // footer; the placement is set on the element too, which a stylesheet rule cannot lose.
+        try{if(getComputedStyle(wrap).position!=='fixed')Object.assign(wrap.style,{position:'fixed',top:'12px',left:'50%',transform:'translateX(-50%)',zIndex:'99999',maxWidth:'min(92vw,760px)',padding:'10px 14px',background:'#1a1020',color:'#eee',border:'1px solid #76548c',borderRadius:'6px',font:'13px/1.5 system-ui,sans-serif'});}catch{}
+    }
+    // In the badge's dialog on the upload's own page.
+    // What this page was searched for on behalf of other trackers, so a banner that did not
+    // appear explains itself here.
+    function looked() {
+        const l=DKOKTO_SOURCE.last();
+        if(!l)return el('p','This page has not been looked over for other trackers’ uploads yet.','dk-source-looked');
+        if(!l.looked)return el('p','Nothing is remembered from other trackers yet, so there was nothing to look for on this page.','dk-source-looked');
+        return el('p','Looked on this page for '+l.looked+' upload'+(l.looked===1?'':'s')+' remembered from other trackers ('+l.hosts.join(', ')+'): '+
+            (l.found?l.found+(l.found===1?' was':' were')+' about this page and got a banner.':'none was about this page — no remembered title, file name, folder or Unique ID is in its text, so no banner.')+
+            (l.hasId?'':' This page prints no Unique ID.'),'dk-source-looked');
+    }
+    function section(entry) {
+        const wrap=el('div',undefined,'dk-source');
+        wrap.append(el('h3','Source check'));
+        const r=DKOKTO_SOURCE.resultFor(entry);
+        wrap.append(remembered(entry));
+        if(!r) {
+            wrap.append(el('p',(entry.uidHex?'These are remembered for three days. ':'No Unique ID is in this page’s report, so the rest is remembered for three days. ')+
+                'Open the same release on another tracker you are on — the lookup row above searches them — and that page will say whether it is the same file; the answer then shows here.'));
+            wrap.append(looked());
+            return wrap;
+        }
+        const good=DKOKTO_SOURCE.allGood(r);
+        wrap.append(el('p',(good&&r.idMatch===true?'Matched on ':good?'Matched by name and size on ':r.idMatch===false&&r.idsOnPage?'Did not match on ':'Compared on ')+r.host+(r.on?' on '+r.on:'')+': '+DKOKTO_SOURCE.summary(r,entry,r.host)+'.'+
+            (r.idMatch===false&&r.idFound?' That page’s Unique ID is '+r.idFound+'.':'')));
+        if(r.url){const link=el('a','Open that page again');link.href=r.url;wrap.append(link);}
+        wrap.append(looked());
+        return wrap;
+    }
+    return {banner,section};
+})();
+
 // Torrent detail page: the same naming badge used on the listing, plus a row of
 // lookup links built from the title and the IDs already shown on the page.
 // Reads the loaded page only; no requests, submissions or downloads.
@@ -5762,16 +6384,19 @@ const DKOKTO_DETAIL = (() => {
         body.append(el('h3',entry.title),el('p',r.label),el('p',(read.length?'Checked against the display title, '+read.join(', ')+' · ':'Display title only · ')+
             (entry.category||'category inferred from title')+'. Green means the supported title checks passed, not verified media or tracker approval.'));
         if(r.review.service)body.append(el('p','Service: '+r.review.service));
-        for(const [kind,label] of [['error','Corrections'],['review','Manual checks']]) {
-            const issues=r.review.issues.filter(i=>i.severity===kind);
-            if(!issues.length)continue;
-            body.append(el('h3',label));const list=el('ul');for(const issue of issues)list.append(el('li',issue.message));body.append(list);
-        }
+        {const errors=r.review.issues.filter(i=>i.severity==='error');
+         if(errors.length){body.append(el('h3','Corrections'));const list=el('ul');for(const issue of errors)list.append(el('li',issue.message));body.append(list);}}
+        // The manual checks, each with a tick kept for this torrent under these rules, and
+        // a standing note with a Hide; checklist.js has the rule and the bounds.
+        {const reviews=r.review.issues.filter(i=>i.severity==='review');
+         if(reviews.length){const heading=el('h3');body.append(heading,DKOKTO_CHECKLIST_UI.section({issues:reviews,site:DKOKTO_RULES.current(),place:DKOKTO_CHECKLIST.where(),heading}));}}
         if(r.review.template)body.append(el('h3','Template'),el('p',r.review.template));
         // Marking an amber ? as conforming, or undoing it; the badge is redrawn on the spot.
         const marking=DKOKTO_REVIEWED_UI.section({title:entry.title,site:DKOKTO_RULES.current(),result:r,
             after:()=>{if(entry.node?.isConnected)badge(entry.node,entry.title);explain(entry);}});
         if(marking)body.append(marking);
+        // What the source tracker said, or how to go and ask it.
+        try{const print=fingerprint(page.file,DKOKTO_FILES_UI.list());if(print&&r.review.profile!=='music'&&r.review.profile!=='ebook'&&r.review.profile!=='audiobook')body.append(DKOKTO_SOURCE_UI.section(print));}catch{}
         const open=el('button','Open Inspector for MediaInfo and notes');open.type='button';
         // Whichever shell is installed: the full toolkit, or the standalone inspector.
         open.onclick=()=>{dialog.close();
@@ -5800,8 +6425,30 @@ const DKOKTO_DETAIL = (() => {
         try{file=DKOKTO_INSPECTOR.readPage(document).map(text=>{try{return DKOKTO_INSPECTOR.parse(text)[0];}catch{return null;}}).find(Boolean)||null;}catch{file=null;}
         // The file list, read by the same reader the marker under the name copies from, so
         // the episodes a pack holds can be read from it rather than left to verify by hand.
-        try{const files=DKOKTO_FILES_UI.list().map(row=>row.path);if(files.length)options.files=files;}catch{}
+        let rows=[];
+        try{rows=DKOKTO_FILES_UI.list();const files=rows.map(row=>row.path);if(files.length){options.files=files;options.fileRows=rows.map(row=>({path:row.path,bytes:row.bytes||0}));}}catch{}
+        // What the source tracker said about this upload, if you have been there (source.js).
+        try{const print=fingerprint(file,rows);if(print){const found=DKOKTO_SOURCE.issues(print);if(found.length)options.sourceIssues=found;}}catch{}
         return knownMemo={options,file};
+    }
+    // This upload, as source.js remembers it: where it is, its Unique ID, its file name,
+    // its folder, its files and its sizes.
+    function fingerprint(file,rows) {
+        const place=DKOKTO_CHECKLIST.where();
+        if(!place)return null;
+        const hit=found();
+        const title=hit?.title||'';
+        const general=file?.general?.[0];
+        const id=general?DKOKTO_SOURCE_CORE.uniqueId(general.fields?.uniqueid||''):null;
+        const list=Array.isArray(rows)?rows.filter(row=>row&&row.path):[];
+        const videos=list.filter(row=>/\.(?:mkv|mp4|m2ts|avi|ts|m4v|wmv|mov|mpg|vob|iso)$/i.test(row.path));
+        const complete=general?DKOKTO_SOURCE_CORE.base(general.fields?.completename||''):'';
+        const main=(complete&&list.find(row=>DKOKTO_SOURCE_CORE.base(row.path)===complete))||(videos.length===1?videos[0]:null);
+        const fileBase=complete?DKOKTO_SOURCE_CORE.stem(complete):main?DKOKTO_SOURCE_CORE.stem(main.path):'';
+        return {host:place.host,id:place.id,url:location.origin+location.pathname,title,uidHex:id?.hex||'',fileBase,
+            folder:(()=>{try{return DKOKTO_FILES_CORE.topFolder(list.map(row=>row.path));}catch{return '';}})(),
+            files:list.map(row=>DKOKTO_SOURCE_CORE.base(row.path)),bytes:main?Number(main.bytes)||0:0,
+            totalBytes:list.reduce((n,row)=>n+(Number(row.bytes)||0),0)};
     }
     function badge(node,title) {
         // The group tag is the internal-groups directory, not a tracker's rule, so it is
@@ -5970,6 +6617,18 @@ const DKOKTO_DETAIL = (() => {
         try{DKOKTO_FILES_UI.clear();}catch{}
         try{DKOKTO_TEMPLATES.clear();}catch{}
         document.querySelectorAll('.dk-detail-links:not(.dk-request-links),.dk-detail-page,.dk-detail-compare,.dk-detail-files').forEach(n=>n.remove());};
+    // The page's text without this script's own output: textContent rather than innerText, so
+    // a MediaInfo panel the tracker has not displayed yet is read too, but nothing from the
+    // badges, dialogs, hub or the source banner — the banner prints the remembered file name
+    // and ID, and a check that read them back would call its own words a match.
+    // Every element this script makes carries a dk- class or a dkokto- id.
+    const OWN='[class^="dk-"],[class*=" dk-"],[id^="dkokto-"]';
+    function pageText() {
+        const body=document.body;if(!body)return '';
+        const walker=document.createTreeWalker(body,NodeFilter.SHOW_TEXT,{acceptNode:node=>node.parentElement&&node.parentElement.closest(OWN)?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+        const parts=[];let node;while((node=walker.nextNode()))parts.push(node.nodeValue);
+        return parts.join('\n');
+    }
     function draw() {
         if(!onPage()){dialog?.close();clear();return;}
         const hit=found();
@@ -5981,6 +6640,12 @@ const DKOKTO_DETAIL = (() => {
         try{DKOKTO_TEMPLATES.attach();}catch{}
         linksRow(hit.node,hit.title);
         try{pageRow(hit.node,hit.title,DKOKTO_LISTING_CORE.category(document.querySelector('li.torrent__category a')?.textContent||''));}catch{}
+        // Remember this upload for the source check, and answer for any upload remembered
+        // from another tracker that this page turns out to be about.
+        try{const page=known();const print=fingerprint(page.file,DKOKTO_FILES_UI.list());if(print)DKOKTO_SOURCE.remember(print);}catch{}
+        try{const place=DKOKTO_CHECKLIST.where();if(place){// textContent, not innerText: trackers keep the MediaInfo in a panel that is not displayed
+        // until clicked, and innerText leaves hidden text out.
+        DKOKTO_SOURCE_UI.banner(DKOKTO_SOURCE.check(pageText(),{host:place.host,url:location.origin+location.pathname}));}}catch{}
     }
     // A page that keeps changing (chat, timers) must not starve the redraw, and must
     // not be redrawn faster than a person can read: one pass per quarter second.
@@ -6090,6 +6755,8 @@ const DKOKTO_TRACKERS = (() => {
         site('nbl','Nebulance','tv','https://nebulance.io/torrents.php?searchstr={q}'),
         site('ar','AlphaRatio','general','https://alpharatio.cc/torrents.php?searchstr={q}'),
         site('tl','TorrentLeech','general','https://www.torrentleech.org/torrents/browse/index/query/{q}'),
+        // Address given 22 Sep 2026, pasted from a search run on the site; kept as given.
+        site('fl','FileList','general','https://filelist.io/browse.php?search={q}&cat=0&searchin=1&sort=2'),
         site('ipt','IPTorrents','general','https://iptorrents.com/t?q={q}'),
         site('ab','AnimeBytes','anime','https://animebytes.tv/torrents.php?searchstr={q}'),
         site('red','Redacted','music','https://redacted.sh/torrents.php?searchstr={q}'),
@@ -7529,6 +8196,114 @@ const DKOKTO_REQUESTS = (() => {
     return {mount,draw,settings,ask:askFor};
 })();
 
+// The torrent page on a tracker that is not UNIT3D (elsewhere-core.js says which): the
+// lookup rows and the source check, and nothing that needs a rule set — these sites have
+// none, so nothing is judged here. Reads the page, remembers the upload for source.js,
+// compares the page with uploads remembered from other trackers, and draws the banner and
+// one panel under the name. Opens nothing on its own.
+const DKOKTO_ELSEWHERE = (() => {
+    const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
+    let timer=null,mounted=false,lastSignature='';
+    // The page's text without this script's own output (the same rule detail.js uses).
+    const OWN='[class^="dk-"],[class*=" dk-"],[id^="dkokto-"],[id^="dp-inspector"]';
+    function pageText() {
+        const body=document.body;if(!body)return '';
+        const walker=document.createTreeWalker(body,NodeFilter.SHOW_TEXT,{acceptNode:node=>node.parentElement&&node.parentElement.closest(OWN)?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+        const parts=[];let node;while((node=walker.nextNode()))parts.push(node.nodeValue);
+        return parts.join('\n');
+    }
+    // Where the panel goes: under the name. TorrentLeech's <h2 id="torrentnameid">; on
+    // FileList the header strip that holds the h4, so the panel sits below it, not inside.
+    function anchor(doc,print) {
+        if(print.host==='torrentleech.org')return doc.querySelector('#torrentnameid');
+        return doc.querySelector('.cblock-header h4')?.closest('.cblock-header')||null;
+    }
+    function row(label,links,limit=14) {
+        // Its own class, not dk-detail-links: detail.js clears those rows on a page that is
+        // not a UNIT3D torrent page, which every page here is.
+        const nav=el('nav',undefined,'dk-elsewhere-row');nav.setAttribute('aria-label',label);
+        nav.append(el('span',label,'dk-detail-links-label'));
+        for(const link of links.slice(0,limit)){const a=el('a',link.label);a.href=link.url;a.title=link.note||'';if(link.exact)a.dataset.exact='yes';if(/^https:\/\//.test(link.url)){a.target='_blank';a.rel='noopener noreferrer';}nav.append(a);}
+        return nav;
+    }
+    function panel(print) {
+        const wrap=el('section',undefined,'dk-elsewhere');wrap.setAttribute('aria-label','Torrent Inspector on '+print.host);
+        wrap.append(el('h3','Torrent Inspector','dk-elsewhere-heading'));
+        wrap.append(el('p',(DKOKTO_ELSEWHERE_CORE.site(print.host)?.label||print.host)+' has no naming rule set in this script, so the name is not judged here; the lookups and the source check are what it offers.','dk-elsewhere-note'));
+        const title=print.title;
+        if(title) {
+            const site=DKOKTO_ELSEWHERE_CORE.site(print.host);
+            const own=(()=>{try{return DKOKTO_TRACKERS.list().find(entry=>entry.key===site?.key)||null;}catch{return null;}})();
+            // The general lookups, without the two relative "this tracker" searches that only
+            // mean something on UNIT3D; this site's own search comes from the catalogue.
+            let general=[];
+            try{general=DKOKTO_LINKS_CORE.links(title,{ids:DKOKTO_LINKS_CORE.ids(document),category:'',site:site?.label||''}).filter(link=>link.key!=='dp'&&link.key!=='exact');}catch{}
+            const fill=(template,q)=>String(template).replace(/\{q\}/g,encodeURIComponent(q));
+            if(own?.search){const term=DKOKTO_LINKS_CORE.parse(title).query||title;general.unshift({key:own.key,label:'Search '+own.label,url:fill(own.search,term),note:'This tracker, same title'},
+                {key:'exact',label:'Exact name',url:fill(own.search,title.trim()),note:'This tracker, this exact release name'});}
+            if(general.length)wrap.append(row('Look up:',general));
+            try{
+                const request={name:title,category:'',url:print.url,source:'torrent'};
+                const result=DKOKTO_REQUESTS_CORE.search(request,{ids:DKOKTO_LINKS_CORE.ids(document),host:print.host});
+                if(result.links.length)wrap.append(row('On your trackers:',result.links.map(link=>({...link,note:link.note}))));
+                const exact=DKOKTO_REQUESTS_CORE.search(request,{exact:true,host:print.host});
+                if(exact.links.length)wrap.append(row('This exact name:',exact.links));
+            }catch{}
+            const copy=el('button','Copy title','dk-detail-copy');copy.type='button';
+            copy.onclick=async()=>{try{await navigator.clipboard.writeText(title);copy.textContent='Copied';setTimeout(()=>copy.textContent='Copy title',1200);}catch{window.prompt('Copy this release title:',title);}};
+            // The same "Trackers you are on" dialog the UNIT3D pages open from their row's
+            // Details button; a tracker ticked there shows here at once.
+            const choose=el('button','Choose trackers…','dk-detail-copy');choose.type='button';choose.setAttribute('aria-haspopup','dialog');
+            choose.title='Tick the trackers you are on; they are searched from here';
+            choose.onclick=()=>{try{DKOKTO_REQUESTS.settings(()=>{lastSignature='';run(address());});}catch{}};
+            wrap.append(copy,choose);
+        }
+        // The source check, as on a UNIT3D torrent page's dialog.
+        try{wrap.append(DKOKTO_SOURCE_UI.section(DKOKTO_SOURCE.entryFor(print)||print));}catch{}
+        if(!print.hasReport&&print.reportLink) {
+            const p=el('p','The MediaInfo for this torrent, with its Unique ID, is on the Media Info page: ','dk-elsewhere-report');
+            const a=el('a','open it');a.href=print.reportLink;p.append(a,' and the ID is remembered for this torrent too.');
+            wrap.append(p);
+        }
+        if(!print.hasReport&&!print.reportLink)wrap.append(el('p','This tracker prints no MediaInfo, so the Unique ID cannot be compared here; the file names and sizes can.','dk-elsewhere-report'));
+        return wrap;
+    }
+    // One pass over the page: read, remember, compare, draw. Safe to run again.
+    function run(url) {
+        const print=DKOKTO_ELSEWHERE_CORE.read(document,url||location.href);
+        if(!print)return null;
+        try{DKOKTO_SOURCE.remember(print);}catch{}
+        const place={host:print.host,url:print.url};
+        let found=[];
+        try{found=DKOKTO_SOURCE.check(pageText(),place);}catch{}
+        try{DKOKTO_SOURCE_UI.banner(found);}catch{}
+        const signature=[print.title,print.uidHex,(DKOKTO_SOURCE.entryFor(print)||{}).uidHex,print.files.join('|'),print.totalBytes,found.length,JSON.stringify(DKOKTO_SOURCE.resultFor(print)||null)].join('\n');
+        const existing=document.querySelector('.dk-elsewhere');
+        if(existing&&lastSignature===signature)return print;
+        existing?.remove();lastSignature=signature;
+        const at=anchor(document,print);
+        const box=panel(print);
+        if(at&&at.parentElement)at.parentElement.insertBefore(box,at.nextSibling);else document.body.prepend(box);
+        return print;
+    }
+    // The offline preview is served from loopback, which is neither site; there the page
+    // says which address it stands for in data-dk-elsewhere-url on <body>, and only there.
+    const LOCAL=/^(?:localhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0)$/i;
+    const standsFor=()=>{try{return LOCAL.test(location.hostname)?document.body?.dataset?.dkElsewhereUrl||'':'';}catch{return '';}};
+    const address=()=>standsFor()||location.href;
+    function mount() {
+        if(mounted)return;
+        const preview=(()=>{try{return LOCAL.test(location.hostname);}catch{return false;}})();
+        if(!preview&&!DKOKTO_ELSEWHERE_CORE.where(location.href))return;
+        mounted=true;
+        const schedule=()=>{clearTimeout(timer);timer=setTimeout(()=>{try{run(address());}catch{}},250);};
+        schedule();
+        new MutationObserver(records=>{if(records.some(r=>r.type==='attributes'||![...r.addedNodes,...r.removedNodes].every(n=>n.nodeType===1&&n.closest&&n.closest(OWN))))schedule();})
+            .observe(document.body,{childList:true,subtree:true,attributes:preview,attributeFilter:preview?['data-dk-elsewhere-url']:undefined});
+    }
+    return {mount,run,pageText};
+})();
+
 // Pure address arithmetic for torrent navigation. No DOM, requests or history writes.
 const DKOKTO_NAV_CORE = (() => {
     const MAX_PAGE=1000000, MAX_ID=2147483647;
@@ -7743,6 +8518,8 @@ const DPTI_HOST = (() => {
         DKOKTO_LISTING.mount();
         DKOKTO_DETAIL.mount();
         DKOKTO_REQUESTS.mount();
+        // TorrentLeech and FileList: the lookups and the source check on their torrent pages.
+        try{DKOKTO_ELSEWHERE.mount();}catch{}
         // The nav panel reads UNIT3D's own addresses — /torrents?page= and /torrents/{id} —
         // so it works wherever this script runs. It adds its own button to the bar above.
         DKOKTO_NAV.mount();

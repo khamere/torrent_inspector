@@ -9,6 +9,235 @@ was named until 1.25.0.
 
 ---
 
+## 1.39.2 — the release name is not read out of the description
+
+- **release-title.js**: `.bbcode-rendered` added to SKIP (UNIT3D's rendered description;
+  HomieHelpDesk torrent 78628, saved 22 Sep 2026, quoted the NFO in Release Notes and its
+  `<b>Full.Dive….S01E01….REMUX-FraMeSToR</b>` scored 13 like the real name and was shorter,
+  so it won the tie); `h1.torrent__name` (`OWN_NAME`) gets +1 when it reads like a release,
+  so the page's own name element wins ties. On the saved page the badge moves from the NFO
+  line to the h1 and the "page disagrees" finding goes away.
+- Checks: detail fixture +1 (a release-looking `<b>` inside `.panel__body.bbcode-rendered`
+  does not take the badge; red with the module reverted). tools/saved-page probe on the
+  real page: badge on `H1.torrent__name`, state pass. Node 924, detail 237 (236), 82 shared
+  modules.
+
+## 1.39.1 — Choose trackers… on the TorrentLeech / FileList panel
+
+- **elsewhere.js**: a `Choose trackers…` button (`aria-haspopup=dialog`) calling
+  `DKOKTO_REQUESTS.settings()` with a redraw callback (the signature is cleared so the panel
+  is rebuilt with the new choice). Khamere, 22 Sep 2026, from the live FileList page: "can
+  we make it so that FileList is one of the searchable things" — it was in the catalogue
+  since 1.39.0 but unticked, and the panel offered no way to tick it.
+- Checks: elsewhere fixture +2 (the button; the dialog it opens lists FileList). Red with
+  the label changed; restored. Node 924, elsewhere 31, 82 shared modules.
+
+## 1.39.0 — TorrentLeech and FileList torrent pages
+
+- **elsewhere-core.js** (new): one adapter per non-UNIT3D site, every selector from the
+  pages Khamere saved on 22 Sep 2026 (TorrentLeech torrent 241837762; FileList details
+  975915 and 976307 with their Media Info pages). `where(url)` — TL `/torrent/{id}`; FL
+  `details.php?id=` and `mediainfo.php?id=`, the same torrent; `read(doc,url)` — title
+  (`#torrentnameid`; `.cblock-header h4`, the link's text on the Media Info page), files
+  (`#fileListTable`; the `Files` tooltip's title HTML), total (`td.description` Size;
+  `<b>Size</b>`), report (FL `font` block, `<br>`→newline, `&nbsp;`→space), the Media
+  Info link; the main file is the report's Complete name, else the one non-sample video.
+  `hosts()` feeds both build headers.
+- **elsewhere.js** (new): on those pages, remember → check → banner → one panel
+  (`.dk-elsewhere`: Look up with the site's own catalogue search first and no
+  UNIT3D-relative searches, On your trackers, This exact name, Copy title, the Source check
+  section, and a note about the Media Info page or the absence of MediaInfo). Its own
+  page-text walker, its own row class (detail.js clears `.dk-detail-links` off-UNIT3D). On
+  loopback the page names its address in `data-dk-elsewhere-url` for the preview.
+- **source.js**: `remember()` merges into an existing entry (non-empty fields win), so a
+  FileList details visit and a Media Info visit are one upload; `entryFor()`; an upload with
+  files but no name or ID is still remembered; `byNameOnly()` and `allGood()` accept a
+  name-and-size match where there is no ID; `caseOnly` kept in results and shown in
+  `summary()`. **source-core.js** `compare()`: case-insensitive fallback for names, folder
+  and files with `caseOnly`. **source-ui.js**: "✓ Same name and size as … (no Unique ID to
+  compare)" / "Matched by name and size on …".
+- **trackers.js**: `fl` FileList, `https://filelist.io/browse.php?search={q}&cat=0&searchin=1&sort=2`
+  (given 22 Sep 2026). **build.mjs** (both): `ELSEWHERE` hosts appended to `@match` (47
+  lines). **host.js**, **away.js**: `DKOKTO_ELSEWHERE.mount()`. **inspector.css**,
+  **scene.css**: the panel and its rows.
+- Checks: elsewhere-check.cjs (5: hosts, addresses incl. the Media Info page, merge on
+  remember, case-only match, no network); elsewhere-preview + elsewhere-fixture.js (29, both
+  editions: TL read/remember/banner/panel/lookups/idempotence; FL details then Media Info
+  with the ID filled in and the banner by ID; own output not page text); inspector-check /
+  check.cjs and links-check extended for the two extra `@match` lines; README/site counts
+  62 searchable. tools/saved-page.mjs against all four real pages, Scene build: TL "same name
+  and size (case differs there)", FL details "file name ✓ · size ✓", FL Media Info "Unique
+  ID ✓", the ten-file season remembered with its files. Node 924 (914), 82 shared modules
+  (78), elsewhere 29.
+
+## 1.38.3 — a missing banner explains itself; the script's own output is not page text
+
+- **detail.js** `pageText()`: a TreeWalker over body text nodes, rejecting anything under
+  `[class^="dk-"],[class*=" dk-"],[id^="dkokto-"]` — the badges, dialogs, hub, tools and the
+  source banner. Found with tools/saved-page.mjs on Khamere's saved OnlyEncodes page: a
+  planted H.265 fingerprint came up "file name ✓" on the H.264 page because the first
+  banner had printed the name and the redraw read it back.
+- **source.js**: `check()` records `last()` — host, how many other trackers' uploads were
+  looked for, their hosts, how many matched, whether the page prints a Unique ID.
+  **source-ui.js** `looked()`: that as a sentence at the end of the dialog's Source check
+  section (`.dk-source-looked`), or "Nothing is remembered from other trackers yet".
+- **source-ui.js** `banner()`: after appending, if the computed position is not `fixed` the
+  placement is set on the element (`style.position` etc.) — CSSOM writes are not subject
+  to a page's stylesheet policy.
+- **tools/saved-page.mjs**: runs a built edition against a saved torrent page at its own
+  address with every request intercepted (nothing leaves the machine), a remembered upload
+  planted from a JSON file; prints banner, badge state, store and page errors.
+- Checks: detail fixture +5 (the "nothing remembered yet" line; the banner's top is 12px;
+  a remembered name not on the page is ✗ and stays ✗ after a redraw with its own banner
+  present; the looked-for sentence with counts). Red with source.js/source-ui.js reverted
+  (209) and with detail.js's pageText reverted; restored. Node 914, detail 236 (231), 78
+  shared modules.
+
+## 1.38.2 — hidden MediaInfo is read; no ID is a dash; the file name in the banner
+
+- **detail.js**: the page text handed to the source check is `document.body.textContent`,
+  not `innerText` — trackers keep the MediaInfo in a panel that is `display:none` until
+  clicked, and innerText leaves hidden text out (Khamere's banner on a third tracker read
+  "this page shows none" with the report plainly on the page, 22 Sep 2026).
+- **source-core.js** `compare()`: `idMatch` is `null` when the page prints no Unique ID at
+  all (was `false`); `idsOnPage` says why. `source-id` is unchanged (it already needed
+  `idsOnPage`). **source.js** `summary(r, entry, page)`: the dash reads "(none here)" when
+  the upload had no ID and "(none on this page)" / "(none on <host>)" when the other page
+  had none.
+- **source-ui.js** `banner()`: the file name (the only file, else the remembered base) under
+  the title as `.dk-source-file`, monospace, `white-space:pre-wrap`; a name containing a
+  space gets `.dk-source-spaces` "The file name has spaces in it." (Khamere: "display the
+  filename under the title, that way we can check easily for spaces").
+- **source-ui.js** `banner()`: drawn only when its key (host|id|verdicts per row) changes;
+  rows sorted by host then id; a Close is remembered per key for the page's lifetime
+  (Khamere's 14 s recording: rows reordering on every redraw, and "the close button didn't
+  work" — draw() reran on each DOM change and re-appended it).
+- **inspector.css**, **dk/source/scene.css**: `.dk-source-file`, `.dk-source-spaces`.
+- Checks: detail fixture +4 (…and the banner stays closed across a redraw; the hidden-panel
+  step uses its own id 557 so a closed answer does not mask it) (a hidden `.torrent-mediainfo-dump` is still read; a page with
+  no ID says dash, not cross; the file name under the title). source-check +5 assertions
+  (`idMatch` null with `idsOnPage` 0; both dash wordings). Red with the four modules
+  reverted (detail 213, two assertion errors); the Close logic alone mutated: red at 217
+  on the stays-closed check; restored. Node 914, detail 231 (227), 78 shared modules.
+
+## 1.38.1 — the source check shows its Unique IDs
+
+- **source-ui.js**: `section()` opens with a small list of what was remembered (Unique ID,
+  file name, folder, size — `.dk-source-what`); `banner()` rows carry a line with the
+  remembered ID and the ID(s) found on the page (`.dk-source-ids`, up to three). A kept
+  "different" answer prints the source's ID in the dialog and in the `source-id` finding.
+- **source.js**: results gain `idFound` (the first ID the source page showed when the match
+  failed; 32 hex chars, validated on read, '' otherwise); `check()` returns the page's IDs
+  alongside each found entry (not stored).
+- **inspector.css**: `.dk-source-what`, `.dk-source-ids`. **dk/source/scene.css**: the checklist and
+  source styles were never copied in for the Scene edition (1.43.0/1.44.0 shipped the tick
+  boxes and the banner unstyled there); copied now, guarded by a fixture check that the
+  banner is `position:fixed` in whichever edition runs it.
+- Checks: detail fixture +6 (banner styled in this edition) (the dialog shows the remembered ID and file name; the banner
+  shows the matched ID; a differing page shows both IDs and keeps `idFound`; the home dialog
+  prints the source's ID). source-check: `idFound` kept and named in the finding; a malformed
+  kept ID is dropped. Both red with source.js/source-ui.js reverted. Node 914, detail 227
+  (221), 78 shared modules.
+
+## 1.38.0 — the source check: is this the same file the source tracker has?
+
+- **source-core.js** (pure): `uniqueId()` (decimal/hex → 32 hex chars; `{bad:true}` when the
+  halves disagree), `bytesOf()`, `reportAgainstFiles(file, rows)` (the report's File size
+  and Complete name against the page's file rows, matched by name or the only video file;
+  2% tolerance), `idsIn(text)` and `compare(text, entry)` (Unique ID, file name, folder,
+  file names, exact bytes or a rounded size within 0.5%, and whether the page mentions the
+  upload at all). Loaded before naming.js, which now takes `options.fileRows` and
+  `options.sourceIssues` and adds `unique-id-bad` (error), `report-size` (error) and
+  `report-name` (review). A Matroska report with no Unique ID is deliberately not asked
+  about. The page's Type field was left to page-core.js, which already does it.
+- **source.js**: key `dkokto_source_v1` — `pending` fingerprints (`host|id`, ≤25, three
+  days) and `results` per fingerprint (≤100), every field validated on read; `remember()`,
+  `pending()`, `check(pageText, {host,url})` (skips fingerprints from this host; keeps an
+  answer for each the page mentions), `resultFor()`, `issues()` (`source-id` error when the
+  page's IDs exist and none match; `source-name` / `source-folder` / `source-size` /
+  `source-files` review), `summary()`, `allGood()`. In backup-core.js KEYS.
+- **source-ui.js**: the banner (`.dk-source-banner`, one row per upload the page is about,
+  a link back opened only on click, Close) and the dialog section (`.dk-source`).
+- **detail.js**: `fingerprint()` from `checklist.where()`, the page's report and
+  `DKOKTO_FILES_UI.list()`; `known()` hands `fileRows` and the kept `sourceIssues` to the
+  check; `draw()` remembers this page and runs `check()` on the page's text; the dialog
+  shows the section for video. inspector.css: the banner and section styles.
+- **Checks.** source-check.cjs (6): the ID forms, the hand-edited case through naming, the
+  report against the rows, `compare()` on a synthetic page, the store (remember, answer from
+  another host, no answer from the same host, a differing ID as a red finding, bounds, a
+  hand-broken store, the Backup key, no network). Detail fixture +16: red badge and dialog
+  text for a hand-edited ID; an honest one remembered under `localhost|1761533513`; the
+  Source check section; the banner as the source page (✓ same release, kept under
+  `midnightscene.cc|555`, Close); a differing ID told apart and kept; a kept "different"
+  answer turning the home badge red with the tracker and date in the dialog; the report's
+  size against the file list (red) and a Complete name not on the page (question). Red with
+  detail.js's remember/issues wiring reverted. Planted fetch in source.js refused.
+  Node 914 (902), detail 221 (205), 78 shared modules.
+- **site/build-site.mjs**: source-core.js added to the rules page's bundle before naming.js
+  (its NEEDS guard caught the missing global: naming.js now takes it as its fifth argument).
+
+## 1.37.2 — a named special is not asked for its name
+
+- naming.js `special`: fired on any `S00E##` / `S##E00`. Now the text after the token, up to
+  the first technical element (resolution, REPACK/PROPER/RERip, Hybrid, NTSC/PAL/DVD,
+  BluRay, WEB-DL/WEBRip, HDTV, REMUX) and with a bare year removed, must contain a letter;
+  otherwise the review says the token "carries no special name". Seen 22 Sep 2026 on a named
+  BYU special. naming-check.cjs: one test rewritten (a named special no longer fires; a bare
+  one does) and one added (the Dwight title, a bare S00E01, a year-only S03E00, a named
+  S03E00, an ordinary episode). Node 902 (900).
+
+## 1.37.1 — the "names it its own way" notes no longer colour a badge
+
+- rules.js BUILTIN_BASELINE gains `book-own` and `music-own`: naming.js adds those review
+  lines when a profile says `books:'own'` / `music:'own'`, and listing-core.js colours a
+  badge by every review that is not a standing note, so on midnightscene.cc every music
+  row was amber with that line as its only reason (screenshot, 22 Sep 2026). As standing
+  notes they show, count as hideable in the checklist, and never move the badge.
+- profiles-check.cjs: a conforming MidnightScene music name and a conforming HomieHelpDesk
+  book name assess as `pass`; both codes are in `rules.baseline()`; a real profile finding
+  still assesses as `error`. Red before the change. Node 900 (898).
+- profiles-ui.js `installedTab()` rewritten ("this page also makes no sense anymore",
+  22 Sep 2026): two fieldsets, *Your trackers* and *Built into the script*. The second lists
+  DarkPeers and Zenith (in force on `rules.hostsOf(key)`, **Copy … as JSON**) and then the
+  four tracker-guides.js sets (in force on their hosts; **Edit a copy of …**, or **Reset
+  your copy to the built-in** once a copy exists, plus **Copy JSON**). A copy under *Your
+  trackers* is labelled "your edited copy of the built-in", says where it applies, and its
+  Remove reads **Remove your copy**; removing it does not forget the host's rule choice.
+  The old *Start from a built-in* fieldset is folded in. rules.js gains `hostsOf()`. Listing
+  fixture: six checks rewritten and six added — the legend, no Add/ship wording, the six rows
+  with DarkPeers and Zenith first, the four Edit a copy buttons and none for the built-ins,
+  the copy's label under Your trackers and on the built-in row, the Reset button, Remove
+  your copy, and the built-in back in the Rules list afterwards. Listing 215 (209); red
+  (104) with the old tab.
+
+## 1.37.0 — the manual checks can be ticked off
+
+- Two new modules, `checklist.js` and `checklist-ui.js`, slotted in after reviewed-ui.js in
+  both builds. The first keeps the data: a tick is stored as `host|torrent id|rule set` with
+  the day and the codes ticked, and a hidden standing note as `rule set` → its codes. It
+  works out which torrent you are on from the address (`/torrents/<number>`) and does nothing
+  on a listing or a queue. Limits: 500 torrents (oldest by day go first), 60 ticks per
+  torrent, 200 hidden notes per rule set, and everything read back is checked before it is
+  trusted. The key is `dkokto_checklist_v1`, listed in backup-core.js so Backup… carries it.
+- The second draws the list, and all three places that show manual checks now use it: the
+  badge dialog on a torrent page, the row dialog on a listing (it takes the torrent from the
+  row's link) and the naming panel. A per-torrent check gets a tick box when the torrent is
+  known; a standing note — anything `rules.baseline()` lists — gets **Hide this note**; a
+  short line under the boxes says a tick records that you looked and nothing more; hidden
+  notes sit at the bottom with **Restore**. The heading reads *Manual checks (n) · d done ·
+  h hidden*. None of it touches the badge.
+- Checks. checklist-check.cjs has five: ticks are per torrent, per rule set and dated, and
+  unticking the last one removes the record; a note hides once per rule set; `where()` on
+  six addresses; the caps, and a store broken by hand is read safely; the Backup key is
+  there and the module makes no request. It was red before the module existed and red again
+  before the key was in the Backup list (backup-check.cjs refuses a key it does not know).
+  The detail fixture has thirteen new checks — the heading, the boxes and the Hide buttons,
+  the note, a tick moving the count and landing under the right id, the badge unchanged,
+  hide / hidden list / restore, the tick still there on reopening, nothing ticked under
+  another rule set — and went red when the dialog wiring was reverted. The inspector
+  fixture has four. Node 898 (was 888), detail 205 (was 192), inspector 26 (was 22), 74
+  shared modules.
+
 ## 1.36.0 — MidnightScene's rules ship with the script
 
 - **MidnightScene in tracker-guides.js.** Key `mns`, host midnightscene.cc, base `dp`,

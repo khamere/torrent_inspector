@@ -1,4 +1,4 @@
-# Torrent Inspector 1.36.0
+# Torrent Inspector 1.39.2
 
 A Tampermonkey userscript for release naming. It reads the page you are on and tells you
 whether a release name is written the way the tracker you are on says it should be — on the
@@ -11,9 +11,10 @@ by torrent ID.
 key, nothing posted, submitted, uploaded or downloaded. Every link opens when you click it and
 not before. What it stores, it stores on your own machine.
 
-It runs on **44 UNIT3D trackers** and can search **61**. Naming rules for DarkPeers, Zenith,
-LUME, OnlyEncodes+, HomieHelpDesk and MidnightScene ship with it; any other tracker is added
-by pasting its rules, as data, never as code.
+It runs on **44 UNIT3D trackers** and can search **62**, and it also runs on TorrentLeech and
+FileList for the lookups and the source check. Naming rules for DarkPeers, Zenith, LUME,
+OnlyEncodes+, HomieHelpDesk and MidnightScene ship with it; any other tracker is added by
+pasting its rules, as data, never as code.
 
 ## What it looks like
 
@@ -93,6 +94,168 @@ JSON somewhere before you update.
 - **CHANGES-1.12.4-to-1.22.3.md** — what changed across the older versions, grouped by what
   it does.
 - **CHANGELOG.md** — every version, newest first.
+
+## Fixed in 1.39.2
+
+**The badge no longer lands on a file name quoted in the description.** On a HomieHelpDesk
+page whose Release Notes quoted the NFO, the script took the NFO's file name for the
+release name — it reads like one and was shorter than the page's long "AKA" title — badged
+it red, and then reported that the page's own name disagreed with it. The description is
+the uploader's text, never the page's name, so it is left out of the search now, and the
+page's own name element wins a tie. On that page the badge is where it belongs and the name
+passes.
+
+## Fixed in 1.39.1
+
+**Choosing trackers from TorrentLeech and FileList.** The panel there had no way to open the
+"Trackers you are on" dialog, so a tracker you hadn't ticked yet — FileList itself, newly in
+the catalogue — couldn't be added without going back to a UNIT3D page. There's now a
+**Choose trackers…** button beside Copy title; tick one and the rows update on the spot.
+
+## New in 1.39.0
+
+**TorrentLeech and FileList.** Neither runs UNIT3D, and until now the script could only build
+a search link to them. It now runs on their torrent pages as well — not to judge the name,
+since neither has a rule set, but for the two things that matter when you are chasing a
+source: the lookup rows and the source check. Under the name you get a small panel with
+this tracker's own search, the usual IMDb / TMDB / srrDB lookups, your other trackers, and
+the Source check section; the upload is remembered like any other, and the banner appears
+there when you arrive from a tracker where you had the same release open.
+
+What each site can and can't say. TorrentLeech has the file list and the size on the page
+but no MediaInfo, so there is no Unique ID to compare; the banner says *✓ Same name and size
+as … (no Unique ID to compare)* when that is all it has, rather than pretending to more. It
+also prints file names in lower case, which the check allows for and marks as *case differs
+there*. FileList keeps the file list in a tooltip and the full MediaInfo on a separate Media
+Info page for the same torrent; the panel on the details page points you at it, and opening
+it fills in the Unique ID for that upload — details page and Media Info page are one
+torrent to the script. FileList is also in the searchable trackers now, with the address
+you gave.
+
+## Fixed in 1.38.3
+
+**A missing banner now explains itself.** Open the badge's dialog on any torrent page and
+the Source check section ends with what the page was searched for: *Looked on this page
+for 4 uploads remembered from other trackers (homiehelpdesk.net, luminarr.me, …): none was
+about this page — no remembered title, file name, folder or Unique ID is in its text, so no
+banner.* That is what you get when the page is a different encode of the same show — an
+H.264 SDR next to the H.265 HDR you remembered — which is the script being right, not
+broken. When nothing is remembered yet, it says that instead.
+
+**The script no longer reads its own words.** Once a banner was on the page, the next
+redraw read the file name the banner had printed as if the page had said it, so a wrong
+file could come up *file name ✓*. The page text is now taken without anything the script
+drew. And the banner sets its own placement on the element, so a site that drops the
+script's stylesheet can't leave it as plain text under the footer.
+
+## Fixed in 1.38.2
+
+**The source check reads MediaInfo the page has not shown yet.** Most trackers keep the
+MediaInfo in a tab or a fold that is not displayed until you click it, and the first
+version only read what was on screen — so a page that plainly had the report was answered
+"this page shows none". It now reads the whole page, shown or not. And when the other page
+really has no Unique ID in it, that is a dash, *Unique ID – (none on this page)*, not a
+cross: no answer is not a wrong answer.
+
+**The file name sits under the release title in the banner**, exactly as the file is named,
+in a fixed-width font, so a space or a stray dot is easy to spot; a name with spaces in it
+gets a line saying so.
+
+**Close now closes the banner.** It was being drawn again on every redraw of the page, so
+Close only hid it for a moment, and the rows swapped places as other tabs touched the
+store. It is now drawn once per answer, in a fixed order, and stays closed until the answer
+changes.
+
+## Fixed in 1.38.1
+
+**You can now see the Unique ID the source check is working with.** The first version told
+you the ID was remembered but never showed it, so there was nothing to compare by eye. The
+**Source check** section in the badge's dialog now lists what it has: the Unique ID, the
+file name, the folder and the size. The banner on the other tracker's page shows the ID it
+remembered next to the one it found there, and when they differ, the answer carried back
+home names the ID the source had instead.
+
+## New in 1.38.0
+
+**Is this the same file the source tracker has?** That is the question a moderator ends up
+asking about most uploads, and until now the script only got you as far as the search
+links. Now it follows through. On a torrent page it quietly remembers what makes the upload
+what it is — the report's Unique ID, the main file's name, the top folder, the file names
+and the sizes — for three days. Open the same release on any other tracker the script runs
+on, by the lookup row or on your own, and a banner at the top of that page tells you
+whether it is the same thing: *✓ Same release as midnightscene.cc's upload · Unique ID ✓ ·
+file name ✓ · size ✓*, or *✕ Not the same file*, with a link back. Come back to the first
+page and the badge's dialog carries the answer under **Source check**, with the tracker and
+the day; a Unique ID that turned out different is a red finding there. Nothing is fetched
+and nothing is opened for you — you go to the other page yourself, and the script reads
+what is already on it.
+
+**Two smaller checks on the report itself, on the same page.** A MediaInfo report writes its
+Unique ID twice, as a decimal and the same number in hex; when the two are different numbers
+somebody typed it, and the badge now says so. And the report's file size is held against
+the size in the page's own file list: more than 2% apart and the report is from a different
+file, which is red; a Complete name that is not among the page's files is a question.
+
+These follow the shape of a MidnightScene moderator helper script you passed on
+(22 Sep 2026), rewritten to this script's rules: no requests, no pre-filled forms, no
+automatic navigation, a report that is remembered rather than a list of who releases where.
+One new storage key, `dkokto_source_v1`, capped at 25 remembered uploads and 100 answers,
+carried by *Backup…*.
+
+## Fixed in 1.37.2
+
+**A special that already has its name is no longer asked for one.** Any `S00E##` or
+`S##E00` used to get the amber "Specials require the special name after numbering", even
+when the name was right there — *Dwight in Shining Armor S00E01 After Woodside: A Look Back
+at Dwight in Shining Armor 1080p BYU WEB-DL …* was one. Now the check looks at what follows
+the number: if there is a name before the resolution and the rest of the technical elements,
+nothing is asked; if there is nothing there, or only a year, it says so and points at TVDB
+as before.
+
+## Fixed in 1.37.1
+
+**Music on MidnightScene was amber for no reason.** Every music row on midnightscene.cc
+carried an amber ? whose only explanation was "MidnightScene names music its own way, so no
+shared music template is applied here" — which is a note about whose rules apply, not a
+problem with the name. That note, and its twin for HomieHelpDesk's books, no longer colour
+a badge; a name that passes the tracker's own rules is green, and the note sits with the
+other standing reminders (where it can be hidden like them). A real finding from the
+tracker's own rules still turns the badge red or amber as before.
+
+**The Added trackers tab reads the way things now work.** It still said "Rule sets that
+ship with this script" with an **Add** button on each, which made it look as if nothing
+applied until you added it — the opposite of what has been true since 1.34.0. It now has
+two parts: *Your trackers*, which is what you added yourself, and *Built into the script*,
+which lists all six built-in rule sets with the tracker each is in force on. The four with
+a profile behind them offer **Edit a copy**; the copy lands under *Your trackers* marked as
+a copy, applies instead of the built-in, and can be removed or reset to the built-in from
+either row. DarkPeers and Zenith, which live in the code itself, offer **Copy as JSON** to
+start a new tracker from.
+
+## New in 1.37.0
+
+**You can now tick off the manual checks.** Every naming check ends with a list of things
+only a person can settle — is the source really what the name says, are there three
+screenshots, is the AKA spelled right. Until now that list was just there to read, and the
+only thing you could record was the one big *Mark as conforming*. So each of those checks
+now has a tick box, and the heading keeps score: *Manual checks (9) · 6 done*.
+
+The ticks belong to the torrent you are on. Come back to it tomorrow and they are still
+ticked; open a different torrent and they are not. They are also kept per rule set, because
+having checked a name against HomieHelpDesk's rules tells you nothing about Zenith's. On a
+listing page the ticks follow each row's own torrent link, and in the naming panel they
+work whenever the panel is open on a torrent page.
+
+Some items in that list are not checks at all, just a rule set's standing reminders — the
+"what a title alone cannot show" paragraphs. You read those once, not once per torrent, so
+they get **Hide this note** instead of a tick. Hidden notes stay hidden for that rule set,
+the heading says *· 1 hidden*, and a *Hidden notes* line at the bottom brings any of them
+back with **Restore**.
+
+One thing to be clear about: a tick means you looked. It does not verify anything, it never
+turns the badge green, and the list says as much right under the boxes. Everything is
+stored on your machine under one new key (`dkokto_checklist_v1`), capped at 500 torrents
+with the oldest dropping off first, and *Backup…* carries it with the rest.
 
 ## New in 1.36.0
 
@@ -1170,8 +1333,8 @@ The naming rules are a snapshot of the supplied guide (`NAMING-GUIDE-REFERENCE.t
 Private notes are per torrent ID in browser storage, not account-wide or public.
 
 The userscript matches HTTPS only, and only the 44 trackers whose addresses are in its own
-catalogue — that list is written into the header at build time from the catalogue itself, so
-the two cannot drift apart, and there is a check for it. It asks for `GM_setValue`,
+catalogue, plus TorrentLeech and FileList — that list is written into the header at build
+time from the catalogue itself, so the two cannot drift apart, and there is a check for it. It asks for `GM_setValue`,
 `GM_getValue` and `GM_deleteValue`, which are storage on your machine rather than network, and
 for no `@connect` host at all. It performs no network request, post, upload or download of any
 kind; every lookup link, the srrDB link included, navigates only when you click it. No

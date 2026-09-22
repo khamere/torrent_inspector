@@ -66,6 +66,61 @@ change later turns a marked name red, red wins. The mark is per rule set, so mar
 under DarkPeers' rules says nothing about it under Zenith's. It verifies nothing and changes
 nothing on the tracker; it records that you looked.
 
+### Checking a release against its source tracker
+
+Most of what a moderator wants to know about an upload comes down to one question: is this
+the same file the source tracker has? The torrent page now remembers what makes the upload
+what it is — the report's Unique ID, the file name, the folder, the file names and the
+sizes — for three days. Open the same release on any other tracker the script runs on, by
+the lookup row or on your own, and a banner at the top of that page says whether it is the
+same thing, item by item, with a link back. On the first page the badge's dialog then
+carries the answer under **Source check**, and a Unique ID that turned out different is a
+red finding. Nothing is fetched or opened for you; the script reads the page you went to.
+
+The section starts by listing what it remembered — the Unique ID, the file name, the folder
+and the size — so you can compare them with the other page by eye; the banner there shows
+the ID it found beside the one it was looking for. The Unique ID itself is on the page's
+own MediaInfo, under General, and the hex in brackets is the form the script matches.
+The other page is read whole, including a MediaInfo tab you have not opened; if it truly
+has no Unique ID in it, the banner says *Unique ID – (none on this page)* and only the
+file name and size are compared. The file name sits under the title in the banner, as the
+file is named, so spaces and dots show.
+
+When no banner appears, the dialog's Source check section says why: how many uploads from
+other trackers it looked for on this page and whether any was about it. A page that is a
+different encode of the same title — H.264 where you remembered the H.265 — is not about
+them, and stays quiet on purpose.
+
+Two things it checks on the report itself while it is there: a Unique ID whose decimal and
+hex halves are different numbers (someone typed it), and a file size that is not the size
+of the file in the page's own list (the report is from another file).
+
+### TorrentLeech and FileList
+
+These two are not UNIT3D, so there are no badges and nothing is judged there. What you get
+on their torrent pages is a panel under the name with the lookups and the Source check
+section, and the banner when you arrive from another tracker with the same release
+remembered. TorrentLeech has no MediaInfo on the page, so only the name, files and size can
+be compared; it prints file names in lower case, and the check says so rather than failing
+them. On FileList the MediaInfo is on its own page — the panel links to it — and opening it
+fills in the Unique ID for that torrent. **Choose trackers…** in the panel opens the same
+"Trackers you are on" dialog as the Details button does elsewhere.
+
+### Ticking off the manual checks
+
+Every check ends with a list of things only you can settle. Each one has a tick box when
+the script knows which torrent you are looking at — on a torrent page, or from a listing
+row's own link — and the heading keeps score: *Manual checks (9) · 6 done*. Ticks stay with
+that torrent under the rules in force, so they are there when you come back and gone on any
+other torrent, tracker or rule set.
+
+A rule set's standing reminders are the same text on every torrent, so those get **Hide this
+note** instead. They stay hidden for that rule set, the heading says *· 1 hidden*, and
+**Restore** under *Hidden notes* brings one back.
+
+A tick means you looked. It doesn't verify anything, it never turns the badge green, and it
+never leaves your machine.
+
 ### Whose rules?
 
 Six rule sets ship: **DarkPeers**, **Zenith**, **LUME**, **OnlyEncodes+**, **HomieHelpDesk**
@@ -73,10 +128,10 @@ and **MidnightScene**. Each is the default on its own tracker: the badges appear
 any setup, and the *Rules* list carries all five. HomieHelpDesk names books its own way
 (`Author Name - Title.epub`), so on it the naming box checks a book against its rules and
 says so, rather than against DarkPeers' book template; MidnightScene names music its own
-way, and its music is checked the same way. To change a shipped set, open
-*Tracker rules… → Added trackers* and press **Add** beside it: that copies it into your
-added trackers, where it is editable, exportable and removable, and your copy applies
-instead of the shipped one until you remove it.
+way, and its music is checked the same way. All six are listed under *Tracker rules… →
+Added trackers → Built into the script*, each saying where it is in force. To change one,
+press **Edit a copy**: the copy appears under *Your trackers*, applies instead of the
+built-in until you remove it, and can be reset to the built-in from the same row.
 
 Every other tracker is added by pasting its rules. A profile is **data**: nothing in one is
 executed, patterns are compiled as regular expressions and matched against a title, and one
@@ -239,8 +294,9 @@ Worth doing before you change script managers, move machines, or update across a
 
 ## What it stores, and where
 
-Added trackers, rule sets, the internal-groups list, your templates, your private notes and
-the record of what you have looked at. All of it on your machine: Tampermonkey's own per-script
+Added trackers, rule sets, the internal-groups list, your templates, your private notes,
+the record of what you have looked at, the checks you have ticked, and the uploads
+remembered for the source check with what the source said. All of it on your machine: Tampermonkey's own per-script
 store where the manager has it, so the setup is the same on every tracker it runs on, and
 ordinary browser storage otherwise. Nothing is sent anywhere, and every list can be exported as
 JSON and taken with you.

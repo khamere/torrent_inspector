@@ -124,8 +124,8 @@
       group linked to where it is internal. Nothing is ever fetched, posted or changed.
     </p>
     <ul class="pills">
-      <li class="pill"><b>1.36.0</b></li>
-      <li class="pill"><b>44</b> trackers it runs on · <b>61</b> it can search</li>
+      <li class="pill"><b>1.39.2</b></li>
+      <li class="pill"><b>44</b> UNIT3D trackers it runs on · <b>62</b> it can search · TorrentLeech and FileList too</li>
       <li class="pill">No requests, no posting</li>
       <li class="pill">Nothing judged without that tracker’s rules</li>
       <li class="pill">Everything stays in your browser</li>
@@ -250,7 +250,7 @@
       <div class="card">
         <h3>Four rule sets are already written</h3>
         <p><b>LUME</b>, <b>OnlyEncodes+</b>, <b>HomieHelpDesk</b> and <b>MidnightScene</b> ship with the script, built from their own published guides — 14, 16, 35 and 26 rules, OnlyEncodes' 136 banned groups with the reasons and dates its page gives, HomieHelpDesk's 48 and MidnightScene's 62. On their own trackers they are already in force.</p>
-        <p>They are the default on their own trackers, with no setup. <b>Add</b> copies one into your added trackers so you can edit it, and your copy then applies instead.</p>
+        <p>They are the default on their own trackers, with no setup. <b>Edit a copy</b> puts a copy under your own trackers, and the copy then applies instead.</p>
       </div>
       <div class="card">
         <h3>Add your own tracker</h3>
@@ -487,8 +487,8 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
         <li><b>Use a ready-made rule set elsewhere if it fits.</b> All five are in the <b>Rules</b>
           dropdown on every tracker, so on a site whose rules are not in hand you can pick the closest
           one. <b>Tracker rules… → Added trackers</b> lists <b>LUME</b>, <b>OnlyEncodes+</b>,
-          <b>HomieHelpDesk</b> and <b>MidnightScene</b> under <em>Rule sets that ship with this script</em>; <b>Add</b> copies one
-          into your added trackers so you can edit it, and your copy then applies instead.</li>
+          <b>HomieHelpDesk</b> and <b>MidnightScene</b> under <em>Built into the script</em>; <b>Edit a copy</b> puts a
+          copy under your own trackers, and the copy then applies instead.</li>
         <li><b>Tick the trackers you are on.</b> Open <em>Is this already on your trackers?</em> and tick
           them. This list follows you to every tracker the script runs on, so you only do it once.</li>
         <li><b>Hover a badge.</b> One line tells you why. Click it for the corrections and a copyable
@@ -687,21 +687,23 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
         <p style="margin-top:10px">Anywhere else nothing is judged until you choose a rule set, because a
         red ✕ quoting a rulebook that tracker never wrote is worse than no badge at all. The group tags are
         marked everywhere regardless.</p>
-        <p>To change a shipped set, <b>Tracker rules…</b> → <b>Added trackers</b> → <em>Rule sets that ship
-        with this script</em> → <b>Add</b> copies it into your added trackers, editable, exportable and
-        removable; your copy then applies instead, and removing it brings the shipped one back.</p>
+        <p>To change one, <b>Tracker rules…</b> → <b>Added trackers</b> → <em>Built into the script</em> →
+        <b>Edit a copy</b>: the copy sits under your own trackers, editable, exportable and removable; it
+        applies instead of the built-in, and removing it brings the built-in back.</p>
         <p>So <b>six trackers badge out of the box</b>. On the other thirty-eight you choose a rule set, or
         add that tracker's rules yourself.</p></dd>
 
-      <dt>Is it 44 trackers or 61?</dt>
+      <dt>Is it 44 trackers or 62?</dt>
       <dd>Both, counting different things. <b>44</b> is how many UNIT3D trackers the script <em>runs
-        on</em> — the <code>@match</code> lines, where badges, the Inspector and <b>vs</b> appear.
-        <b>61</b> is how many it can <em>search</em> for the cross-check, which adds the Gazelle-family
+        on</em> — where badges, the Inspector and <b>vs</b> appear.
+        <b>62</b> is how many it can <em>search</em> for the cross-check, which adds the Gazelle-family
         and other non-UNIT3D sites — PassThePopcorn, HDBits, BroadcasTheNet, AvistaZ and the rest. It
-        never runs on those; it builds a link you click. (<b>44</b> trackers is <b>45</b>
-        <code>@match</code> lines, because DarkPeers gets one with <code>www.</code> and one without.)
-        Both numbers went down by two in 1.25.0: MoreThanTV and FearNoPeer closed, and a link to a site
-        that is gone is a wasted click.</dd>
+        never runs on those; it builds a link you click. The exceptions since 1.39.0 are TorrentLeech
+        and FileList: it runs on their torrent pages too, for the lookups and the source check only,
+        with nothing judged, since neither has a rule set. (That is <b>47</b> <code>@match</code>
+        lines: DarkPeers gets one with <code>www.</code> and one without, and the two extra sites
+        one each.) Both numbers went down by two in 1.25.0: MoreThanTV and FearNoPeer closed, and a
+        link to a site that is gone is a wasted click.</dd>
 
       <dt>The tracker I moderate is not on the list. How much work is adding it?</dt>
       <dd>Its rules page and its banned list, as text, are all a profile needs. Open
@@ -778,7 +780,7 @@ Bureau.Burgwallen.S01E02.…-DDF.mkv 1278590592 B</code></pre>
 
 <footer>
   <div class="wrap">
-    <p><b>Torrent Inspector 1.36.0</b> — a personal fork, offered as-is.</p>
+    <p><b>Torrent Inspector 1.39.2</b> — a personal fork, offered as-is.</p>
     <p>Found something wrong? A screenshot with the badge's tooltip visible is the fastest fix — several bugs in this line were found exactly that way, and each one now has a test built from the row that showed it up.</p>
   </div>
 </footer>

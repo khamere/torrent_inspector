@@ -2,8 +2,8 @@
 
 Six rule sets ship with the script: **DarkPeers**, **Zenith**, **LUME**, **OnlyEncodes+**,
 **HomieHelpDesk** and **MidnightScene**. All six are in force on their own trackers as they
-ship. The last four are listed under *Added trackers → Rule sets that ship with this script*, where
-**Add** copies one into your added trackers so you can edit it.
+ship. All six are listed under *Added trackers → Built into the script*; the last four offer
+**Edit a copy**, which puts an editable copy under *Your trackers*.
 
 Any other tracker is added as a **profile**: a JSON object holding who the tracker is, its
 banned release group list, and its rules. Nothing in a profile is executed and nothing is
@@ -16,10 +16,10 @@ top of the naming box.
 ## The rule sets that ship with the script
 
 Four are built from guides supplied in full. They are the default on their own trackers
-and sit in the *Rules* list without being added. Under **Added trackers → Rule sets that
-ship with this script**, **Add** copies one into your added trackers — editable, exportable,
-removable — and your copy then applies instead of the shipped one; remove the copy and the
-shipped set is back in force.
+and sit in the *Rules* list without being added. Under **Added trackers → Built into the
+script**, **Edit a copy** puts a copy under *Your trackers* — editable, exportable,
+removable — and the copy then applies instead of the built-in; remove it (or press **Reset
+your copy to the built-in**) and the built-in is back in force.
 
 | Rule set | Built from | What it does not have |
 | --- | --- | --- |
