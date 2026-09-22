@@ -9,6 +9,17 @@ was named until 1.25.0.
 
 ---
 
+## 1.39.3 — the FileList panel sits inside the content box
+
+- **elsewhere.js** `anchor()`: on FileList the panel is prepended to `.cblock-innercontent`
+  of the name's `.cblock` rather than inserted after `.cblock-header` — the header strip is
+  `.cblock-headerleft` / `.cblock-header` / `.cblock-headerright` and a clearfix, and a
+  block between them broke the frame (Khamere's screenshot, 22 Sep 2026: "We broke the
+  html slightly, look past the star"). TorrentLeech unchanged (after `#torrentnameid`).
+- Checks: elsewhere fixture updated (first child of `.cblock-innercontent`, no previous
+  sibling); red with the module reverted. Probe of the real details page: parent
+  `DIV.cblock-innercontent`. Node 924, elsewhere 31, 82 shared modules.
+
 ## 1.39.2 — the release name is not read out of the description
 
 - **release-title.js**: `.bbcode-rendered` added to SKIP (UNIT3D's rendered description;

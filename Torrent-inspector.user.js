@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.39.2
+// @version      1.39.3
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       DKOKTO
 // This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,
@@ -8212,11 +8212,14 @@ const DKOKTO_ELSEWHERE = (() => {
         const parts=[];let node;while((node=walker.nextNode()))parts.push(node.nodeValue);
         return parts.join('\n');
     }
-    // Where the panel goes: under the name. TorrentLeech's <h2 id="torrentnameid">; on
-    // FileList the header strip that holds the h4, so the panel sits below it, not inside.
+    // Where the panel goes: under the name. TorrentLeech's <h2 id="torrentnameid">, the
+    // panel after it. On FileList the header strip is three pieces (left cap, header, right
+    // cap) and a clearfix, and anything put between them breaks the frame — Khamere's
+    // screenshot, 22 Sep 2026 — so the panel goes first inside the content box instead.
     function anchor(doc,print) {
-        if(print.host==='torrentleech.org')return doc.querySelector('#torrentnameid');
-        return doc.querySelector('.cblock-header h4')?.closest('.cblock-header')||null;
+        if(print.host==='torrentleech.org'){const h=doc.querySelector('#torrentnameid');return h?{after:h}:null;}
+        const box=doc.querySelector('.cblock-header h4')?.closest('.cblock')?.querySelector('.cblock-innercontent');
+        return box?{first:box}:null;
     }
     function row(label,links,limit=14) {
         // Its own class, not dk-detail-links: detail.js clears those rows on a page that is
@@ -8283,7 +8286,9 @@ const DKOKTO_ELSEWHERE = (() => {
         existing?.remove();lastSignature=signature;
         const at=anchor(document,print);
         const box=panel(print);
-        if(at&&at.parentElement)at.parentElement.insertBefore(box,at.nextSibling);else document.body.prepend(box);
+        if(at?.first)at.first.prepend(box);
+        else if(at?.after&&at.after.parentElement)at.after.parentElement.insertBefore(box,at.after.nextSibling);
+        else document.body.prepend(box);
         return print;
     }
     // The offline preview is served from loopback, which is neither site; there the page

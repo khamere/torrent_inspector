@@ -1,4 +1,4 @@
-# Torrent Inspector 1.39.2
+# Torrent Inspector 1.39.3
 
 A Tampermonkey userscript for release naming. It reads the page you are on and tells you
 whether a release name is written the way the tracker you are on says it should be — on the
@@ -91,7 +91,15 @@ JSON somewhere before you update.
 - **GUIDE-1.22.md** — the older walkthrough, written for the fuller DKOKTO Scene Edition. Kept
   for reference; its theme, artwork and chat-game sections do not apply to this script.
 - **TRACKER-RULES.md** — how to add a tracker of your own, as a rules profile.
+- **CHANGES-1.12.4-to-1.22.3.md** — what changed across the older versions, grouped by what
+  it does.
 - **CHANGELOG.md** — every version, newest first.
+
+## Fixed in 1.39.3
+
+**The FileList panel no longer breaks the page's box.** It was being put between the header
+strip and its right-hand cap, which pushed the frame apart; it now sits first inside the
+content box, above the download link, with the frame intact.
 
 ## Fixed in 1.39.2
 
