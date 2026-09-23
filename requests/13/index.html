@@ -1,3 +1,50 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Demo · Vigil (2013) S03 · Torrent Inspector</title><link rel="icon" type="image/svg+xml" href="/images/logo.svg">
+<style>body{margin:0;font:15px 'Segoe UI',system-ui,sans-serif;background:#100c16;color:#eae3f2}
+.top-nav{padding:12px 22px;background:#1b1424;border-bottom:1px solid #33243f;color:#c9b6d8;letter-spacing:.08em;font-size:12px}
+main{max-width:1180px;margin:auto;padding:18px 22px 120px}
+h1{font-size:20px;margin:14px 0 4px}
+.note{color:#9d8bad;font-size:13px;margin:0 0 14px}
+table{width:100%;border-collapse:collapse}
+th{color:#a892bb;font-size:12px;text-align:left;padding:8px 10px;border-bottom:1px solid #3a2f45;font-weight:600}
+td{padding:10px;border-bottom:1px solid #2a2036;vertical-align:middle}
+td a{color:#dbc0ef;text-decoration:none}
+.cat{color:#b7a6c6;font-size:13px}
+.num{color:#8fd6a8;text-align:right;font-variant-numeric:tabular-nums}
+.num.red{color:#e08a8a}
+.torrent__name{font-size:22px;margin:14px 0 2px}
+.torrent__meta{display:flex;gap:14px;margin:8px 0 12px;color:#b9a7c7;font-size:13px}
+.torrent-release{font-size:15px;margin:6px 0 10px}
+.torrent-mediainfo-dump{background:#0c0811;border:1px solid #3a2b47;padding:12px;max-height:210px;overflow:auto}
+.torrent-mediainfo-dump code{white-space:pre;font:12px/1.55 Consolas,monospace;color:#cbb9db}
+
+.demo-strip{padding:12px 22px;background:#1b1226;border-bottom:1px solid #3b2a4a;color:#c3b2d3;font:14px/1.5 "Segoe UI",system-ui,sans-serif}
+.demo-strip b{color:#efe7f6}.demo-strip a{color:#c79bf0}.demo-strip nav a{margin-right:14px}.demo-strip p{margin:6px 0 0;max-width:110ch}
+h2{font-size:16px;margin:18px 0 6px;color:#c3b2d3}.dialog__form table{width:auto;min-width:60%}.dialog__form td{padding:5px 10px;font:13px Consolas,monospace}.dialog__form th{padding:5px 10px}</style>
+<script>
+// Demo shell: the rule set for this host, a few trackers ticked, and on one page the
+// remembered upload. All of it is this site's own localStorage; nothing is fetched.
+window.GM_info={script:{version:"1.42.5"}};
+window.GM_registerMenuCommand=()=>0;window.GM_unregisterMenuCommand=()=>{};
+window.GM_addStyle=css=>{const s=document.createElement("style");s.textContent=css;document.head.append(s);return s;};
+try{localStorage.setItem("dp_dkokto_last_seen_version","1.42.5");
+localStorage.setItem("dkokto_rules_host_v1",JSON.stringify({[location.hostname]:"dp"}));
+if(!localStorage.getItem("dkokto_trackers_v1"))localStorage.setItem("dkokto_trackers_v1",JSON.stringify({enabled:["aither","blu","ptp","hdb"],search:{},custom:[],popups:{}}));
+
+}catch{}
+</script></head><body>
+<div class="demo-strip"><nav><b>Torrent Inspector demo</b> · <a href="/torrents/">The listing</a><a href="/requests/">The requests page</a><a href="/">Back to the site</a></nav>
+<p><b>A request page</b> — a TV request, with the season in the title, so the searches carry it. Made-up releases, the real 1.42.5 script; nothing here is a tracker, and nothing is fetched or sent.</p></div>
+<nav class="top-nav">TRACKER / VIGIL (2013) S03</nav>
+<main>
+<h1>Vigil (2013) S03</h1>
+<p class="note">Example request page · offline demo page, no tracker login.</p>
+<p><span class="request__category cat">TV Shows</span> · Bounty 250 GB · <a href="/requests/">Back to the requests</a></p>
+<p>Requested by a made-up member. The description would be here.</p>
+</main>
+
+<script>
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
@@ -9232,3 +9279,5 @@ const DPTI_HOST = (() => {
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once: true});
     else start();
 })();
+
+</script></body></html>

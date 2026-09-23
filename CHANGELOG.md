@@ -9,6 +9,46 @@ was named until 1.25.0.
 
 ---
 
+## 1.42.5 — the demo: a page for every torrent and request
+
+- site/build-site.mjs: `TORRENTS` (101–106) and `REQUESTS` (12–14) tables; a shell()
+  shared by the listing, the requests page, six torrent pages (`torrents/<id>/index.html`,
+  each with the release, the UNIT3D meta spans, a `.dialog__form[data-tab="list"]` file
+  list with byte counts in the size's title, and a MediaInfo whose Unique ID decimal and
+  hex agree) and three request pages (`requests/<id>/index.html`, h1 + `.request__category`).
+  101 carries the remembered upload; 102 is an S02 pack missing E04 with DDP5.1 in the
+  name; 103 is -RARBG; 104 is music (badge from the heading); 105 has original language
+  Japanese and an English-only report; 106 is untagged 576p. tools/demo/listing.html row
+  106 is now that untagged name (was "Unknown Release"); screenshots regenerated.
+  Checked in Chromium: badges pass/error/error/pass/review/review on 101–106, the file
+  marker on each, the banner on 101, the E04 gap in 102's dialog, request links on 12–14;
+  no page errors. Script unchanged; Scene stays 1.48.1.
+
+## 1.42.4 — tools/check-list.mjs: a list of torrents against one tracker's rules
+
+- `node tools/check-list.mjs <in.csv|in.txt> [--rules zenith] [--out out.csv] [--only
+  missing,possible]` — repository tool, not part of the script. Reads a CSV with a name
+  column (the report zenith_fill.py writes, or any other) or a plain list, writes the same
+  rows with `verdict` (blocked / check / ok / unclear / skipped), `blocks`, `questions`,
+  `display_name`, `category_used` and `cosmetic_ua_fixes`. The verdict comes only from the
+  tracker's own rules (rules.js `check()`, the standing reminders left out) and its banned
+  list (groups.js `find()`); the shared template's findings — dots, spacing, DDP — go in
+  their own column because Upload-Assistant rewrites the title anyway ("remember that UA
+  will fix the titles", 23 Sep 2026). Category guessed from the name (S## → TV; year and
+  source → Movies; "Artist - Album (Year)" → Music) unless the CSV has one. Offline; a
+  throwaway store; nothing fetched. Script unchanged; Scene stays 1.48.1.
+
+## 1.42.3 — the demo pages at real addresses
+
+- site/build-site.mjs writes the demo to `torrents/index.html`, `torrents/101/index.html`
+  and `requests/index.html` (folders GitHub Pages serves at `/torrents/`, `/torrents/101/`,
+  `/requests/`; the script's page tests accept the trailing slash) instead of faking the
+  address with replaceState, which left a reload on the host's 404 (seen 23 Sep 2026,
+  `torrent.dkokto.dev/torrents/101`). `demo.html`, `demo-listing.html` and
+  `demo-requests.html` are now one-line redirects. `<meta name="robots" content="noindex">`
+  on the demo pages. Checked in Chromium: each page draws, survives a reload, the listing's
+  row link lands on the torrent page with the banner up, the redirect works.
+
 ## 1.42.2 — the site: a live demo, a shorter front page, source-check screenshots
 
 - site/build-site.mjs builds `demo.html` (torrent page), `demo-listing.html` and

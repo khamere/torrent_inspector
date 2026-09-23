@@ -1,4 +1,4 @@
-# Torrent Inspector 1.42.2
+# Torrent Inspector 1.42.5
 
 ![Torrent Inspector — release naming checks, the MediaInfo Inspector and a cross-tracker lookup. It reads the page; it does not act.](images/banner.png)
 
@@ -110,6 +110,14 @@ JSON somewhere before you update.
 - **CHANGELOG.md** — every version, newest first, in more detail than here. The version
   notes below stop at 1.39.0; everything earlier is there.
 
+## Fixed in 1.42.3
+
+**The demo survives a reload.** The first cut of the live demo faked the page address so the
+script would treat the page as a torrent page, and a reload landed on the host's 404. The
+three pages now live at the real addresses the script expects — `/torrents/`,
+`/torrents/101/` and `/requests/` on the site — so a reload, a bookmark or the listing's
+own link to the torrent page all just work. The old `demo.html` names redirect there.
+
 ## New in 1.42.2
 
 **The website has a live demo, and a once-over.** torrent.dkokto.dev now has three demo
@@ -145,6 +153,15 @@ rows, the same links. On a page where no banner appeared, it puts a small box in
 banner's place saying what the page was looked over for and why nothing matched, so a
 quiet page is never a mystery. Close works on both. Nothing is fetched by pressing it; it
 shows what the page already told the script.
+
+## Fixed in 1.42.5
+
+**The demo is a whole small site now.** Every row on the demo listing has its own torrent
+page and every request its own request page — six torrents and three requests — and each
+one shows a different thing: the source-check banner, a season pack with an episode
+missing from its files, a banned group, a music release, an anime pack whose only audio
+track is not the original language, and a name with no group tag that gets an amber
+question. Nothing on the demo links to a page that is not there.
 
 ## Fixed in 1.41.3
 
