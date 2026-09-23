@@ -1,4 +1,4 @@
-# Torrent Inspector 1.41.2
+# Torrent Inspector 1.42.0
 
 ![Torrent Inspector — release naming checks, the MediaInfo Inspector and a cross-tracker lookup. It reads the page; it does not act.](images/banner.png)
 
@@ -97,6 +97,24 @@ JSON somewhere before you update.
   it does.
 - **CHANGELOG.md** — every version, newest first, in more detail than here. The version
   notes below stop at 1.39.0; everything earlier is there.
+
+## New in 1.42.0
+
+**A Source check button in the tools bar.** Next to *Nav* and *Inspect torrent* there is
+now *Source check*. Press it and the banner comes back after you have closed it — the same
+rows, the same links. On a page where no banner appeared, it puts a small box in the
+banner's place saying what the page was looked over for and why nothing matched, so a
+quiet page is never a mystery. Close works on both. Nothing is fetched by pressing it; it
+shows what the page already told the script.
+
+## Fixed in 1.41.3
+
+**A music torrent page gets its badge.** A MidnightScene single's page showed nothing
+under its name at all, for the reason books had until 1.40.0: a music name does not look
+like a release to the script, so it had nothing to hang the badge on. On a page filed
+under Music it now takes the page's own heading, as it does for books, and the tracker's
+music rules read it — on that single, MidnightScene's "primary artist only" rule turns the
+`ft.` credit into a red ✕. Nothing changes for video pages.
 
 ## New in 1.41.2
 

@@ -88,7 +88,9 @@ file is named, so spaces and dots show. The summary line prints the size it comp
 *size ✓ (20.40 GiB, 21,904,512,000 bytes)* — so a tick can be checked against the page,
 to the byte where the page prints bytes, and a cross says which size it was looking for.
 
-When no banner appears, the dialog's Source check section says why: how many uploads from
+A **Source check** button sits in the tools bar beside *Nav* and *Inspect torrent*: it
+brings the banner back after you close it, and where none appeared it says what the page
+was looked over for. When no banner appears, the dialog's Source check section says why: how many uploads from
 other trackers it looked for on this page and whether any was about it. A page that is a
 different encode of the same title — H.264 where you remembered the H.265 — is not about
 them, and stays quiet on purpose.

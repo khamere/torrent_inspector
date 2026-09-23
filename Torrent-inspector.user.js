@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.41.2
+// @version      1.42.0
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       DKOKTO
 // This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,
@@ -6774,12 +6774,23 @@ const DKOKTO_SOURCE_UI = (() => {
         return '? Compared with ' + entry.host + '’s upload';
     }
 
+    // The rows of the last banner, kept so the tools-bar button can bring it back after
+    // Close (asked 23 Sep 2026).
+    let lastRows = [];
+
     // On the other tracker's page: one row per remembered upload this page is about.
-    function banner(found) {
+    // `again` is the tools-bar button asking for the banner back: the closed mark is lifted
+    // and the banner is drawn even when nothing has changed.
+    function banner(found, again = false) {
         const rows = (Array.isArray(found) ? found.slice() : [])
             .sort((a, b) => a.entry.host.localeCompare(b.entry.host) || a.entry.id.localeCompare(b.entry.id));
+        lastRows = rows;
         const key = keyOf(rows);
-        if (key && key === shown && document.querySelector('.dk-source-banner')) return;
+        if (again) closed.delete(key);
+        if (!again && key && key === shown && document.querySelector('.dk-source-banner')) return;
+        // Nothing found, as before: leave the page alone — including the "looked for" box
+        // the tools-bar button may have put up, which a redraw must not sweep away.
+        if (!again && !key && !shown) return;
         for (const node of document.querySelectorAll('.dk-source-banner')) node.remove();
         shown = key;
         if (!rows.length || closed.has(key)) return;
@@ -6820,10 +6831,12 @@ const DKOKTO_SOURCE_UI = (() => {
             el('small', 'Read from this page’s text and the upload remembered from the other tracker. Nothing was fetched or opened.'),
             button('Close', () => { closed.add(key); wrap.remove(); }));
         document.body.append(wrap);
+        pin(wrap);
+    }
 
-        // A site that drops the script's stylesheet would leave this as plain text under the
-        // footer. The placement is set on the element as well, which no stylesheet policy
-        // can take away.
+    // The banner as a fixed box, whatever the site's stylesheet policy: the placement is set
+    // on the element as well as in the stylesheet.
+    function pin(wrap) {
         try {
             if (getComputedStyle(wrap).position !== 'fixed') {
                 Object.assign(wrap.style, { position: 'fixed', top: '12px', left: '50%', transform: 'translateX(-50%)', zIndex: '99999',
@@ -6831,6 +6844,29 @@ const DKOKTO_SOURCE_UI = (() => {
                     border: '1px solid #76548c', borderRadius: '6px', font: '13px/1.5 system-ui,sans-serif' });
             }
         } catch {}
+    }
+
+    // The tools-bar button, beside Nav and Inspect torrent. Pressing it brings the last
+    // banner back after Close; when there was none, it puts the "looked for" line in the
+    // banner's place instead of doing nothing. Idempotent: detail.js and elsewhere.js call
+    // it on every pass, and the button is added once, only where a bar exists.
+    function reveal() {
+        if (lastRows.length) { banner(lastRows, true); return; }
+        for (const node of document.querySelectorAll('.dk-source-banner')) node.remove();
+        const wrap = el('div', undefined, 'dk-source-banner');
+        wrap.setAttribute('role', 'status');
+        wrap.append(el('strong', 'Source check'), looked(), button('Close', () => wrap.remove()));
+        document.body.append(wrap);
+        pin(wrap);
+    }
+    function toolsButton() {
+        const tools = document.querySelector('#dkokto-tools,#dp-inspector-tools');
+        if (!tools || tools.querySelector('.dk-source-launch')) return;
+        const launch = button('Source check', reveal, 'dk-source-launch');
+        launch.title = 'What the source check found on this page — brings the banner back after Close';
+        const inspect = tools.querySelector('.dk-inspector-launch');
+        if (inspect) inspect.after(launch);
+        else tools.append(launch);
     }
 
     // What this page was searched for on behalf of other trackers, so a banner that did not
@@ -6877,7 +6913,7 @@ const DKOKTO_SOURCE_UI = (() => {
         return wrap;
     }
 
-    return { banner, section, pageText, OWN };
+    return { banner, section, pageText, toolsButton, reveal, OWN };
 })();
 
 // Torrent detail page: the same naming badge used on the listing, plus a row of
@@ -7149,13 +7185,15 @@ const DKOKTO_DETAIL = (() => {
     function draw() {
         if(!onPage()){dialog?.close();clear();return;}
         const hit=found();
-        // A book or audiobook name ("Andy Weir - Project Hail Mary (Read by Ray Porter)")
-        // does not look like a release, so release-title.js scores it 0 and hands back the
-        // page's own name element instead. On a page the tracker files under Audiobooks or
-        // E-Books that element is the name to judge — HomieHelpDesk's h1.torrent__name
-        // (torrent 78628, seen 22 Sep 2026) — so the 0 is accepted there and nowhere else.
-        const bookPage = /^(?:audiobook|ebook)$/.test(DKOKTO_LISTING_CORE.category(category()));
-        const usable = hit && hit.title && (hit.score || (bookPage && hit.node.matches?.('.torrent__name')));
+        // A book, audiobook or music name ("Andy Weir - Project Hail Mary (Read by Ray
+        // Porter)", "Four Tet - Pink EP (2012) [CD-FLAC]") does not look like a release, so
+        // release-title.js scores it 0 and hands back the page's own name element instead.
+        // On a page the tracker files under Audiobooks, E-Books or Music that element is the
+        // name to judge — HomieHelpDesk's h1.torrent__name (torrent 78628, seen 22 Sep 2026),
+        // a MidnightScene single's heading (seen 23 Sep 2026) — so the 0 is accepted there
+        // and nowhere else.
+        const namedPage = /^(?:audiobook|ebook|music)$/.test(DKOKTO_LISTING_CORE.category(category()));
+        const usable = hit && hit.title && (hit.score || (namedPage && hit.node.matches?.('.torrent__name, h1')));
         if(!usable){clear();return;}
         badge(hit.node,hit.title);
         // A torrent of more than one file says so under its name, and hands you the list.
@@ -7167,6 +7205,7 @@ const DKOKTO_DETAIL = (() => {
         // Remember this upload for the source check, and answer for any upload remembered
         // from another tracker that this page turns out to be about.
         try{const page=known();const print=fingerprint(page.file,DKOKTO_FILES_UI.list());if(print)DKOKTO_SOURCE.remember(print);}catch{}
+        try{DKOKTO_SOURCE_UI.toolsButton();}catch{}
         try{const place=DKOKTO_CHECKLIST.where();if(place){// textContent, not innerText: trackers keep the MediaInfo in a panel that is not displayed
         // until clicked, and innerText leaves hidden text out.
         DKOKTO_SOURCE_UI.banner(DKOKTO_SOURCE.check(DKOKTO_SOURCE_UI.pageText(),{host:place.host,url:location.origin+location.pathname}));}}catch{}
@@ -8877,6 +8916,7 @@ const DKOKTO_ELSEWHERE = (() => {
         let found = [];
         try { found = DKOKTO_SOURCE.check(DKOKTO_SOURCE_UI.pageText(), { host: print.host, url: print.url }); } catch {}
         try { DKOKTO_SOURCE_UI.banner(found); } catch {}
+        try { DKOKTO_SOURCE_UI.toolsButton(); } catch {}
 
         const remembered = DKOKTO_SOURCE.entryFor(print) || {};
         const signature = [print.title, print.uidHex, remembered.uidHex, print.files.join('|'), print.totalBytes,

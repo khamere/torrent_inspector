@@ -9,6 +9,29 @@ was named until 1.25.0.
 
 ---
 
+## 1.42.0 — a Source check button in the tools bar
+
+- source-ui.js: `toolsButton()` adds `.dk-source-launch` ("Source check") after
+  `.dk-inspector-launch` in `#dkokto-tools` / `#dp-inspector-tools`, once; `reveal()`
+  redraws the last banner (`banner(rows, again=true)` lifts the closed mark and skips the
+  same-key shortcut) or, with no rows, puts a `.dk-source-banner` box holding `looked()`
+  and a Close. `banner()` now leaves the page alone when nothing was found and nothing
+  is shown (`!key && !shown`), so a redraw does not sweep that box away; the fixed-position
+  fallback moved into `pin()`. detail.js draw() and elsewhere.js run() call
+  `toolsButton()` on every pass. Asked 23 Sep 2026 ("this page shows up with a button
+  press next to the torrent inspector button"). Detail fixture +6 (249): the button before
+  any banner; the "looked for" box and its Close; the banner back after Close and closed
+  again. Red with the detail.js call removed (212, the first new check).
+
+## 1.41.3 — music torrent pages get a badge
+
+- detail.js `draw()`: the 0-score allowance from 1.40.0 covers `music` as well as
+  `audiobook`/`ebook`, and accepts the fallback node when it is `.torrent__name` or the
+  page's `h1` (release-title.js falls back to those two in that order). Seen 23 Sep 2026
+  on a MidnightScene torrent page ("Dope (FR) ft. Lydia Scarfo-Concrete Groove-(DH134)-
+  SINGLE-WEB-2026-PTC": no badge, no rows). Detail fixture +2 (red under `mns`, the
+  dialog quotes the guest-credit rule); it went red with the allowance narrowed back.
+
 ## 1.41.2 — images for the repository
 
 - `images/`: `logo.svg` with PNGs at 512/256/128/64/32 (rounded tile, lens, green tick),
