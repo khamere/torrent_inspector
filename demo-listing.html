@@ -1,3 +1,57 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Demo · The listing · Torrent Inspector</title><link rel="icon" type="image/svg+xml" href="/images/logo.svg">
+<style>body{margin:0;font:15px 'Segoe UI',system-ui,sans-serif;background:#100c16;color:#eae3f2}
+.top-nav{padding:12px 22px;background:#1b1424;border-bottom:1px solid #33243f;color:#c9b6d8;letter-spacing:.08em;font-size:12px}
+main{max-width:1180px;margin:auto;padding:18px 22px 120px}
+h1{font-size:20px;margin:14px 0 4px}
+.note{color:#9d8bad;font-size:13px;margin:0 0 14px}
+table{width:100%;border-collapse:collapse}
+th{color:#a892bb;font-size:12px;text-align:left;padding:8px 10px;border-bottom:1px solid #3a2f45;font-weight:600}
+td{padding:10px;border-bottom:1px solid #2a2036;vertical-align:middle}
+td a{color:#dbc0ef;text-decoration:none}
+.cat{color:#b7a6c6;font-size:13px}
+.num{color:#8fd6a8;text-align:right;font-variant-numeric:tabular-nums}
+.num.red{color:#e08a8a}
+.torrent__name{font-size:22px;margin:14px 0 2px}
+.torrent__meta{display:flex;gap:14px;margin:8px 0 12px;color:#b9a7c7;font-size:13px}
+.torrent-release{font-size:15px;margin:6px 0 10px}
+.torrent-mediainfo-dump{background:#0c0811;border:1px solid #3a2b47;padding:12px;max-height:210px;overflow:auto}
+.torrent-mediainfo-dump code{white-space:pre;font:12px/1.55 Consolas,monospace;color:#cbb9db}
+
+.demo-strip{padding:12px 22px;background:#1b1226;border-bottom:1px solid #3b2a4a;color:#c3b2d3;font:14px/1.5 "Segoe UI",system-ui,sans-serif}
+.demo-strip b{color:#efe7f6}.demo-strip a{color:#c79bf0}.demo-strip nav a{margin-right:14px}.demo-strip p{margin:6px 0 0;max-width:110ch}</style>
+<script>
+// Demo shell: the address the script reads, the rule set for this host, and the
+// remembered upload. All of it is this site's own localStorage; nothing is fetched.
+window.GM_info={script:{version:"1.42.2"}};
+window.GM_registerMenuCommand=()=>0;window.GM_unregisterMenuCommand=()=>{};
+window.GM_addStyle=css=>{const s=document.createElement("style");s.textContent=css;document.head.append(s);return s;};
+try{localStorage.setItem("dp_dkokto_last_seen_version","1.42.2");
+localStorage.setItem("dkokto_rules_host_v1",JSON.stringify({[location.hostname]:"dp"}));
+// A few trackers ticked, so the lookup rows have something to show; untouched if the visitor has chosen their own.
+if(!localStorage.getItem("dkokto_trackers_v1"))localStorage.setItem("dkokto_trackers_v1",JSON.stringify({enabled:["aither","blu","ptp","hdb"],search:{},custom:[],popups:{}}));
+
+}catch{}
+const realPath=location.pathname;
+history.replaceState({},"","/torrents");
+addEventListener("pagehide",()=>{try{history.replaceState({},"",realPath);}catch{}});
+</script></head><body>
+<div class="demo-strip"><nav><b>Torrent Inspector demo</b> · <a href="/demo-listing.html">The listing</a><a href="/demo.html">A torrent page</a><a href="/demo-requests.html">The requests page</a><a href="/">Back to the site</a></nav>
+<p>Every loaded title gets a badge. Hover one for the reason, click it for the explanation, the corrections and the reply draft. The bar above the table switches the checks and the rule set. This is a made-up page with made-up releases, running the real 1.42.2 script; nothing here is a tracker, and nothing is fetched or sent.</p></div>
+<main>
+<h1>Torrents</h1>
+<p class="note">Example listing · offline demo page, no tracker login.</p>
+<section class="torrent-search__results"><table class="data-table"><thead><tr><th>Category</th><th>Name</th><th>Size</th><th class="num">S</th><th class="num">L</th></tr></thead><tbody>
+<tr><td class="torrent-search--list__category cat">Movies</td><td><a class="torrent-search--list__name" href="/torrents/101">The Whisper Man 2026 2160p NF WEB-DL DD+ 5.1 Atmos DV HDR H.265-DKOKTO</a></td><td>18.4 GiB</td><td class="num">12</td><td class="num red">2</td></tr>
+<tr><td class="torrent-search--list__category cat">TV Shows</td><td><a class="torrent-search--list__name" href="/torrents/102">Shiny Happy People S02 1080p AMZN WEB-DL DDP5.1 H.264-DKOKTO</a></td><td>5.32 GiB</td><td class="num">8</td><td class="num red">0</td></tr>
+<tr><td class="torrent-search--list__category cat">Movies</td><td><a class="torrent-search--list__name" href="/torrents/103">Some Film 2019 1080p BluRay DD 5.1 x264-RARBG</a></td><td>9.11 GiB</td><td class="num">3</td><td class="num red">1</td></tr>
+<tr><td class="torrent-search--list__category cat">Music</td><td><a class="torrent-search--list__name" href="/torrents/104">Julien Baker - Sugar in the Tank (2024) - WEB FLAC</a></td><td>412 MiB</td><td class="num">6</td><td class="num red">0</td></tr>
+<tr><td class="torrent-search--list__category cat">Anime</td><td><a class="torrent-search--list__name" href="/torrents/105">Some Show S01 1080p CR WEB-DL AAC 2.0 H.264-DKOKTO</a></td><td>7.80 GiB</td><td class="num">21</td><td class="num red">3</td></tr>
+<tr><td class="torrent-search--list__category cat">Other</td><td><a class="torrent-search--list__name" href="/torrents/106">Unknown Release</a></td><td>1.02 GiB</td><td class="num">0</td><td class="num red">0</td></tr>
+</tbody></table></section>
+</main>
+<script></script>
+<script>
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
@@ -9232,3 +9286,5 @@ const DPTI_HOST = (() => {
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once: true});
     else start();
 })();
+
+</script></body></html>

@@ -9,6 +9,30 @@ was named until 1.25.0.
 
 ---
 
+## 1.42.2 — the site: a live demo, a shorter front page, source-check screenshots
+
+- site/build-site.mjs builds `demo.html` (torrent page), `demo-listing.html` and
+  `demo-requests.html` from the three offline demo pages in tools/demo, with common.css,
+  a shell strip, a shim (GM_info / GM_registerMenuCommand / GM_addStyle stubs, the `dp`
+  rule set for the host, four trackers ticked if none are, and on the torrent page a
+  remembered upload whose Unique ID, file name and size match the page's MediaInfo) and
+  the current built script inlined. Each page sets the address the script reads with
+  replaceState (`/torrents`, `/torrents/101`, `/requests`) and puts the real one back on
+  pagehide. Checked in Chromium: badges, the lookup rows, the banner, Close + Source check,
+  the request buttons; no page errors.
+- site/index-page.html rewritten: 790 → ~560 lines; a "What you get" fourth card and a
+  section for the source check; the stale numbers (60/43 trackers, 47 @match, "six badge
+  out of the box", the 1.25.0 / 1.26.0 / 1.34.0 asides, the internal-groups history) gone;
+  seven rule sets throughout; tutorials 7 → 6 with a new one for the source check; a
+  "Try it without installing" button.
+- tools/demo: the torrent page's MediaInfo carries a Unique ID and Complete name; the
+  pages link `/tools/demo/common.css` (the bare `common.css` under `<base href="/">` had
+  stopped resolving, so the shots came out unstyled). tools/screenshots.mjs seeds the
+  remembered upload and takes `14-source-banner.png`, `15-source-section.png`, and
+  `13-tools-bar.png` with the third button; all fifteen regenerated, halved and quantised
+  into pkg/…/screenshots and site/screenshots. README gains the three.
+- Script unchanged; the Scene edition stays at 1.48.1.
+
 ## 1.42.1 — the banner can wait for the Source check button
 
 - source.js: `options.quiet` in the `dkokto_source_v1` record (read() takes only `true`,

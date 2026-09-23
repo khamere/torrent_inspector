@@ -1,4 +1,4 @@
-# Torrent Inspector 1.42.1
+# Torrent Inspector 1.42.2
 
 ![Torrent Inspector — release naming checks, the MediaInfo Inspector and a cross-tracker lookup. It reads the page; it does not act.](images/banner.png)
 
@@ -41,6 +41,18 @@ A banned or low-quality group is named with the list it is on, and the reason th
 **vs** capture button, and the file marker with the exact byte count:
 
 ![A torrent page with the badge, lookup row and file marker](screenshots/05-torrent-page.png)
+
+**The source check** — open the same release on a second tracker and the banner says whether
+it is the same file: Unique ID, file name, size to the byte, and a link back:
+
+![The source-check banner: same release as the other tracker's upload](screenshots/14-source-banner.png)
+
+Back on the first page, the badge's dialog says what was remembered and what the other
+tracker answered. The **Source check** button in the tools bar brings the banner back:
+
+![The Source check section of the badge dialog](screenshots/15-source-section.png)
+
+![The tools bar: Nav, Inspect torrent, Source check](screenshots/13-tools-bar.png)
 
 **The Inspector** reads the MediaInfo already on the page and checks the name against it:
 
@@ -97,6 +109,16 @@ JSON somewhere before you update.
   it does.
 - **CHANGELOG.md** — every version, newest first, in more detail than here. The version
   notes below stop at 1.39.0; everything earlier is there.
+
+## New in 1.42.2
+
+**The website has a live demo, and a once-over.** torrent.dkokto.dev now has three demo
+pages — a listing, a torrent page and a requests page — made-up releases running the real
+script, so you can click the badges, open the Inspector and see the source-check banner
+without installing anything. The front page was cut down and brought up to date (seven
+rule sets, the source check with its own section and screenshots, the numbers as they are
+now), and the screenshots here and there were regenerated from this build. The script
+itself is unchanged.
 
 ## New in 1.42.1
 
