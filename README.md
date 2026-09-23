@@ -1,4 +1,4 @@
-# Torrent Inspector 1.42.5
+# Torrent Inspector 1.42.7
 
 ![Torrent Inspector — release naming checks, the MediaInfo Inspector and a cross-tracker lookup. It reads the page; it does not act.](images/banner.png)
 
@@ -17,6 +17,17 @@ It runs on **45 UNIT3D trackers** and can search **63**, and it also runs on Tor
 FileList for the lookups and the source check. Naming rules for DarkPeers, Zenith, LUME,
 OnlyEncodes+, HomieHelpDesk, MidnightScene and InfinityHD ship with it; any other tracker is added by
 pasting its rules, as data, never as code.
+
+## New in 1.42.7
+
+The listing bar now keeps the active rules, audit button and results in view. Open
+**Settings & tools** for automatic checks, tracker choices, internal groups, tracker
+rules, backups and the moderation log. You can choose your search trackers here without
+first opening a torrent or request. Your saved choices are reused.
+
+A badge's dialog puts its main actions near the top, before the longer findings.
+On a torrent page, **Open Inspector** takes you to the MediaInfo already read from that
+page, and **Compare releases** is the clearer name for the former **vs** button.
 
 ## What it looks like
 
@@ -38,7 +49,7 @@ A banned or low-quality group is named with the list it is on, and the reason th
 ![A badge reporting a banned release group](screenshots/03-banned-group.png)
 
 **On a torrent page** — the badge on the release name, the cross-tracker lookup row, the
-**vs** capture button, and the file marker with the exact byte count:
+**Compare releases** button, and the file marker with the exact byte count:
 
 ![A torrent page with the badge, lookup row and file marker](screenshots/05-torrent-page.png)
 
@@ -153,6 +164,15 @@ rows, the same links. On a page where no banner appeared, it puts a small box in
 banner's place saying what the page was looked over for and why nothing matched, so a
 quiet page is never a mystery. Close works on both. Nothing is fetched by pressing it; it
 shows what the page already told the script.
+
+## Fixed in 1.42.6
+
+**The profile builder can say everything a profile can.** Three fields had crept into the
+format that the *Build one* form — in the script and on the rules page — had no box for:
+a tracker that names its books its own way, one that names its music its own way, and one
+with a folder standard for audiobooks. A profile with them pasted in fine, but you could
+not build one. The form now has the three boxes and a field for the resolutions the
+tracker's guide lists, and the *Added trackers* summary says when a profile uses them.
 
 ## Fixed in 1.42.5
 
@@ -335,7 +355,7 @@ own.
 tracker's own search, the exact name, IMDb, TMDB, TVDb, Trakt, JustWatch, Blu-ray.com,
 srrDB — then the other trackers you are on, with **Search all**, and the same trackers
 searched for the exact release name. A marker under the name reads the file list and says
-what the torrent actually holds, to the byte. **vs** captures this release so you can open
+what the torrent actually holds, to the byte. **Compare releases** captures this release so you can open
 another and compare the two side by side. The page's own MediaInfo is read and checked
 against the name, and the file list is read and checked against the name too, so a pack
 that says S01 and holds three episodes is caught.

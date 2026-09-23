@@ -36,9 +36,16 @@ Green is not approval. It means the checks this script can make on a **display t
 tracker has accepted it.
 
 Click a badge and it tells you what it found, quotes the rule it is applying, and offers
-**Copy report text** — a paste-ready summary for a comment or a report.
+**Copy report text** near the top — a paste-ready summary for a comment or a report.
+On a torrent page, **Open Inspector for MediaInfo and notes** is beside it. The Inspector
+reads the report on that page as it opens.
 
-Above the results is a bar with:
+Above the results, the bar keeps **Rules**, **Audit loaded titles** and the result counts
+visible. **Settings & tools** opens the occasional controls together; close it again to
+keep the listing compact. **Choose trackers…** there opens your saved search-tracker
+choices, the same list used by torrent and request lookups.
+
+The controls are:
 
 - **Automatic naming checks** — the on/off switch for the badges. The group tag in each
   name is not a check and stays marked with the box cleared.
@@ -172,7 +179,7 @@ Under the release name:
   cross-check, **This exact name:** searches the whole release name on those same trackers,
   with a **Search all** of its own. The **srrDB** link searches the title words and the
   release group, which is how a scene record is found.
-- **vs** — capture this release, capture another on a second page, and compare the two side by
+- **Compare releases** — capture this release, capture another on a second page, and compare the two side by
   side: the names, the sizes to the byte, the file counts, the MediaInfo. If one page never
   rendered its file list, it says so rather than reporting nothing as zero.
 - **From this page** — what the page itself says about the release, and where it disagrees
@@ -295,7 +302,7 @@ left out with the reason, rather than given a link that finds nothing.
 
 ## Taking it with you
 
-**Backup…** in the listing bar saves everything this script has kept — the trackers you are on,
+**Backup…** under **Settings & tools** in the listing bar saves everything this script has kept — the trackers you are on,
 the trackers you added and their rules, which rule set applies on which tracker, whether the
 automatic checks are on, your internal-groups changes, your templates, your private notes, the
 nav settings, and the records of what you have looked at — as one file, copied or saved by your

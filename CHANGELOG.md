@@ -9,6 +9,36 @@ was named until 1.25.0.
 
 ---
 
+## 1.42.7 — fewer controls between you and the review
+
+- listing.js: group automatic checks, tracker choices, internal groups, tracker rules,
+  backup and log actions in a closed native Settings & tools disclosure. Keep the active
+  rules, audit action and result counts visible. The tracker chooser uses the existing
+  settings dialog and storage. No new storage keys.
+- listing.js and detail.js: place report/open actions before the long findings.
+- capture.js and inspector-ui.js: label the capture entry point Compare releases and
+  use that wording in the Inspector's empty-capture message.
+- inspector.css and scene.css: wrap the settings controls on narrow screens; keep all
+  styling inside the script's own UI. Shared modules copied to Scene 1.48.3.
+- Local browser runners accept PYTHON and PLAYWRIGHT_CHROMIUM_EXECUTABLE overrides,
+  allowing verification with installed runtimes on Windows.
+- Existing checks exposed three workspace inconsistencies: the unbuilt description
+  prototype's key was missing its backup exclusion, Scene startup called its absent UI,
+  and the title finder missed a known heading after 6,000 candidates. The prototype is
+  explicitly excluded, its optional startup call guarded, and known name headings and
+  their inner text checked before the bounded general walk.
+
+## 1.42.6 — the profile builder learns books, music, audiobooks and resolutions
+
+- profiles.js `build()` takes `ownBooks`, `ownMusic`, `audiobookFolders` and
+  `resolutions` (a string or list; entries not of the form `\d{3,4}[pi]` dropped) and
+  writes `books`, `music`, `audiobooks` and `resolutions` accordingly — before, it wrote
+  none of the three and an empty list. profiles-ui.js: a "Where this tracker goes its own
+  way" fieldset with the three boxes and a resolutions field; the *Added trackers* summary
+  adds "audiobook folder standard" and the resolution list. site/rules-page.html: the same
+  fieldset and field, wired into the draft and the untouched test; the Check summary's
+  Templates line names the folder standard and the resolutions. profiles-check: the builder test gains the defaults and the all-four-set case (938 in all); rules-page-check +3 (55). Both seen red first.
+
 ## 1.42.5 — the demo: a page for every torrent and request
 
 - site/build-site.mjs: `TORRENTS` (101–106) and `REQUESTS` (12–14) tables; a shell()
