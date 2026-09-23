@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.39.3
+// @version      1.41.2
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       DKOKTO
 // This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,
@@ -31,6 +31,7 @@
 // @match        https://*.hawke.uno/*
 // @match        https://*.homiehelpdesk.net/*
 // @match        https://*.immortuos.life/*
+// @match        https://*.infinityhd.net/*
 // @match        https://*.itatorrents.xyz/*
 // @match        https://*.jme-reunit3d.de/*
 // @match        https://*.lat-team.com/*
@@ -1382,6 +1383,12 @@ const DKOKTO_PROFILES = (() => {
         // The same for music: MidnightScene's is Artist - Title (Year) [Catalog] [Media - Format].
         const music=text(input.music,10).toLowerCase()||'base';
         if(!['base','own'].includes(music))errors.push('“music” must be "base" (the base’s music template) or "own" (this tracker names music its own way).');
+        // "folder-standard": the tracker has an audiobook folder standard of the HomieHelpDesk
+        // shape (a root folder for a multi-track book, zero-padded track numbers that sort in
+        // story order, no .nfo / .txt / .url in the payload), and naming.js reads the file
+        // list against it.
+        const audiobooks=text(input.audiobooks,20).toLowerCase()||'base';
+        if(!['base','folder-standard'].includes(audiobooks))errors.push('“audiobooks” must be "base" or "folder-standard" (the tracker has an audiobook folder standard the file list is read against).');
         const hosts=(Array.isArray(input.hosts)?input.hosts:[]).slice(0,LIMITS.hosts)
             .map(host=>text(host,80).toLowerCase().replace(/^https?:\/\//,'').replace(/\/.*$/,''))
             .filter(host=>/^[a-z0-9.-]+\.[a-z]{2,}$/.test(host));
@@ -1447,11 +1454,11 @@ const DKOKTO_PROFILES = (() => {
         // Optional: where these rules came from and when, as one line of text — shown at the
         // point of use so a person knows how old what they are reading against may be.
         const source=text(input.source,200);
-        return {errors,warnings,profile:{key,label,base,books,music,hosts,banned,conditional,sources,resolutions,rules,notes,...(source?{source}:{})}};
+        return {errors,warnings,profile:{key,label,base,books,music,audiobooks,hosts,banned,conditional,sources,resolutions,rules,notes,...(source?{source}:{})}};
     }
     // Back to the JSON you would paste, so a profile can be edited and shared.
     function toJSON(profile) {
-        return {format:FORMAT,version:1,key:profile.key,label:profile.label,base:profile.base,...(profile.books==='own'?{books:'own'}:{}),...(profile.music==='own'?{music:'own'}:{}),hosts:[...profile.hosts],
+        return {format:FORMAT,version:1,key:profile.key,label:profile.label,base:profile.base,...(profile.books==='own'?{books:'own'}:{}),...(profile.music==='own'?{music:'own'}:{}),...(profile.audiobooks==='folder-standard'?{audiobooks:'folder-standard'}:{}),hosts:[...profile.hosts],
             groups:{banned:profile.banned.map(entry=>[...entry]),
                 conditional:profile.conditional.map(entry=>({name:entry.name,allowIf:entry.allow.source,allowed:entry.allowed,otherwise:entry.otherwise})),
                 sources:profile.sources.map(entry=>({name:entry.name,pattern:entry.pattern.source}))},
@@ -1696,6 +1703,12 @@ const DKOKTO_GROUPS = ((profiles) => {
     const TECHNICAL=/^(?:\d{3,4}[pi]|(?:18|19|20)\d{2}|S\d{2}(?:E\d{2})?|E\d{2}|\d+\.\d+|BluRay|BDRip|BRRip|BDMV|ISO|WEB|WEBRip|WEBDL|DL|HDTV|UHDTV|SDTV|DVD|DVDRip|UHD|HD|SD|Rip|Disc|REMUX|Hybrid|x26[45]|H\.?26[45]|AVC|HEVC|AV1|XviD|DivX|VC-?1|MPEG-?\d?|DD|DDP|DD\+|AC3|EAC3|AAC|FLAC|DTS|DTS-HD|DTS-X|MA|TrueHD|Atmos|Opus|LPCM|PCM|MP3|Audio|\d*bits?|\d+(?:\.\d+)?kHz|HDR|HDR10|HDR10\+|DV|SDR|HLG|Hi10P|IMAX|REPACK|PROPER|EXTENDED|UNCUT|Remastered|Criterion|MULTi|SUBBED|DUBBED|Subs?|Dubs?|Complete|Season|Part|AKA|Edition|Cut|NTSC|PAL)$/i;
     function trailingTag(title) {
         const value=String(title||'').replace(DECORATION,'').trim();
+        // Zenith's music shape, "Artist - Album (Year) - [Format] - Group" (two rows on its
+        // moderation queue, 23 Sep 2026): the group follows the bracketed format after a
+        // spaced hyphen, which the loop below rightly refuses to open a tag on. One word
+        // straight after "] - " is that group; two or more is a subtitle and is not.
+        const afterFormat=value.match(/\]\s-\s([A-Za-z0-9][A-Za-z0-9._+]{0,29})\s*$/);
+        if(afterFormat)return afterFormat[1];
         // Each hyphen in turn, earliest first, because a group name can hold hyphens of its
         // own (R-A-R-B-G) and the tag is whatever runs unbroken to the end from the first
         // hyphen that opens one. A tail carrying a technical token is not a tag: that is
@@ -1706,6 +1719,10 @@ const DKOKTO_GROUPS = ((profiles) => {
             if(/\s$/.test(value.slice(0,at)))continue;
             const tail=value.slice(at+1).trim();
             if(!tail||tail.length>40)continue;
+            // A spaced " - " is a name separator, never the inside of a tag: in Zenith's
+            // "[CD FLAC 16bit-44kHz] - craftwork" the hyphen in the sample rate must not
+            // open a tag that runs on through the bracket (seen 23 Sep 2026).
+            if(/\s-\s/.test(tail))continue;
             const words=tail.split(/\s+/);
             if(words.length>4||!/^[A-Za-z0-9]/.test(words[0]))continue;
             // A release name separates its tokens with spaces, dots or hyphens, depending
@@ -1723,7 +1740,7 @@ const DKOKTO_GROUPS = ((profiles) => {
             // tail on its hyphens costs nothing: a group whose own name carries them
             // (R-A-R-B-G) has no technical token among the pieces.
             const parts=tail.split(/[\s.-]+/).filter(Boolean);
-            if(parts.some(word=>TECHNICAL.test(word.replace(/[.,;:]+$/,''))))continue;
+            if(parts.some(word=>TECHNICAL.test(word.replace(/[.,;:\])]+$/,''))))continue;
             return tail;
         }
         return '';
@@ -1828,6 +1845,7 @@ const DKOKTO_RULES = ((profiles) => {
     // Whether a site names books its own way (profiles.js books:"own"); the built-ins never do.
     const booksOf=key=>profiles.get(key)?.books==='own'?'own':'base';
     const musicOf=key=>profiles.get(key)?.music==='own'?'own':'base';
+    const audiobooksOf=key=>profiles.get(key)?.audiobooks==='folder-standard'?'folder-standard':'base';
     const labelOf=key=>sites().find(site=>site.key===key)?.label||'DarkPeers';
     const hostsOf=key=>(sites().find(site=>site.key===key)?.hosts||[]).filter(host=>!/^www\./.test(host));
     // In words, for the panel: "in hand 10 Sep 2026", or the honest absence of a date.
@@ -1976,7 +1994,10 @@ const DKOKTO_RULES = ((profiles) => {
             add('error','zenith-name-author',profile==='music'?'Start with Artist - Album.':'Start with Author - Title, separated by " - ".');
         if(profile==='music') {
             // "Suggested format", in their words, with only the artist and album required.
-            if(!/^.+?\s-\s.+?\s\((?:18|19|20)\d{2}\)\s-\s\[.+\]\s*$/.test(value))
+            // A group tag after the format ("… - [CD FLAC 16bit-44kHz] - craftwork", seen on
+            // a Zenith listing 22 Sep 2026) still follows that shape: rule 1.4 keeps the
+            // original group tag, and the suggested form does not say where it goes.
+            if(!/^.+?\s-\s.+?\s\((?:18|19|20)\d{2}\)\s-\s\[.+\](?:\s-\s\S+)?\s*$/.test(value))
                 add('review','zenith-mu-form','Zenith suggests Artist - Album (Year) - [Format], with the format in square brackets; only the artist and album are required. Format can carry source, codec, bit depth and sample rate, e.g. - [CD FLAC 16bit-44kHz].');
             if(/\w+\.\w+\.\w+/.test(value)&&!value.includes(' - '))
                 add('error','zenith-mu-scene','Zenith names music with words and spaces, not scene-style dot separators.');
@@ -2044,219 +2065,325 @@ const DKOKTO_RULES = ((profiles) => {
     const baseline=()=>[...BUILTIN_BASELINE,...profiles.baseline()];
     // A profile may list the resolutions its tracker accepts; otherwise its base decides.
     const resolutions=site=>profiles.get(site)?.resolutions?.length?profiles.get(site).resolutions:null;
-    return {list,labelOf,hostsOf,guideDate,guideSince,current,choose,forget,check,books,siteFor,baseOf,booksOf,musicOf,baseline,resolutions,added,hasRules,settled,BASELINE,KEY,HOSTS,
+    return {list,labelOf,hostsOf,guideDate,guideSince,current,choose,forget,check,books,siteFor,baseOf,booksOf,musicOf,audiobooksOf,baseline,resolutions,added,hasRules,settled,BASELINE,KEY,HOSTS,
         bannedAuthors:()=>[...BANNED_AUTHORS],bannedWorks:()=>[...BANNED_WORKS],use(store){backing=store;migrated=false;}};
 })(typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./profiles.js'):DKOKTO_PROFILES);
 
 // Does the report belong to this file, and is this the release the source tracker has?
 //
-// Two page-local questions, answered from text already on the torrent page: the
-// MediaInfo report's Unique ID (a Matroska report writes it as a decimal and the same
-// number in hex — halves that disagree were typed by hand), the report's file size and
-// Complete name against the page's own file list (the page's Type field against the name
-// is page-core.js's job already). Plus the pieces of a cross-tracker check: a fingerprint of
-// an upload (its Unique ID, file names, folder, sizes) and a comparison of that fingerprint
-// with the plain text of another tracker's torrent page, so that opening the same release
-// where it was first published says whether it is the same file. Nothing here reads the
-// DOM or the network: text in, findings out. source.js does the page work.
+// This is the part of the source check with no page in it: text in, findings out, so the
+// Node checks can exercise every line. It answers two kinds of question.
 //
-// The shape of the checks follows the "MidnightScene Mod Helper" userscript Khamere
+// On the torrent page itself: does the MediaInfo report belong to the file? A Matroska
+// report writes its Unique ID twice, as a decimal and as the same number in hex, and
+// MediaInfo never gets the two to disagree — so halves that differ were typed by hand.
+// The report's File size and Complete name are held against the page's own file list.
+// (The page's Type field against the name is page-core.js's job already.)
+//
+// Across trackers: a fingerprint of an upload (Unique ID, file names, folder, sizes) is
+// compared with the plain text of another tracker's torrent page, so that opening the
+// same release where it was first published says whether it is the same file. source.js
+// does the remembering and the page work.
+//
+// The shape of these checks follows the "MidnightScene Mod Helper" userscript that was
 // supplied on 22 Sep 2026; the code is this project's own.
 const DKOKTO_SOURCE_CORE = (() => {
-    const key=s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'');
-    const field=(t,...names)=>names.map(n=>t?.fields?.[key(n)]).find(Boolean)||'';
-    // Unique ID → 32 hex characters. {bad:true} where the decimal and the hex disagree.
+    const key = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
+    // A MediaInfo field by any of its names, as inspector.js keys them.
+    const field = (track, ...names) => names.map(n => track?.fields?.[key(n)]).find(Boolean) || '';
+
+    // A Unique ID as 32 hex characters, from either half of the way MediaInfo writes it:
+    // "228267…926 (0xABBA…CE)", or just the decimal, or just the hex. {bad:true} where the
+    // decimal and the hex are different numbers; null where there is nothing usable.
     function uniqueId(raw) {
-        const s=String(raw||'').trim();
-        if(!s)return null;
-        const hex=s.match(/0x([0-9a-f]{8,40})\b/i);
-        const dec=s.match(/^(\d{10,40})(?=\s|$|\()/);
-        try{
-            if(hex&&dec&&BigInt('0x'+hex[1])!==BigInt(dec[1]))return {bad:true};
-            const value=hex?BigInt('0x'+hex[1]):dec?BigInt(dec[1]):null;
-            if(value===null||value===0n||value>=2n**128n)return null;
-            return {hex:value.toString(16).toUpperCase().padStart(32,'0')};
-        }catch{return null;}
+        const s = String(raw || '').trim();
+        if (!s) return null;
+        const hex = s.match(/0x([0-9a-f]{8,40})\b/i);
+        const dec = s.match(/^(\d{10,40})(?=\s|$|\()/);
+        try {
+            if (hex && dec && BigInt('0x' + hex[1]) !== BigInt(dec[1])) return { bad: true };
+            const value = hex ? BigInt('0x' + hex[1]) : dec ? BigInt(dec[1]) : null;
+            if (value === null || value === 0n || value >= 2n ** 128n) return null;
+            return { hex: value.toString(16).toUpperCase().padStart(32, '0') };
+        } catch { return null; }
     }
-    // "20.4 GiB" / "21 904 512 000 bytes" → bytes, or 0.
-    function bytesOf(text) {
-        const s=String(text||'').replace(/[\s\u00a0\u202f]/g,'');
-        const plain=s.match(/^(\d{4,})(?:bytes)?$/i);
-        if(plain)return Number(plain[1]);
-        const m=s.match(/([\d.,]+)(B|KiB|MiB|GiB|TiB|KB|MB|GB|TB)$/i);
-        if(!m)return 0;
-        const n=parseFloat(m[1].replace(',','.'));
-        const pow={B:0,KIB:1,KB:1,MIB:2,MB:2,GIB:3,GB:3,TIB:4,TB:4}[m[2].toUpperCase()];
-        return Number.isFinite(n)?n*Math.pow(1024,pow):0;
+
+    // "20.4 GiB", "1.08 GB", "21 904 512 000 bytes" → bytes, or 0 when it is not a size.
+    function bytesOf(value) {
+        const s = String(value || '').replace(/[\s\u00a0\u202f]/g, '');
+        const plain = s.match(/^(\d{4,})(?:bytes)?$/i);
+        if (plain) return Number(plain[1]);
+        const m = s.match(/([\d.,]+)(B|KiB|MiB|GiB|TiB|KB|MB|GB|TB)$/i);
+        if (!m) return 0;
+        const n = parseFloat(m[1].replace(',', '.'));
+        const power = { B: 0, KIB: 1, KB: 1, MIB: 2, MB: 2, GIB: 3, GB: 3, TIB: 4, TB: 4 }[m[2].toUpperCase()];
+        return Number.isFinite(n) ? n * Math.pow(1024, power) : 0;
     }
-    const base=name=>String(name||'').replace(/\\/g,'/').split('/').pop();
-    const stem=name=>base(name).replace(/\.[^.]+$/,'');
-    const VIDEO=/\.(?:mkv|mp4|m2ts|avi|ts|m4v|wmv|mov|mpg|vob|iso)$/i;
-    // The report against the page's file rows ({path,bytes}). Matched by the report's
-    // Complete name, or the only video file where there is just one.
-    function reportAgainstFiles(file,rows) {
-        const general=file?.general?.[0];
-        const list=(Array.isArray(rows)?rows:[]).filter(row=>row&&row.path);
-        const out={name:{report:'',found:null},size:{report:0,file:0,match:null}};
-        if(!general||!list.length)return out;
-        const complete=base(field(general,'Complete name','CompleteName'));
-        out.name.report=complete;
-        const videos=list.filter(row=>VIDEO.test(row.path));
-        const byName=complete?list.find(row=>base(row.path)===complete):null;
-        if(complete)out.name.found=!!byName;
-        const target=byName||(videos.length===1?videos[0]:null);
-        const reported=bytesOf(field(general,'File size','FileSize'));
-        const actual=target?Number(target.bytes)||0:0;
-        out.size.report=reported;out.size.file=actual;
-        if(reported&&actual)out.size.match=Math.abs(reported-actual)/actual<=0.02;
+
+    const base = name => String(name || '').replace(/\\/g, '/').split('/').pop();
+    const stem = name => base(name).replace(/\.[^.]+$/, '');
+    const VIDEO = /\.(?:mkv|mp4|m2ts|avi|ts|m4v|wmv|mov|mpg|vob|iso)$/i;
+
+    // The report against the page's file rows ({path, bytes}). The report's file is found
+    // by its Complete name, or it is the only video file when there is just one. Sizes are
+    // compared within two per cent, since the page rounds.
+    function reportAgainstFiles(file, rows) {
+        const general = file?.general?.[0];
+        const list = (Array.isArray(rows) ? rows : []).filter(row => row && row.path);
+        const out = { name: { report: '', found: null }, size: { report: 0, file: 0, match: null } };
+        if (!general || !list.length) return out;
+        const complete = base(field(general, 'Complete name', 'CompleteName'));
+        out.name.report = complete;
+        const videos = list.filter(row => VIDEO.test(row.path));
+        const byName = complete ? list.find(row => base(row.path) === complete) : null;
+        if (complete) out.name.found = !!byName;
+        const target = byName || (videos.length === 1 ? videos[0] : null);
+        const reported = bytesOf(field(general, 'File size', 'FileSize'));
+        const actual = target ? (Number(target.bytes) || 0) : 0;
+        out.size.report = reported;
+        out.size.file = actual;
+        if (reported && actual) out.size.match = Math.abs(reported - actual) / actual <= 0.02;
         return out;
     }
-    // Every Unique ID on a page, as 32 hex characters.
+
+    // Every Unique ID printed on a page, as 32 hex characters. The hex form is tried first
+    // so that "0x…" is not read as a decimal "0".
     function idsIn(text) {
-        const ids=new Set();
-        const rx=/(?:Unique ID|Identifiant unique)\s*:\s*(0x[0-9A-F]+|[0-9]{1,40}(?:\s*\(0x[0-9A-F]+\))?)/gi;
+        const ids = new Set();
+        const rx = /(?:Unique ID|Identifiant unique)\s*:\s*(0x[0-9A-F]+|[0-9]{1,40}(?:\s*\(0x[0-9A-F]+\))?)/gi;
         let m;
-        while((m=rx.exec(text))){const n=uniqueId(m[1]);if(n&&n.hex)ids.add(n.hex);}
+        while ((m = rx.exec(text))) {
+            const id = uniqueId(m[1]);
+            if (id && id.hex) ids.add(id.hex);
+        }
         return ids;
     }
-    // An upload's fingerprint against another page's text.
-    function compare(pageText,entry) {
-        const text=String(pageText||'');
-        const ids=idsIn(text);
-        // No ID on the page is no answer, not a wrong one: null, and idsOnPage says why.
-        const idMatch=entry.uidHex&&ids.size?ids.has(String(entry.uidHex).toUpperCase()):null;
+
+    // An upload's fingerprint against another page's text. Each answer is true, false or
+    // null (nothing to compare). `mentioned` says whether the page is about this upload at
+    // all — by ID, file name, folder or title — so that unrelated pages get no banner.
+    function compare(pageText, entry) {
+        const text = String(pageText || '');
+        const ids = idsIn(text);
+        // No ID on the page is no answer, not a wrong one; idsOnPage says which it was.
+        const idMatch = (entry.uidHex && ids.size) ? ids.has(String(entry.uidHex).toUpperCase()) : null;
+
         // A page that prints file names in lower case (TorrentLeech does) still names the
-        // file; caseOnly says the match needed that allowance.
-        const lower=text.toLowerCase();
-        let caseOnly=false;
-        const has=needle=>{if(!needle)return false;if(text.includes(needle))return true;if(lower.includes(String(needle).toLowerCase())){caseOnly=true;return true;}return false;};
-        const nameMatch=entry.fileBase?has(entry.fileBase):null;
-        const folderMatch=entry.folder?has(entry.folder):null;
-        const files=Array.isArray(entry.files)?entry.files:[];
-        const filesFound=files.filter(name=>has(name)).length;
-        const wanted=[entry.bytes,entry.totalBytes].map(Number).filter(b=>b>1e6);
-        let sizeMatch=wanted.length?false:null,sizesOnPage=0;
-        for(const b of wanted) {
-            const digits=String(Math.round(b)).split('').join('[,.\\s\\u00a0\\u202f]?');
-            if(new RegExp('(?:^|[^\\d])'+digits+'(?:[^\\d]|$)').test(text))sizeMatch=true;
+        // file; caseOnly records that the match needed that allowance.
+        const lower = text.toLowerCase();
+        let caseOnly = false;
+        const has = needle => {
+            if (!needle) return false;
+            if (text.includes(needle)) return true;
+            if (lower.includes(String(needle).toLowerCase())) { caseOnly = true; return true; }
+            return false;
+        };
+        const nameMatch = entry.fileBase ? has(entry.fileBase) : null;
+        const folderMatch = entry.folder ? has(entry.folder) : null;
+        const files = Array.isArray(entry.files) ? entry.files : [];
+        const filesFound = files.filter(name => has(name)).length;
+
+        // Sizes: an exact byte count anywhere in the text (with any thousands separator),
+        // or a rounded "20.40 GiB" within half a per cent.
+        const wanted = [entry.bytes, entry.totalBytes].map(Number).filter(b => b > 1e6);
+        let sizeMatch = wanted.length ? false : null;
+        let sizesOnPage = 0;
+        for (const b of wanted) {
+            const digits = String(Math.round(b)).split('').join('[,.\\s\\u00a0\\u202f]?');
+            if (new RegExp('(?:^|[^\\d])' + digits + '(?:[^\\d]|$)').test(text)) sizeMatch = true;
         }
-        const sizeRx=/(\d+(?:[.,]\d+)?)\s*(KiB|MiB|GiB|TiB|KB|MB|GB|TB)\b/gi;
+        const sizeRx = /(\d+(?:[.,]\d+)?)\s*(KiB|MiB|GiB|TiB|KB|MB|GB|TB)\b/gi;
         let sm;
-        while((sm=sizeRx.exec(text))) {
-            const b=bytesOf(sm[0]);
-            if(b<1e6)continue;
+        while ((sm = sizeRx.exec(text))) {
+            const b = bytesOf(sm[0]);
+            if (b < 1e6) continue;
             sizesOnPage++;
-            if(wanted.some(w=>Math.abs(b-w)/w<0.005))sizeMatch=true;
+            if (wanted.some(w => Math.abs(b - w) / w < 0.005)) sizeMatch = true;
         }
-        const mentioned=!!(idMatch||nameMatch||folderMatch||(entry.title&&text.includes(entry.title)));
-        return {ids,idsOnPage:ids.size,idMatch,nameMatch,folderMatch,filesFound,filesTotal:files.length,sizeMatch,sizesOnPage,mentioned,caseOnly};
+
+        const mentioned = !!(idMatch || nameMatch || folderMatch || (entry.title && text.includes(entry.title)));
+        return { ids, idsOnPage: ids.size, idMatch, nameMatch, folderMatch, filesFound, filesTotal: files.length, sizeMatch, sizesOnPage, mentioned, caseOnly };
     }
-    return {uniqueId,bytesOf,reportAgainstFiles,idsIn,compare,base,stem};
+
+    return { uniqueId, bytesOf, reportAgainstFiles, idsIn, compare, base, stem };
 })();
 
-// Torrent pages on trackers that are not UNIT3D: where a release is, and what its page
-// says about the file. One entry per site, read from pages Khamere saved and sent on
-// 22 Sep 2026 — a TorrentLeech torrent page (torrent 241837762) and two FileList details
-// pages (975915, a one-file movie; 976307, a ten-file season) with their Media Info pages.
-// Nothing here is guessed from a site's reputation: every selector is one those pages had.
+// Torrent pages on trackers that are not UNIT3D: which torrent an address is about, and
+// what its page says about the file. One entry per site, and every selector in it comes
+// from pages saved from the live sites and supplied on 22 Sep 2026 — a TorrentLeech torrent page (torrent
+// 241837762) and two FileList details pages (975915, a one-file movie; 976307, a ten-file
+// season) with their Media Info pages. Nothing here is guessed from a site's reputation.
 //
-// Pure where it can be: `where()` takes an address, `read()` takes a document. Nothing is
-// fetched; the Media Info page on FileList is a page you open yourself.
+// Pure where it can be: where() takes an address, read() takes a document. Nothing is
+// fetched; FileList's Media Info page is a page you open yourself.
 const DKOKTO_ELSEWHERE_CORE = (() => {
-    const core=typeof DKOKTO_SOURCE_CORE!=='undefined'?DKOKTO_SOURCE_CORE:(typeof require==='function'?require('./source-core.js'):null);
-    const text=node=>String(node?.textContent||'').replace(/\s+/g,' ').trim();
-    // A block of lines the site wrote with <br />: textContent runs them together, so the
-    // breaks are put back as newlines before the report is parsed.
+    const core = typeof DKOKTO_SOURCE_CORE !== 'undefined' ? DKOKTO_SOURCE_CORE
+        : (typeof require === 'function' ? require('./source-core.js') : null);
+    const text = node => String(node?.textContent || '').replace(/\s+/g, ' ').trim();
+
+    // A block the site wrote with <br /> line breaks. textContent runs the lines together,
+    // so the breaks are put back as newlines before the report is parsed, and the &nbsp;
+    // padding becomes ordinary spaces.
     function lines(node) {
-        if(!node)return '';
-        const out=[];
-        const walk=n=>{for(const child of n.childNodes){if(child.nodeType===3)out.push(child.nodeValue);else if(child.nodeName==='BR')out.push('\n');else walk(child);}};
+        if (!node) return '';
+        const out = [];
+        const walk = n => {
+            for (const child of n.childNodes) {
+                if (child.nodeType === 3) out.push(child.nodeValue);
+                else if (child.nodeName === 'BR') out.push('\n');
+                else walk(child);
+            }
+        };
         walk(node);
-        return out.join('').replace(/\u00a0/g,' ');
+        return out.join('').replace(/ /g, ' ');
     }
-    const SITES={
-        // TorrentLeech. The page: <h2 id="torrentnameid"> for the name; a "Torrent Info"
-        // table whose "Size" row holds the total; #fileListTable (Filename, Size) with the
-        // file names in lower case, as the site prints them; an NFO but no MediaInfo, so
-        // there is no Unique ID to read here.
-        'torrentleech.org':{
-            key:'tl',label:'TorrentLeech',
-            where(at){const m=at.pathname.match(/^\/torrent\/(\d{1,12})(?:\/|$)/);return m?{id:m[1],page:'torrent'}:null;},
-            url(id){return 'https://www.torrentleech.org/torrent/'+id;},
-            title(doc){return text(doc.querySelector('#torrentnameid'));},
-            files(doc){return [...doc.querySelectorAll('#fileListTable tbody tr')].map(row=>{const cells=row.querySelectorAll('td');
-                return cells.length>=2?{path:text(cells[0]),bytes:core?core.bytesOf(text(cells[1])):0}:null;}).filter(row=>row&&row.path);},
-            total(doc){const row=[...doc.querySelectorAll('.torrent_info_details td.description')].find(td=>text(td)==='Size');
-                return row&&core?core.bytesOf(text(row.nextElementSibling)):0;},
-            report(){return '';},
-            reportLink(){return '';},
-            lowercases:true,
+
+    const SITES = {
+        // TorrentLeech. The name is in <h2 id="torrentnameid">; the "Torrent Info" table has a
+        // "Size" row with the total; #fileListTable (Filename, Size) lists the files, with
+        // their names in lower case as the site prints them (source-core.js's comparison
+        // allows for that). There is an NFO but no MediaInfo, so no Unique ID to read.
+        'torrentleech.org': {
+            key: 'tl',
+            label: 'TorrentLeech',
+            where(at) {
+                const m = at.pathname.match(/^\/torrent\/(\d{1,12})(?:\/|$)/);
+                return m ? { id: m[1], page: 'torrent' } : null;
+            },
+            url(id) { return 'https://www.torrentleech.org/torrent/' + id; },
+            title(doc) { return text(doc.querySelector('#torrentnameid')); },
+            files(doc) {
+                return [...doc.querySelectorAll('#fileListTable tbody tr')].map(row => {
+                    const cells = row.querySelectorAll('td');
+                    return cells.length >= 2 ? { path: text(cells[0]), bytes: core ? core.bytesOf(text(cells[1])) : 0 } : null;
+                }).filter(row => row && row.path);
+            },
+            total(doc) {
+                const label = [...doc.querySelectorAll('.torrent_info_details td.description')].find(td => text(td) === 'Size');
+                return (label && core) ? core.bytesOf(text(label.nextElementSibling)) : 0;
+            },
+            report() { return ''; },
+            reportLink() { return ''; },
         },
-        // FileList. details.php?id=N: the name in .cblock-header h4; "Size" under a <b> in
-        // the details block; the file list only in the title attribute of the "Files"
-        // tooltip (HTML, name and size in alternating divs); "Media Info … View" linking to
-        // mediainfo.php?id=N. That page carries the whole report in a monospace <font>
+
+        // FileList. details.php?id=N has the name in .cblock-header h4, "Size" under a <b> in
+        // the details block, the file list only inside the title attribute of the "Files"
+        // tooltip (HTML: name and size in alternating divs), and a "Media Info … View" link
+        // to mediainfo.php?id=N. That page carries the whole report in a monospace <font>
         // block with <br /> line breaks and &nbsp; padding, Unique ID included, and links
-        // back to details.php?id=N. Both addresses are the same torrent here.
-        'filelist.io':{
-            key:'fl',label:'FileList',
-            where(at){const m=at.pathname.match(/^\/(details|mediainfo)\.php$/);const id=at.searchParams.get('id');
-                return m&&/^\d{1,12}$/.test(id||'')?{id,page:m[1]==='details'?'torrent':'report'}:null;},
-            url(id){return 'https://filelist.io/details.php?id='+id;},
-            title(doc){const h=doc.querySelector('.cblock-header h4');if(!h)return '';const a=h.querySelector('a[href*="details.php?id="]');return text(a||h);},
-            files(doc){
-                const span=[...doc.querySelectorAll('span[data-toggle="tooltip"][title]')].find(s=>/\bFiles\b/.test(text(s)));
-                if(!span)return [];
-                const holder=doc.createElement('div');holder.innerHTML=span.getAttribute('title')||'';
-                const cells=[...holder.querySelectorAll('div')].filter(d=>!d.classList.contains('clearfix')).map(text);
-                const out=[];
-                for(let i=0;i+1<cells.length;i+=2)if(cells[i])out.push({path:cells[i],bytes:core?core.bytesOf(cells[i+1]):0});
+        // back to details.php?id=N. The two addresses are one torrent here.
+        'filelist.io': {
+            key: 'fl',
+            label: 'FileList',
+            where(at) {
+                const m = at.pathname.match(/^\/(details|mediainfo)\.php$/);
+                const id = at.searchParams.get('id');
+                if (!m || !/^\d{1,12}$/.test(id || '')) return null;
+                return { id, page: m[1] === 'details' ? 'torrent' : 'report' };
+            },
+            url(id) { return 'https://filelist.io/details.php?id=' + id; },
+            title(doc) {
+                const heading = doc.querySelector('.cblock-header h4');
+                if (!heading) return '';
+                // On the Media Info page the heading is "Media Info for <a>name</a>".
+                const link = heading.querySelector('a[href*="details.php?id="]');
+                return text(link || heading);
+            },
+            files(doc) {
+                const span = [...doc.querySelectorAll('span[data-toggle="tooltip"][title]')].find(s => /\bFiles\b/.test(text(s)));
+                if (!span) return [];
+                const holder = doc.createElement('div');
+                holder.innerHTML = span.getAttribute('title') || '';
+                const cells = [...holder.querySelectorAll('div')].filter(d => !d.classList.contains('clearfix')).map(text);
+                const out = [];
+                for (let i = 0; i + 1 < cells.length; i += 2) {
+                    if (cells[i]) out.push({ path: cells[i], bytes: core ? core.bytesOf(cells[i + 1]) : 0 });
+                }
                 return out;
             },
-            total(doc){const b=[...doc.querySelectorAll('b')].find(n=>text(n)==='Size');
-                if(!b||!core)return 0;const m=(b.parentElement?.textContent||'').match(/Size\s*([\d.,]+\s*[KMGT]i?B)/i);return m?core.bytesOf(m[1]):0;},
-            report(doc){const font=[...doc.querySelectorAll('.cblock-innercontent font')].find(f=>/^General\b/.test(lines(f).trim()));return font?lines(font):'';},
-            reportLink(doc){const a=doc.querySelector('a[href*="mediainfo.php?id="]');return a?a.getAttribute('href'):'';},
-            lowercases:false,
+            total(doc) {
+                const label = [...doc.querySelectorAll('b')].find(n => text(n) === 'Size');
+                if (!label || !core) return 0;
+                const m = (label.parentElement?.textContent || '').match(/Size\s*([\d.,]+\s*[KMGT]i?B)/i);
+                return m ? core.bytesOf(m[1]) : 0;
+            },
+            report(doc) {
+                const block = [...doc.querySelectorAll('.cblock-innercontent font')].find(f => /^General\b/.test(lines(f).trim()));
+                return block ? lines(block) : '';
+            },
+            reportLink(doc) {
+                const a = doc.querySelector('a[href*="mediainfo.php?id="]');
+                return a ? a.getAttribute('href') : '';
+            },
         },
     };
-    const hosts=()=>Object.keys(SITES);
-    const site=hostname=>SITES[String(hostname||'').toLowerCase().replace(/^www\./,'')]||null;
-    // Which torrent an address is about, on a site listed here.
+
+    const hosts = () => Object.keys(SITES);
+    const site = hostname => SITES[String(hostname || '').toLowerCase().replace(/^www\./, '')] || null;
+
+    // Which torrent an address is about, on a site listed here; null anywhere else.
     function where(url) {
-        try{
-            const at=new URL(String(url));
-            const host=at.hostname.toLowerCase().replace(/^www\./,'');
-            const s=SITES[host];if(!s)return null;
-            const hit=s.where(at);
-            return hit?{host,id:hit.id,page:hit.page,site:s}:null;
-        }catch{return null;}
+        try {
+            const at = new URL(String(url));
+            const host = at.hostname.toLowerCase().replace(/^www\./, '');
+            const s = SITES[host];
+            if (!s) return null;
+            const hit = s.where(at);
+            return hit ? { host, id: hit.id, page: hit.page, site: s } : null;
+        } catch { return null; }
     }
+
     // Everything the page says about the release, in the shape source.js remembers.
-    function read(doc,url) {
-        const place=where(url);
-        if(!place||!doc)return null;
-        const s=place.site;
-        const files=s.files(doc).map(row=>({path:row.path,bytes:Math.round(Number(row.bytes)||0)})),reportText=s.report(doc);
-        let uidHex='',complete='';
-        if(reportText&&typeof DKOKTO_INSPECTOR!=='undefined') {
-            try{const general=DKOKTO_INSPECTOR.parse(reportText)[0]?.general?.[0];
-                const id=general?core.uniqueId(general.fields?.uniqueid||''):null;uidHex=id?.hex||'';
-                complete=general?core.base(general.fields?.completename||''):'';}catch{}
+    function read(doc, url) {
+        const place = where(url);
+        if (!place || !doc) return null;
+        const s = place.site;
+        const files = s.files(doc).map(row => ({ path: row.path, bytes: Math.round(Number(row.bytes) || 0) }));
+        const reportText = s.report(doc);
+
+        let uidHex = '';
+        let complete = '';
+        if (reportText && typeof DKOKTO_INSPECTOR !== 'undefined') {
+            try {
+                const general = DKOKTO_INSPECTOR.parse(reportText)[0]?.general?.[0];
+                const id = general ? core.uniqueId(general.fields?.uniqueid || '') : null;
+                uidHex = id?.hex || '';
+                complete = general ? core.base(general.fields?.completename || '') : '';
+            } catch {}
         }
-        const videos=files.filter(row=>/\.(?:mkv|mp4|m2ts|avi|ts|m4v|wmv|mov|mpg|vob|iso)$/i.test(row.path));
-        // The main file: the report's Complete name; else the one video that is not a
-        // sample (TorrentLeech lists Sample/…-sample.mkv beside the episode); a pack has none.
-        const feature=videos.filter(row=>!/sample/i.test(row.path));
-        const main=(complete&&files.find(row=>core.base(row.path).toLowerCase()===complete.toLowerCase()))||(feature.length===1?feature[0]:null);
-        const fileBase=complete?core.stem(complete):main?core.stem(main.path):'';
-        const folder=(()=>{const first=files[0]?.path.split('/');if(!first||first.length<2)return '';const top=first[0];return files.every(row=>row.path.startsWith(top+'/'))?top:'';})();
-        return {host:place.host,id:place.id,page:place.page,url:s.url(place.id),title:s.title(doc),uidHex,fileBase,folder,
-            files:files.map(row=>core.base(row.path)),bytes:main?Number(main.bytes)||0:0,
-            totalBytes:files.reduce((n,row)=>n+(Number(row.bytes)||0),0)||Math.round(s.total(doc)||0),
-            reportLink:s.reportLink(doc),hasReport:!!reportText,lowercases:!!s.lowercases};
+
+        // The main file: the report's Complete name, or else the one video that is not a
+        // sample (TorrentLeech lists Sample/…-sample.mkv beside the episode). A pack has
+        // no single main file.
+        const videos = files.filter(row => /\.(?:mkv|mp4|m2ts|avi|ts|m4v|wmv|mov|mpg|vob|iso)$/i.test(row.path));
+        const feature = videos.filter(row => !/sample/i.test(row.path));
+        const main = (complete && files.find(row => core.base(row.path).toLowerCase() === complete.toLowerCase()))
+            || (feature.length === 1 ? feature[0] : null);
+        const fileBase = complete ? core.stem(complete) : main ? core.stem(main.path) : '';
+
+        // The folder every file sits in, if there is one.
+        const firstPath = files[0]?.path.split('/');
+        const top = (firstPath && firstPath.length >= 2) ? firstPath[0] : '';
+        const folder = (top && files.every(row => row.path.startsWith(top + '/'))) ? top : '';
+
+        return {
+            host: place.host,
+            id: place.id,
+            page: place.page,
+            url: s.url(place.id),
+            title: s.title(doc),
+            uidHex,
+            fileBase,
+            folder,
+            files: files.map(row => core.base(row.path)),
+            bytes: main ? (Number(main.bytes) || 0) : 0,
+            totalBytes: files.reduce((n, row) => n + (Number(row.bytes) || 0), 0) || Math.round(s.total(doc) || 0),
+            reportLink: s.reportLink(doc),
+            hasReport: !!reportText,
+        };
     }
-    return {hosts,site,where,read,lines};
+
+    return { hosts, site, where, read, lines };
 })();
 
 // Local checks against the naming guide of whichever tracker's rules are in use.
@@ -2414,6 +2541,35 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
     }
     // What the file list says about the episodes, against what the name says. Only called
     // when a list is in hand: without one the reminder stands, and this is never reached.
+    // An audiobook's file list against a tracker's folder standard (HomieHelpDesk's Audiobook
+    // Naming and Folder Standard, notes/homiehelpdesk-rules-2026-09-20.md, supplied 22 Sep
+    // 2026): a multi-track book sits in one root folder; a single M4B may be loose; every
+    // audio file starts with a zero-padded track number — two digits under a hundred tracks,
+    // three from a hundred — so that an alphabetical sort is story order; .nfo, .txt and
+    // .url files are stripped. Tags cannot be read from a page and stay a reminder.
+    const AUDIO=/\.(?:mp3|m4a|m4b|flac|ogg|opus|aac|wma)$/i;
+    function audiobookPayload(files,add) {
+        if(!files.length)return;
+        const audio=files.filter(path=>AUDIO.test(path));
+        const name=path=>path.split('/').pop();
+        // The root folder.
+        const tops=new Set(files.map(path=>path.includes('/')?path.split('/')[0]:''));
+        const loose=files.some(path=>!path.includes('/'));
+        const singleM4b=files.length===1&&/\.m4b$/i.test(files[0]);
+        if(audio.length>1&&(loose||tops.size>1))
+            add('error','ab-root-folder','The Audiobook Naming and Folder Standard: a multi-track audiobook sits inside one top-level root folder named Author Name - Title (Read by Narrator), not as loose files'+(tops.size>1?' or across several folders':'')+'. Only a single M4B may be uploaded as a loose file.');
+        // The track numbers.
+        if(audio.length>1||(audio.length===1&&!singleM4b&&!/\.m4b$/i.test(audio[0]))) {
+            const digits=audio.length>=100?3:2;
+            const bad=audio.map(name).filter(file=>!new RegExp('^\\d{'+digits+'}(?!\\d)').test(file));
+            if(bad.length)
+                add('error','ab-track-numbers','The Audiobook Naming and Folder Standard: every audio file starts with a zero-padded track number — '+(digits===3?'three digits for a hundred tracks or more (001 - Prologue.mp3)':'two digits for fewer than a hundred tracks (01 - Prologue.mp3)')+' — so that, sorted alphabetically, the files play in story order. Not numbered that way: '+bad.slice(0,6).join(', ')+(bad.length>6?' and '+(bad.length-6)+' more':'')+'.');
+        }
+        // Junk.
+        const junk=files.filter(path=>/\.(?:nfo|txt|url)$/i.test(path)).map(name);
+        if(junk.length)
+            add('error','ab-junk','The Audiobook Naming and Folder Standard: .nfo files, stray .txt notes and .url links are stripped before the torrent is made — the upload form has an NFO field. In this payload: '+junk.slice(0,6).join(', ')+(junk.length>6?' and '+(junk.length-6)+' more':'')+'.');
+    }
     function episodeFindings(title,token,files,add) {
         const season=Number(String(token).match(/^S(\d+)/i)[1]);
         const videos=files.map(pathOf).filter(path=>VIDEO_FILE.test(path));
@@ -2489,6 +2645,8 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
             // books:"own"), so neither DarkPeers' nor Zenith's book template is held against
             // them; the profile's rules, applied in result(), are what is checked.
             add('review','book-own',(rules.labelOf?rules.labelOf(site):site)+' names books its own way, so no shared book template is applied here: what is checked is its own rule set, below.');
+            if(profile==='audiobook'&&rules.audiobooksOf&&rules.audiobooksOf(site)==='folder-standard')
+                audiobookPayload(Array.isArray(options.files)?options.files.slice(0,2000).map(pathOf).filter(Boolean):[],add);
             return result('own-books');
         }
         if(ownMusic&&profile==='music'){
@@ -2630,7 +2788,7 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         if(!channelLabel&&spacedChannels)add('error','channel-spacing','Write the channel layout with a period: '+spacedChannels[1]+'.'+spacedChannels[2]+', not '+spacedChannels[1]+' '+spacedChannels[2]+'. The layout itself is fine — 3.1 and other discrete layouts are valid when they match the default audio track.');
         else if(!channelLabel)add('error','channels-missing','Include the default track’s discrete channel layout, e.g. 2.0 or 5.1. Do not infer an LFE channel from total channel count alone.');
         if(!video&&!(dvd&&discFamily))add('error','video-missing','Include the video codec using the spelling for this release type.');
-        if(video){const v=video[1].replace(/[ .]/g,'').toLowerCase(),allowed=discFamily?['mpeg-2','vc-1','avc','hevc']:/WEB-DL/i.test(releaseKind)?['h264','h265','vp9','mpeg-2','av1']:/HDTV|UHDTV|SDTV/i.test(releaseKind)?['h264','h265','vp9','mpeg-2','av1','x264','x265','xvid']:['x264','x265','av1','xvid'];
+        if(video){const v=video[1].replace(/[ .]/g,'').toLowerCase(),allowed=discFamily?['mpeg-2','vc-1','avc','hevc']:/WEB-DL/i.test(releaseKind)?['h264','h265','vp9','mpeg-2','av1']:(/HDTV|UHDTV|SDTV/i.test(releaseKind)||releaseKind==='TV capture')?['h264','h265','vp9','mpeg-2','av1','x264','x265','xvid']:['x264','x265','av1','xvid'];
             if(/^h26[45]$/.test(v)&&!/^H\.26[45]$/i.test(video[1]))add('error','h26-spelling','Use H.264 / H.265 with the period in the video codec label.');
             if(!allowed.includes(v))add('error','video-label','Video codec label '+video[1]+' does not match the guide for '+releaseKind+'. Expected: '+allowed.join(', ')+'. This is a naming distinction, not a conversion.');
             if(dvd&&discFamily)add('error','dvd-video','Omit the video codec for DVD full discs/remuxes.');
@@ -3059,7 +3217,7 @@ TORRENTGALAXY TSP TSPxL ViSION VXT WAF WKS x0r YAWNiX YIFY YTS PSA`.split(/\s+/)
         ['FGT','allowed only where no other encode is available']];
 
     const HOMIEHELPDESK={
-        format:FORMAT,version:1,key:'hhd',label:'HomieHelpDesk',base:'dp',books:'own',hosts:['homiehelpdesk.net'],
+        format:FORMAT,version:1,key:'hhd',label:'HomieHelpDesk',base:'dp',books:'own',audiobooks:'folder-standard',hosts:['homiehelpdesk.net'],
         source:'homiehelpdesk.net/pages/7 — Upload rules, with its banned list and naming standard, as supplied 20 Sep 2026.',
         groups:{
             banned:HHD_BANNED,
@@ -3176,6 +3334,18 @@ TORRENTGALAXY TSP TSPxL ViSION VXT WAF WKS x0r YAWNiX YIFY YTS PSA`.split(/\s+/)
             {code:'book-series-pad',severity:'error',profiles:['ebook'],
              forbid:'\\[[^\\]]*\\s\\d\\]',
              message:'A series volume is zero-padded to two digits inside the brackets: [The Stormlight Archive 02], not [The Stormlight Archive 2].'},
+            // The Audiobook Naming and Folder Standard (supplied 22 Sep 2026): the title form,
+            // and the two payload rules a name can show. The folder, numbering and junk rules
+            // are read from the file list by naming.js (audiobooks:'folder-standard').
+            {code:'ab-form',severity:'review',profiles:['audiobook'],
+             require:'^\\S.+?\\s-\\s.+?\\s\\(Read by [^()]+\\)(?:\\.m4b)?$',
+             message:'The Audiobook Naming and Folder Standard: the root folder, or a single M4B, is Author Name - Title (Read by Narrator) — Andy Weir - Project Hail Mary (Read by Ray Porter).'},
+            {code:'ab-url',severity:'error',profiles:['audiobook'],
+             forbid:'(?:^|[ ._-])www\\.|https?://|\\.(?:com|net|org|info|cc|to)(?=$|[ /._-])',
+             message:'The Audiobook Naming and Folder Standard: no website URLs anywhere in file or folder names.'},
+            {code:'ab-group',severity:'review',profiles:['audiobook'],
+             forbid:'\\)-[A-Za-z][A-Za-z0-9]+(?:\\.[a-z0-9]{2,4})?\\s*$|\\S-[A-Z][A-Z0-9]{2,}(?:\\.[a-z0-9]{2,4})?\\s*$',
+             message:'The Audiobook Naming and Folder Standard: no scene or release-group tags in file or folder names — use the upload form’s NFO field for an NFO.'},
             {code:'comic-pad',severity:'error',profiles:['ebook'],
              forbid:'^.+?\\s\\d{1,2}\\s\\((?:18|19|20)\\d{2}\\)',
              message:'The Comic, Manga and Magazine Naming Standard: a comic issue or manga chapter number is zero-padded to three digits — Saga 001 (2012).cbz — and a manga volume is v01.'}
@@ -3191,8 +3361,10 @@ TORRENTGALAXY TSP TSPxL ViSION VXT WAF WKS x0r YAWNiX YIFY YTS PSA`.split(/\s+/)
              message:'§10 Description Requirements: in English; at least three screenshots (optional for a Blu-ray ISO); no advertisements, logos, recruitment or greetz; the MediaInfo of the first episode for a multi-file torrent; for a full Blu-ray the BDInfo Quick Summary, for a full DVD the .IFO MediaInfo plus the largest .VOB’s in a spoiler, for a full HD DVD the first main EVO’s.'},
             {code:'trumping',profiles:['movie','tv','disc'],
              message:'§9: Blu-ray remuxes, WEB-DLs and HDTV releases are one torrent per cut per resolution unless a coexistence rule applies (different masters, a different provider’s best offering, encodes with a meaningful benefit). A complete season pack trumps individual episodes; a WEB-DL trumps a WEBRip of the same source; REPACK, PROPER, RERip and RE-ISSUE trump the original; individual seasons trump a COMPLETE series pack. Its Trumping & Quality Tiers page: sources are categories, not one ladder — the detail decides, and the same tier again is not a trump.'},
-            {code:'books',profiles:['ebook','audiobook'],
-             message:'The E-book and the Comic, Manga and Magazine naming standards, beyond the name: loose files side by side where a book comes in several formats; comics CBZ (preferred) or CBR; magazines PDF; no .nfo, stray .txt or .url in the payload — the upload form has an NFO field; a cover image that belongs to the book is fine; one naming style across a pack. The Audiobook Naming and Folder Standard was not supplied, so nothing is claimed for audiobooks beyond this.'}
+            {code:'books',profiles:['ebook'],
+             message:'The E-book and the Comic, Manga and Magazine naming standards, beyond the name: loose files side by side where a book comes in several formats; comics CBZ (preferred) or CBR; magazines PDF; no .nfo, stray .txt or .url in the payload — the upload form has an NFO field; a cover image that belongs to the book is fine; one naming style across a pack.'},
+            {code:'audiobook',profiles:['audiobook'],
+             message:'The Audiobook Naming and Folder Standard, beyond what the name and the file list show: the audio files’ tags carry the track number and chapter title that match the file names (players read the tags); a companion e-book (EPUB, MOBI, AZW3, PDF) and cover art (JPG, PNG) are welcome inside the folder; .nfo, .txt and .url are stripped.'}
         ]
     };
 
@@ -3320,6 +3492,108 @@ Sicario Silence SM737 STUTTERSHIT Tigole TSP TSPxL UTR ViSION WAF Will1869 x0r Y
         ]
     };
 
+    // --- InfinityHD -----------------------------------------------------------------------
+    // Two pieces, supplied as text on 23 Sep 2026 and kept verbatim in
+    // notes/infinityhd-rules-2026-09-23.md: the Banned Release Groups page and the Naming
+    // Guide. The guide's two templates are the element order the shared checks already know —
+    // audio before VCodec on encodes, VCodec before audio on discs and remuxes, as
+    // OnlyEncodes+, LUME and HomieHelpDesk write them — so base is "dp". No other page of the
+    // site has been seen: the search page, the upload rules, the trumping and description
+    // rules are not in hand, and nothing is claimed about them.
+    //
+    // The banned page gives two reasons for the list as a whole (low quality or dishonest;
+    // naming that breaks automation) and none per name, so no name carries one. BRrip is a
+    // source marker and goes in groups.sources; "NhaNc3" and "nhanc3" are one name, kept
+    // once. Every other name is carried as printed, "in", "Scene" and "1000" included — the
+    // matcher only ever compares a tag that closes a title.
+    //
+    // The guide lists resolutions as "One of: 1080i, 1080p, 2160p, 4320p", so a 720p title
+    // is told it is not on the list; whether the site takes 720p in practice is not known
+    // here. Its HDR list is HDR, HDR10+, DV, DV HDR10+, HLG, PQ10 — no "DV HDR" — and that is
+    // checked as written. The Tag is omitted where there is no group, so nothing asks for one.
+    const IHD_BANNED=`1000 24xHD 41RGB 4K4U AG AOC AROMA aXXo AZAZE BARC0DE BAUCKLEY BdC beAst BONE BRiNK BTM C1NEM4
+C4K CDDHD CHAOS CHD CHX CiNE COLLECTiVE CREATiVE24 CrEwSaDe CTFOH d3g DDR DepraveD DNL DRX EDITH
+EPiC EuReKA EVO FaNGDiNG0 Feranki1980 FGT FiSTER FMD FRDS FZHD GalaxyRG GalaxyTV GHD GHOSTS
+GPTHD GRACE HDHUB4U HDS HDT HDTime HDWinG HiQVE iHYTECH in iNTENSO iPlanet ION10 iVy
+jennaortegaUHD JFF KC KiNGDOM KIRA L0SERNIGHT LAMA Leffe Liber8 LiGaS LT LUCY MarkII MeGusta
+Mesc mHD MTeam mSD MT MySiLU NaNi NhaNc3 nHD nikt0 nSD OFT Paheph PATOMiEL POKE PRODJi PSA PTNK
+RARBG RDN Rifftrax RU4HD SANTi SasukeducK Scene SHD ShieldBearer SM737 STUTTERSHIT SUNSCREEN TBS
+TEKNO3D TG TGx Tigole TIKO TORRENTGALAXY UNiON VIDEOHOLE VISIONPLUSHDR-X VXT WAF WiKi WKS
+worldmkv x0r XLF YIFY YTSMX Zero00 Zeus`
+        .split(/\s+/).map(name=>[name]);
+
+    const INFINITYHD={
+        format:FORMAT,version:1,key:'ihd',label:'InfinityHD',base:'dp',hosts:['infinityhd.net'],
+        source:'infinityhd.net — Banned Release Groups and Naming Guide, as supplied 23 Sep 2026.',
+        groups:{banned:IHD_BANNED,conditional:[],sources:[{name:'BRrip',pattern:'(?:^|[ ._])BR-?rip(?=$|[ ._-])'}]},
+        resolutions:['1080i','1080p','2160p','4320p'],
+        rules:[
+            {code:'no-group',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'-\\s?(?:NOGRP|NOGROUP)\\s*$',
+             message:'The Tag is omitted where there is no group — not written as NOGRP or NOGROUP.'},
+            {code:'acodec-ddp',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])(?:DDP\\d?(?:\\.\\d)?|E-?AC-?3)(?=$|[ .-])',
+             message:'The ACodec element is DD+; DDP and E-AC-3 are not among the names the guide gives (DD, DD EX, DD+, TrueHD, DTS, DTS-HD, FLAC, AAC).'},
+            {code:'acodec-ac3',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])AC-?3(?=$|[ .-])',
+             message:'The ACodec element writes Dolby Digital as DD (or DD EX), not AC3.'},
+            {code:'acodec-dolby',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])Dolby[ .](?:Digital|TrueHD)',
+             message:'The ACodec element uses the short names the guide gives: DD, DD EX, DD+, TrueHD, DTS, DTS-HD, FLAC, AAC.'},
+            {code:'object-atmos',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])Dolby[ .]Atmos(?=$|[ .-])',
+             message:'The Object element is Atmos on its own (the only other value is Auro3D).'},
+            {code:'hdr-vocab',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])(?:HDR10(?!\\+)|DoVi|Dolby[ .]Vision|DV[ .]HDR(?![ .]?10\\+))(?=$|[ .-])',
+             message:'The HDR element is one of HDR, HDR10+, DV, DV HDR10+, HLG or PQ10 — HDR10 on its own is written HDR, Dolby Vision is DV, and "DV HDR" is not on the list (DV HDR10+ is).'},
+            {code:'vcodec-dot',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])H26[45](?=$|[ .-])',
+             message:'The VCodec element writes it H.264 or H.265, with the dot.'},
+            {code:'vcodec-web',severity:'error',profiles:['movie','tv'],
+             forbid:'WEB-DL[\\s\\S]*(?:^|[ .])x26[45](?=$|[ .-])',
+             message:'For a WEB-DL the VCodec is H.264, H.265, VP9 or AV1; x264 and x265 name an encoder and belong to encodes and WEBRips.'},
+            {code:'vcodec-webrip',severity:'error',profiles:['movie','tv'],
+             forbid:'WEBRip[\\s\\S]*(?:^|[ .])H\\.?26[45](?=$|[ .-])',
+             message:'For a WEBRip the VCodec is x264, x265 or AV1 — it has been re-encoded, so the encoder is what is named.'},
+            {code:'vcodec-remux',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'REMUX[\\s\\S]*(?:^|[ .])(?:x26[45]|H\\.?26[45])(?=$|[ .-])',
+             message:'For a remux the VCodec is MPEG-2, VC-1, AVC, HEVC, ProRes, CineForm or JPEG 2000: the stream is untouched, so the format is what is named.'},
+            {code:'type-webdl',severity:'error',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])WEBDL(?=$|[ .-])',
+             message:'The Type is written WEB-DL, with the dash.'},
+            {code:'type-webrip',severity:'error',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])WEB-Rip(?=$|[ .-])',
+             message:'The Type is written WEBRip, as one word.'},
+            {code:'web-service',severity:'review',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])\\d{3,4}[pi][ .]WEB-?(?:DL|Rip)(?=$|[ .-])',
+             message:'For a WEB-DL or WEBRip the Source is the streaming service abbreviation, and none sits between the resolution and the type here.'},
+            {code:'remux-source',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:Blu-ray[\\s\\S]*REMUX|REMUX[\\s\\S]*Blu-ray)',
+             message:'For a remux the Source is BluRay, one word. Blu-ray with the hyphen is the full-disc spelling.'},
+            {code:'encode-source',severity:'error',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])(?:UHD[ .])?Blu-ray(?=$|[ .-])',
+             message:'For encodes and remuxes the Source is BluRay, one word; Blu-ray with the hyphen is the full-disc spelling. If this is a full disc, check the category first.'},
+            {code:'edition-name',severity:'review',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])(?:\\d+(?:th|st|nd|rd)[ .]Anniversary[ .]Edition|Anniversary[ .]Edition|4K[ .]Remaster|Remastered|Criterion(?:[ .]Collection)?|Limited)(?=$|[ .-])',
+             message:'The Edition is omitted for anything that is not a full disc unless it is needed to tell the release apart. Confirm it is needed here.'},
+            {code:'dub-dual-audio',severity:'error',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])Dual[ .]Audio(?=$|[ .-])',
+             message:'Dual-Audio is written hyphenated (Dubbed for an English dub only, Multi for two or more language tracks).'},
+            {code:'repack-number',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])(?:REPACK|PROPER|RERip)[ .](?:2|3|II)(?=$|[ .-])',
+             message:'A second repack, proper or rerip is written REPACK2, PROPER2 or RERip2 — the number joined to the word.'},
+            {code:'multi-season',severity:'error',profiles:['tv'],
+             forbid:'(?:^|[ .])S\\d{2}[ .]?-[ .]?S?\\d{2}(?![ .]*COMPLETE)',
+             message:'A complete season pack is written S01-S03 COMPLETE — the range, then the word COMPLETE.'}
+        ],
+        notes:[
+            {code:'naming-details',profiles:['movie','tv','disc'],
+             message:'What the naming guide states that a title alone cannot settle: the Name is IMDb’s, with its punctuation; AKA Original where the original name differs; LOCALE only to tell apart same-named titles; a TV year only where series share a name; specials S00E## (on TVDB) or S##E00 (not) with the special’s name; extras packs S## Extras or S00 Description; OVAs S## OVA; daily shows YYYY-MM-DD; Cut only where more than one official cut exists; Ratio one of IMAX, Open Matte, MAR; Hybrid where the main streams come from more than one source; Region on full discs only; Hi10P for 10-bit SDR AVC.'},
+            {code:'not-supplied',profiles:['movie','tv','disc'],
+             message:'Only InfinityHD’s banned list and Naming Guide are in hand (23 Sep 2026). Its upload rules, description requirements and trumping rules were not supplied, so nothing is claimed about them; the banned page says to open a Helpdesk ticket when unsure about a release.'}
+        ]
+    };
+
     const ALL=[
         {profile:LUME,summary:'The LUME naming guide: both title templates and the vocabulary for every element.',
          source:'luminarr.me — Naming Guide, as supplied 10 Sep 2026.'},
@@ -3328,7 +3602,9 @@ Sicario Silence SM737 STUTTERSHIT Tigole TSP TSPxL UTR ViSION WAF Will1869 x0r Y
         {profile:HOMIEHELPDESK,summary:'HomieHelpDesk upload rules, banned groups and naming standard: what a title can be checked for, and the rest as standing reminders.',
          source:'homiehelpdesk.net/pages/7 — Upload rules, with its banned list and naming standard, as supplied 20 Sep 2026.'},
         {profile:MIDNIGHTSCENE,summary:'MidnightScene’s Upload Naming Guide, video and music, and its banned list; its upload rules were not supplied.',
-         source:'midnightscene.cc — Upload Naming Guide and Banned Release Groups, as supplied 21 Sep 2026.'}
+         source:'midnightscene.cc — Upload Naming Guide and Banned Release Groups, as supplied 21 Sep 2026.'},
+        {profile:INFINITYHD,summary:'InfinityHD’s Naming Guide and its banned list; its upload rules were not supplied.',
+         source:'infinityhd.net — Banned Release Groups and Naming Guide, as supplied 23 Sep 2026.'}
     ];
     // A fresh copy each time: what the caller does with it must never reach this list.
     const list=()=>ALL.map(entry=>({...entry,profile:JSON.parse(JSON.stringify(entry.profile))}));
@@ -6131,224 +6407,477 @@ const DKOKTO_CAPTURE_UI = (() => {
     return {mount,read,close};
 })();
 
-// Is this the same release the source tracker has? The cross-tracker half of source-core.
+// The source check: is this the same release the source tracker has?
 //
-// On a torrent page this remembers a fingerprint of the upload — the tracker and torrent
-// number, the name, the report's Unique ID, the main file's name, the top folder, the file
-// names and the sizes — in the shared store. Open the same release on another tracker the
-// script runs on, and that page's plain text is compared with every recent fingerprint from
-// elsewhere: a banner says whether the Unique ID, the file name, the folder, the files and
-// the size are there. The result is kept under the fingerprint, and back on the first page
-// the badge's dialog shows it, with a red finding where the Unique ID on the source differs.
+// The idea is simple. When you open a torrent page, the script remembers what makes that
+// upload what it is: which tracker and torrent number, the release name, the report's
+// Unique ID, the main file's name, the top folder, the file names and the sizes. That is
+// the "fingerprint". When you then open the same release on another tracker the script
+// runs on, it compares that page's plain text with every recent fingerprint from elsewhere
+// and puts a banner on the page saying, item by item, whether the Unique ID, the file
+// name, the folder, the files and the size are there. The answer is kept under the
+// fingerprint, so back on the first page the badge's dialog can show it, and a Unique ID
+// that turned out different becomes a red finding.
 //
-// Nothing is fetched and nothing is opened: you go to the other page yourself, through the
-// lookup links or on your own, and this reads what is already on it. Bounded: PENDING
-// fingerprints at most, three days old at most, RESULTS kept results; everything read back
-// is validated. One key, carried by Backup….
+// Nothing is fetched and nothing is opened for you. You go to the other page yourself,
+// through the lookup links or on your own, and this reads what is already on it. The store
+// is bounded: at most PENDING fingerprints, none older than DAYS days, at most RESULTS kept
+// answers, and everything read back is checked before it is trusted. One storage key,
+// carried by Backup…. The pure comparison lives in source-core.js; this file is the store
+// and the wording.
 const DKOKTO_SOURCE = (() => {
-    const KEY='dkokto_source_v1',PENDING=25,RESULTS=100,DAYS=3,FILES=300;
-    const core=typeof DKOKTO_SOURCE_CORE!=='undefined'?DKOKTO_SOURCE_CORE:(typeof require==='function'?require('./source-core.js'):null);
-    let backing=null;
-    const storage=()=>{if(backing)return backing;try{return typeof DKOKTO_STORE!=='undefined'?DKOKTO_STORE.open():localStorage;}catch{try{return localStorage;}catch{return null;}}};
-    const HOST=/^[a-z0-9.-]{1,80}$/,HEX=/^[0-9A-F]{32}$/,ID=/^\d{1,12}$/;
-    const text=(v,cap)=>typeof v==='string'?v.slice(0,cap):'';
-    const cleanEntry=e=>{
-        if(!e||typeof e!=='object')return null;
-        const host=text(e.host,80).toLowerCase(),id=text(e.id,12);
-        if(!HOST.test(host)||!ID.test(id))return null;
-        const uidHex=text(e.uidHex,32).toUpperCase();
-        return {host,id,url:text(e.url,300),title:text(e.title,300),uidHex:HEX.test(uidHex)?uidHex:'',fileBase:text(e.fileBase,300),
-            folder:text(e.folder,300),files:(Array.isArray(e.files)?e.files:[]).filter(f=>typeof f==='string').map(f=>f.slice(0,300)).slice(0,FILES),
-            bytes:Number(e.bytes)||0,totalBytes:Number(e.totalBytes)||0,t:Number(e.t)||0};
+    const KEY = 'dkokto_source_v1';
+    const PENDING = 25;   // fingerprints kept
+    const RESULTS = 100;  // answers kept
+    const DAYS = 3;       // how long a fingerprint stays useful
+    const FILES = 300;    // file names kept per fingerprint
+
+    // source-core.js is a global in the built script and a require() in the Node checks.
+    const core = typeof DKOKTO_SOURCE_CORE !== 'undefined' ? DKOKTO_SOURCE_CORE
+        : (typeof require === 'function' ? require('./source-core.js') : null);
+
+    // Tampermonkey's own store where there is one (shared across trackers), else this
+    // site's localStorage. The checks hand in a fake store through use().
+    let backing = null;
+    const storage = () => {
+        if (backing) return backing;
+        try { return typeof DKOKTO_STORE !== 'undefined' ? DKOKTO_STORE.open() : localStorage; }
+        catch { try { return localStorage; } catch { return null; } }
     };
-    const cleanResult=r=>{
-        if(!r||typeof r!=='object')return null;
-        const host=text(r.host,80).toLowerCase();
-        if(!HOST.test(host))return null;
-        const tri=v=>v===true||v===false?v:null;
-        const idFound=text(r.idFound,32).toUpperCase();
-        return {host,url:text(r.url,300),on:/^\d{4}-\d{2}-\d{2}$/.test(String(r.on||''))?r.on:'',t:Number(r.t)||0,caseOnly:r.caseOnly===true,
-            idMatch:tri(r.idMatch),idFound:HEX.test(idFound)?idFound:'',idsOnPage:Number(r.idsOnPage)||0,nameMatch:tri(r.nameMatch),folderMatch:tri(r.folderMatch),
-            sizeMatch:tri(r.sizeMatch),sizesOnPage:Number(r.sizesOnPage)||0,filesFound:Number(r.filesFound)||0,filesTotal:Number(r.filesTotal)||0};
+
+    const HOST = /^[a-z0-9.-]{1,80}$/;
+    const HEX = /^[0-9A-F]{32}$/;
+    const ID = /^\d{1,12}$/;
+    const text = (value, cap) => typeof value === 'string' ? value.slice(0, cap) : '';
+
+    // A fingerprint as it is allowed to be stored: every field capped, the host and id
+    // checked, the Unique ID either 32 hex characters or nothing.
+    const cleanEntry = (e) => {
+        if (!e || typeof e !== 'object') return null;
+        const host = text(e.host, 80).toLowerCase();
+        const id = text(e.id, 12);
+        if (!HOST.test(host) || !ID.test(id)) return null;
+        const uidHex = text(e.uidHex, 32).toUpperCase();
+        const files = (Array.isArray(e.files) ? e.files : [])
+            .filter(f => typeof f === 'string').map(f => f.slice(0, 300)).slice(0, FILES);
+        return {
+            host, id,
+            url: text(e.url, 300),
+            title: text(e.title, 300),
+            uidHex: HEX.test(uidHex) ? uidHex : '',
+            fileBase: text(e.fileBase, 300),
+            folder: text(e.folder, 300),
+            files,
+            bytes: Number(e.bytes) || 0,
+            totalBytes: Number(e.totalBytes) || 0,
+            t: Number(e.t) || 0,
+        };
     };
+
+    // An answer as it is allowed to be stored. A match is true, false or null (not
+    // compared); anything else read back becomes null rather than a verdict.
+    const cleanResult = (r) => {
+        if (!r || typeof r !== 'object') return null;
+        const host = text(r.host, 80).toLowerCase();
+        if (!HOST.test(host)) return null;
+        const tri = v => (v === true || v === false) ? v : null;
+        const idFound = text(r.idFound, 32).toUpperCase();
+        return {
+            host,
+            url: text(r.url, 300),
+            on: /^\d{4}-\d{2}-\d{2}$/.test(String(r.on || '')) ? r.on : '',
+            t: Number(r.t) || 0,
+            caseOnly: r.caseOnly === true,
+            idMatch: tri(r.idMatch),
+            idFound: HEX.test(idFound) ? idFound : '',
+            idsOnPage: Number(r.idsOnPage) || 0,
+            nameMatch: tri(r.nameMatch),
+            folderMatch: tri(r.folderMatch),
+            sizeMatch: tri(r.sizeMatch),
+            sizesOnPage: Number(r.sizesOnPage) || 0,
+            filesFound: Number(r.filesFound) || 0,
+            filesTotal: Number(r.filesTotal) || 0,
+        };
+    };
+
+    const empty = () => ({ pending: [], results: {} });
+
     function read() {
-        const store=storage();if(!store)return {pending:[],results:{}};
-        try{
-            const parsed=JSON.parse(store.getItem(KEY)||'null');
-            if(!parsed||typeof parsed!=='object'||parsed.v!==1)return {pending:[],results:{}};
-            const pending=(Array.isArray(parsed.pending)?parsed.pending:[]).map(cleanEntry).filter(Boolean).slice(0,PENDING);
-            const results={};
-            for(const [k,v] of Object.entries(parsed.results&&typeof parsed.results==='object'?parsed.results:{}).slice(0,RESULTS)) {
-                const r=cleanResult(v);if(r&&/^[a-z0-9.-]{1,80}\|\d{1,12}$/.test(k))results[k]=r;
+        const store = storage();
+        if (!store) return empty();
+        try {
+            const parsed = JSON.parse(store.getItem(KEY) || 'null');
+            if (!parsed || typeof parsed !== 'object' || parsed.v !== 1) return empty();
+            const pending = (Array.isArray(parsed.pending) ? parsed.pending : [])
+                .map(cleanEntry).filter(Boolean).slice(0, PENDING);
+            const results = {};
+            const stored = parsed.results && typeof parsed.results === 'object' ? parsed.results : {};
+            for (const [key, value] of Object.entries(stored).slice(0, RESULTS)) {
+                const r = cleanResult(value);
+                if (r && /^[a-z0-9.-]{1,80}\|\d{1,12}$/.test(key)) results[key] = r;
             }
-            return {pending,results};
-        }catch{return {pending:[],results:{}};}
+            return { pending, results };
+        } catch { return empty(); }
     }
+
     function write(data) {
-        const store=storage();if(!store)return false;
-        const results=Object.entries(data.results).sort((a,b)=>(a[1].t||0)-(b[1].t||0)).slice(-RESULTS);
-        try{store.setItem(KEY,JSON.stringify({v:1,pending:data.pending.slice(0,PENDING),results:Object.fromEntries(results)}));return true;}catch{return false;}
+        const store = storage();
+        if (!store) return false;
+        // Oldest answers fall off first.
+        const results = Object.entries(data.results)
+            .sort((a, b) => (a[1].t || 0) - (b[1].t || 0)).slice(-RESULTS);
+        try {
+            store.setItem(KEY, JSON.stringify({ v: 1, pending: data.pending.slice(0, PENDING), results: Object.fromEntries(results) }));
+            return true;
+        } catch { return false; }
     }
-    const keyOf=e=>e.host+'|'+e.id;
-    const today=()=>{try{return new Date().toISOString().slice(0,10);}catch{return '';}};
-    const fresh=e=>Date.now()-(e.t||0)<DAYS*86400000;
-    // Remember this page's upload. Nothing is remembered without a Unique ID or a file name
-    // to look for.
-    // A torrent seen twice fills in rather than starts over: FileList's details page has
-    // the files and size, its Media Info page the Unique ID, and both are one torrent.
+
+    const keyOf = e => e.host + '|' + e.id;
+    const today = () => { try { return new Date().toISOString().slice(0, 10); } catch { return ''; } };
+    const isFresh = e => Date.now() - (e.t || 0) < DAYS * 86400000;
+
+    // Remember this page's upload. A torrent seen twice fills in rather than starts over:
+    // FileList's details page has the files and the size, its Media Info page has the
+    // Unique ID, and both are one torrent. Nothing is remembered unless there is something
+    // to look for later: an ID, a file name or a file list.
     function remember(entry) {
-        const fresh=cleanEntry({...entry,t:Date.now()});
-        if(!fresh)return false;
-        const data=read();
-        const old=data.pending.find(p=>keyOf(p)===keyOf(fresh));
-        const e=old?cleanEntry({...old,...Object.fromEntries(Object.entries(fresh).filter(([k,v])=>k==='t'||(Array.isArray(v)?v.length:v)))}):fresh;
-        if(!e||(!e.uidHex&&!e.fileBase&&!e.files.length))return false;
-        data.pending=[e,...data.pending.filter(p=>keyOf(p)!==keyOf(e))].slice(0,PENDING);
+        const incoming = cleanEntry({ ...entry, t: Date.now() });
+        if (!incoming) return false;
+        const data = read();
+        const previous = data.pending.find(p => keyOf(p) === keyOf(incoming));
+        let merged = incoming;
+        if (previous) {
+            // Keep what the earlier visit had wherever this visit has nothing.
+            const filled = Object.fromEntries(Object.entries(incoming)
+                .filter(([field, value]) => field === 't' || (Array.isArray(value) ? value.length : value)));
+            merged = cleanEntry({ ...previous, ...filled });
+        }
+        if (!merged || (!merged.uidHex && !merged.fileBase && !merged.files.length)) return false;
+        data.pending = [merged, ...data.pending.filter(p => keyOf(p) !== keyOf(merged))].slice(0, PENDING);
         return write(data);
     }
-    const pending=()=>read().pending.filter(fresh);
-    const resultFor=entry=>{const e=cleanEntry(entry);return e?read().results[keyOf(e)]||null:null;};
-    // The upload as remembered — with whatever an earlier visit filled in.
-    const entryFor=entry=>{const e=cleanEntry(entry);return e?read().pending.find(p=>keyOf(p)===keyOf(e))||null:null;};
-    // Compare this page's text with every recent fingerprint from another tracker; keep and
-    // return what was found for those the page is about.
-    // What the last check on this page looked for, for the dialog to explain itself.
-    let last=null;
-    function check(pageText,here) {
-        if(!core)return [];
-        const host=String(here?.host||'').toLowerCase().replace(/^www\./,'');
-        const data=read(),found=[];
-        const others=data.pending.filter(fresh).filter(e=>e.host!==host);
-        last={host,looked:others.length,hosts:[...new Set(others.map(e=>e.host))].sort(),found:0,hasId:/Unique ID\s*:/i.test(String(pageText||''))};
-        for(const e of others) {
-            const v=core.compare(pageText,e);
-            if(!v.mentioned)continue;
-            const ids=[...v.ids];
-            // The first ID the page shows is kept, so the upload's own page can show what the
-            // source had instead.
-            const result={host,url:text(here?.url,300),on:today(),t:Date.now(),idMatch:v.idMatch,idFound:v.idMatch===false&&ids.length?ids[0]:'',idsOnPage:v.idsOnPage,nameMatch:v.nameMatch,
-                folderMatch:v.folderMatch,sizeMatch:v.sizeMatch,sizesOnPage:v.sizesOnPage,filesFound:v.filesFound,filesTotal:v.filesTotal,caseOnly:v.caseOnly===true};
-            data.results[keyOf(e)]=result;
-            found.push({entry:e,result,ids});
+
+    const pending = () => read().pending.filter(isFresh);
+
+    // The kept answer for an upload, if another tracker's page has given one.
+    const resultFor = (entry) => {
+        const e = cleanEntry(entry);
+        return e ? (read().results[keyOf(e)] || null) : null;
+    };
+
+    // The upload as remembered, with whatever an earlier visit filled in.
+    const entryFor = (entry) => {
+        const e = cleanEntry(entry);
+        return e ? (read().pending.find(p => keyOf(p) === keyOf(e)) || null) : null;
+    };
+
+    // What the last check on this page looked for and found, so the dialog can say why a
+    // banner did or did not appear.
+    let last = null;
+
+    // Compare this page's text with every fresh fingerprint from another tracker. Keep an
+    // answer for each fingerprint the page turns out to be about, and return those.
+    function check(pageText, here) {
+        if (!core) return [];
+        const host = String(here?.host || '').toLowerCase().replace(/^www\./, '');
+        const data = read();
+        const found = [];
+        const others = data.pending.filter(isFresh).filter(e => e.host !== host);
+        last = {
+            host,
+            looked: others.length,
+            hosts: [...new Set(others.map(e => e.host))].sort(),
+            found: 0,
+            hasId: /Unique ID\s*:/i.test(String(pageText || '')),
+        };
+        for (const entry of others) {
+            const v = core.compare(pageText, entry);
+            if (!v.mentioned) continue;
+            const ids = [...v.ids];
+            const result = {
+                host,
+                url: text(here?.url, 300),
+                on: today(),
+                t: Date.now(),
+                idMatch: v.idMatch,
+                // When the IDs differ, the first one this page shows is kept so the
+                // upload's own page can say what the source had instead.
+                idFound: (v.idMatch === false && ids.length) ? ids[0] : '',
+                idsOnPage: v.idsOnPage,
+                nameMatch: v.nameMatch,
+                folderMatch: v.folderMatch,
+                sizeMatch: v.sizeMatch,
+                sizesOnPage: v.sizesOnPage,
+                filesFound: v.filesFound,
+                filesTotal: v.filesTotal,
+                caseOnly: v.caseOnly === true,
+            };
+            data.results[keyOf(entry)] = result;
+            found.push({ entry, result, ids });
         }
-        last.found=found.length;
-        if(found.length)write(data);
+        last.found = found.length;
+        if (found.length) write(data);
         return found;
     }
-    // Findings for the badge, from a kept result: a differing Unique ID is a red finding; a
-    // file name the source page does not show is a question; a match is a note.
+
+    // Findings for the badge, from a kept answer. A differing Unique ID is a red finding.
+    // A file name, folder, size or file the source page did not show is a question, because
+    // many pages simply do not print those.
     function issues(entry) {
-        const r=resultFor(entry);
-        if(!r)return [];
-        const out=[];
-        if(r.idMatch===false&&r.idsOnPage)out.push({severity:'error',code:'source-id',message:'The Unique ID on '+r.host+' is not this one ('+(r.idFound?'that page’s is '+r.idFound+'; ':'')+r.idsOnPage+' on that page, none matching). The report here is not from the file the source tracker has — ask for the complete, unedited report.'});
-        if(r.nameMatch===false)out.push({severity:'review',code:'source-name',message:'The file name was not found on '+r.host+'. That page may show only the release name, so compare the file names by hand.'});
-        if(r.folderMatch===false)out.push({severity:'review',code:'source-folder',message:'The top folder was not found on '+r.host+'. Compare the folder name by hand.'});
-        if(r.sizeMatch===false&&r.sizesOnPage)out.push({severity:'review',code:'source-size',message:'No size on '+r.host+' matched this upload. Compare the sizes by hand.'});
-        if(r.filesTotal>1&&r.filesFound<r.filesTotal)out.push({severity:'review',code:'source-files',message:r.filesFound+' of '+r.filesTotal+' file names were found on '+r.host+'. That page may not list them all, so compare the file list by hand.'});
+        const r = resultFor(entry);
+        if (!r) return [];
+        const out = [];
+        if (r.idMatch === false && r.idsOnPage) {
+            out.push({ severity: 'error', code: 'source-id',
+                message: 'The Unique ID on ' + r.host + ' is not this one ('
+                    + (r.idFound ? 'that page’s is ' + r.idFound + '; ' : '')
+                    + r.idsOnPage + ' on that page, none matching). The report here is not from the file the source tracker has — ask for the complete, unedited report.' });
+        }
+        if (r.nameMatch === false) {
+            out.push({ severity: 'review', code: 'source-name',
+                message: 'The file name was not found on ' + r.host + '. That page may show only the release name, so compare the file names by hand.' });
+        }
+        if (r.folderMatch === false) {
+            out.push({ severity: 'review', code: 'source-folder',
+                message: 'The top folder was not found on ' + r.host + '. Compare the folder name by hand.' });
+        }
+        if (r.sizeMatch === false && r.sizesOnPage) {
+            out.push({ severity: 'review', code: 'source-size',
+                message: 'No size on ' + r.host + ' matched this upload. Compare the sizes by hand.' });
+        }
+        if (r.filesTotal > 1 && r.filesFound < r.filesTotal) {
+            out.push({ severity: 'review', code: 'source-files',
+                message: r.filesFound + ' of ' + r.filesTotal + ' file names were found on ' + r.host + '. That page may not list them all, so compare the file list by hand.' });
+        }
         return out;
     }
-    // One line for the dialog and the banner. A dash on the Unique ID is either this upload
-    // having none (entry.uidHex empty) or the other page printing none; `page` names it.
-    function summary(r,entry,page) {
-        const mark=v=>v===true?'✓':v===false?'✗':'–';
-        const noId=entry&&!entry.uidHex?'– (none here)':'– (none on '+(page||'this page')+')';
-        const bits=['Unique ID '+(r.idMatch===null?noId:mark(r.idMatch)),'file name '+mark(r.nameMatch)+(r.nameMatch&&r.caseOnly?' (case differs there)':'')];
-        if(r.folderMatch!==null)bits.push('folder '+mark(r.folderMatch));
-        if(r.filesTotal>1)bits.push('files '+r.filesFound+'/'+r.filesTotal);
-        if(r.sizeMatch!==null)bits.push('size '+(r.sizeMatch?'✓':r.sizesOnPage?'✗':'– (none shown)'));
+
+    // The one-line verdict used in the dialog and the banner, for example
+    // "Unique ID ✓ · file name ✓ · folder ✓ · files 6/6 · size ✓". A dash on the Unique ID
+    // means either this upload had none (entry.uidHex empty) or the other page printed
+    // none; `page` names that page.
+    function summary(r, entry, page) {
+        const mark = v => v === true ? '✓' : v === false ? '✗' : '–';
+        const noId = (entry && !entry.uidHex) ? '– (none here)' : '– (none on ' + (page || 'this page') + ')';
+        const bits = [
+            'Unique ID ' + (r.idMatch === null ? noId : mark(r.idMatch)),
+            'file name ' + mark(r.nameMatch) + ((r.nameMatch && r.caseOnly) ? ' (case differs there)' : ''),
+        ];
+        if (r.folderMatch !== null) bits.push('folder ' + mark(r.folderMatch));
+        if (r.filesTotal > 1) bits.push('files ' + r.filesFound + '/' + r.filesTotal);
+        // The size that was compared is printed beside the mark, so a ✓ can be checked
+        // against the page by eye (asked 22 Sep 2026).
+        const size = sizeText(entry);
+        if (r.sizeMatch !== null) {
+            if (r.sizeMatch) bits.push('size ✓' + (size ? ' (' + size + ')' : ''));
+            else if (r.sizesOnPage) bits.push('size ✗' + (size ? ' (' + size + ')' : ''));
+            else bits.push('size – (none shown' + (size ? '; ' + size + ' here' : '') + ')');
+        }
         return bits.join(' · ');
     }
+
+    // "20.40 GiB, 21,904,512,000 bytes" for the remembered file, or the whole torrent when
+    // no one file was singled out; empty when neither size is known. The rounded form is
+    // what a page shows at a glance; the exact count is what its file list carries, and
+    // that is the one worth comparing (asked 23 Sep 2026).
+    function sizeText(entry) {
+        const bytes = Number(entry?.bytes) || Number(entry?.totalBytes) || 0;
+        if (bytes <= 0) return '';
+        const rounded = bytes >= 1073741824 ? (bytes / 1073741824).toFixed(2) + ' GiB' : (bytes / 1048576).toFixed(2) + ' MiB';
+        const grouped = String(Math.round(bytes)).replace(/\B(?=(\d{3})+$)/g, ',');
+        return rounded + ', ' + grouped + ' bytes';
+    }
+
     // Without a Unique ID on either side (TorrentLeech prints none), a matching name and
     // size is as good as it gets, and the banner says that is all it is.
-    const byNameOnly=r=>r.idMatch===null&&r.nameMatch===true&&r.sizeMatch===true;
-    const allGood=r=>(r.idMatch===true||byNameOnly(r))&&r.nameMatch!==false&&r.folderMatch!==false&&(r.filesTotal<2||r.filesFound===r.filesTotal)&&(r.sizeMatch!==false||!r.sizesOnPage);
-    return {KEY,PENDING,RESULTS,DAYS,remember,pending,resultFor,entryFor,check,issues,summary,allGood,byNameOnly,last:()=>last,use(store){backing=store;last=null;}};
+    const byNameOnly = r => r.idMatch === null && r.nameMatch === true && r.sizeMatch === true;
+
+    // Everything that could be compared matched, so the banner may say "same release".
+    const allGood = r => (r.idMatch === true || byNameOnly(r))
+        && r.nameMatch !== false
+        && r.folderMatch !== false
+        && (r.filesTotal < 2 || r.filesFound === r.filesTotal)
+        && (r.sizeMatch !== false || !r.sizesOnPage);
+
+    return {
+        KEY, PENDING, RESULTS, DAYS,
+        remember, pending, resultFor, entryFor, check, issues, summary, allGood, byNameOnly,
+        last: () => last,
+        use(store) { backing = store; last = null; },
+    };
 })();
 
-// What source.js found, drawn: the banner on the source tracker's page, and the section in
-// the badge's dialog back on the upload's page. Data and rules live in source.js and
-// source-core.js; this only draws, and opens nothing.
+// What the source check found, drawn: the banner on the other tracker's page, and the
+// "Source check" section in the badge's dialog back on the upload's own page (and in the
+// panel on TorrentLeech / FileList). The data and the rules live in source.js and
+// source-core.js; this file only draws, and opens nothing.
 const DKOKTO_SOURCE_UI = (() => {
-    const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
-    const button=(label,onClick,cls)=>{const b=el('button',label,cls);b.type='button';b.onclick=onClick;return b;};
-    // On the source tracker's page: one banner per upload this page is about.
-    const gib=b=>b>0?(b/1073741824).toFixed(2)+' GiB':'';
-    // What was remembered, spelled out so it can be compared by eye.
-    function remembered(entry) {
-        const dl=el('dl',undefined,'dk-source-what');
-        const row=(k,v)=>{if(!v)return;dl.append(el('dt',k),el('dd',v));};
-        row('Unique ID',entry.uidHex||'none in the report');
-        row('File name',entry.fileBase);
-        row('Folder',entry.folder);
-        row('Size',gib(entry.bytes)||gib(entry.totalBytes));
-        return dl;
+    const el = (tag, textContent, className) => {
+        const node = document.createElement(tag);
+        if (textContent !== undefined) node.textContent = textContent;
+        if (className) node.className = className;
+        return node;
+    };
+    const button = (label, onClick, className) => {
+        const b = el('button', label, className);
+        b.type = 'button';
+        b.onclick = onClick;
+        return b;
+    };
+    const gib = bytes => bytes > 0 ? (bytes / 1073741824).toFixed(2) + ' GiB' : '';
+
+    // Everything this script draws carries a dk- class or a dkokto- / dp-inspector id. The
+    // page text handed to the source check leaves all of that out, for a simple reason:
+    // the banner prints the remembered file name and Unique ID, and a check that read its
+    // own words back would call them a match. textContent rather than innerText, so a
+    // MediaInfo panel the tracker has not displayed yet is read as well. detail.js and
+    // elsewhere.js both use this.
+    const OWN = '[class^="dk-"],[class*=" dk-"],[id^="dkokto-"],[id^="dp-inspector"]';
+    function pageText() {
+        const body = document.body;
+        if (!body) return '';
+        const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, {
+            acceptNode: node => (node.parentElement && node.parentElement.closest(OWN)) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT,
+        });
+        const parts = [];
+        let node;
+        while ((node = walker.nextNode())) parts.push(node.nodeValue);
+        return parts.join('\n');
     }
-    // Redrawn only when what it would say changes, so it neither flickers nor reorders as
-    // other tabs touch the store; once closed it stays closed for that answer.
-    let shown='';const closed=new Set();
-    const keyOf=found=>found.map(({entry,result})=>entry.host+'|'+entry.id+'|'+result.idMatch+result.nameMatch+result.folderMatch+result.sizeMatch+result.filesFound).join(';');
+
+    // What was remembered about this upload, spelled out so it can be compared by eye.
+    function remembered(entry) {
+        const list = el('dl', undefined, 'dk-source-what');
+        const row = (label, value) => { if (value) list.append(el('dt', label), el('dd', value)); };
+        row('Unique ID', entry.uidHex || 'none in the report');
+        row('File name', entry.fileBase);
+        row('Folder', entry.folder);
+        row('Size', gib(entry.bytes) || gib(entry.totalBytes));
+        return list;
+    }
+
+    // The banner is drawn once per answer and left alone after that, so it neither
+    // flickers nor reorders as other tabs touch the store, and once closed it stays closed
+    // until the answer changes. `shown` is the key of the banner on the page; `closed`
+    // holds the keys that were dismissed with Close.
+    let shown = '';
+    const closed = new Set();
+    const keyOf = rows => rows.map(({ entry, result }) =>
+        entry.host + '|' + entry.id + '|' + result.idMatch + result.nameMatch + result.folderMatch + result.sizeMatch + result.filesFound).join(';');
+
+    // The heading for one row of the banner.
+    function verdict(entry, result) {
+        const good = DKOKTO_SOURCE.allGood(result);
+        if (result.idMatch === false && result.idsOnPage) return '✕ Not the same file as ' + entry.host + '’s upload';
+        if (good && result.idMatch === true) return '✓ Same release as ' + entry.host + '’s upload';
+        if (good) return '✓ Same name and size as ' + entry.host + '’s upload (no Unique ID to compare)';
+        return '? Compared with ' + entry.host + '’s upload';
+    }
+
+    // On the other tracker's page: one row per remembered upload this page is about.
     function banner(found) {
-        const rows=(Array.isArray(found)?found.slice():[]).sort((a,b)=>a.entry.host.localeCompare(b.entry.host)||a.entry.id.localeCompare(b.entry.id));
-        const key=keyOf(rows);
-        if(key&&key===shown&&document.querySelector('.dk-source-banner'))return;
-        for(const node of document.querySelectorAll('.dk-source-banner'))node.remove();
-        shown=key;
-        if(!rows.length||closed.has(key))return;
-        const wrap=el('div',undefined,'dk-source-banner');wrap.setAttribute('role','status');
-        for(const {entry,result,ids} of rows) {
-            const good=DKOKTO_SOURCE.allGood(result);
-            const row=el('div',undefined,'dk-source-row');row.dataset.state=result.idMatch===false&&result.idsOnPage?'error':good?'pass':'review';
-            row.append(el('strong',(result.idMatch===false&&result.idsOnPage?'✕ Not the same file as ':good&&result.idMatch===true?'✓ Same release as ':good?'✓ Same name and size as ':'? Compared with ')+entry.host+'’s upload'+(good&&result.idMatch!==true?' (no Unique ID to compare)':'')),
-                el('span',entry.title,'dk-source-title'));
+        const rows = (Array.isArray(found) ? found.slice() : [])
+            .sort((a, b) => a.entry.host.localeCompare(b.entry.host) || a.entry.id.localeCompare(b.entry.id));
+        const key = keyOf(rows);
+        if (key && key === shown && document.querySelector('.dk-source-banner')) return;
+        for (const node of document.querySelectorAll('.dk-source-banner')) node.remove();
+        shown = key;
+        if (!rows.length || closed.has(key)) return;
+
+        const wrap = el('div', undefined, 'dk-source-banner');
+        wrap.setAttribute('role', 'status');
+        for (const { entry, result, ids } of rows) {
+            const good = DKOKTO_SOURCE.allGood(result);
+            const row = el('div', undefined, 'dk-source-row');
+            row.dataset.state = (result.idMatch === false && result.idsOnPage) ? 'error' : good ? 'pass' : 'review';
+            row.append(el('strong', verdict(entry, result)), el('span', entry.title, 'dk-source-title'));
+
             // The file as it is named, under the release title, so spaces and dots show.
-            const fileName=(Array.isArray(entry.files)&&entry.files.length===1?entry.files[0]:'')||entry.fileBase;
-            if(fileName)row.append(el('span',fileName,'dk-source-file'));
-            if(fileName&&/ /.test(fileName))row.append(el('span','The file name has spaces in it.','dk-source-spaces'));
-            row.append(el('span',DKOKTO_SOURCE.summary(result,entry),'dk-source-bits'));
-            const here=Array.isArray(ids)?ids:[];
-            if(entry.uidHex)row.append(el('span','Unique ID remembered from '+entry.host+': '+entry.uidHex+(result.idMatch?' — the same one is on this page':here.length?' — this page has '+here.slice(0,3).join(', '):' — this page shows none'),'dk-source-ids'));
-            else if(here.length)row.append(el('span','No Unique ID was in the report on '+entry.host+'; this page has '+here.slice(0,3).join(', '),'dk-source-ids'));
-            if(entry.url){const back=el('a','Back to that torrent');back.href=entry.url;row.append(back);}
+            const fileName = ((Array.isArray(entry.files) && entry.files.length === 1) ? entry.files[0] : '') || entry.fileBase;
+            if (fileName) row.append(el('span', fileName, 'dk-source-file'));
+            if (fileName && / /.test(fileName)) row.append(el('span', 'The file name has spaces in it.', 'dk-source-spaces'));
+
+            row.append(el('span', DKOKTO_SOURCE.summary(result, entry), 'dk-source-bits'));
+
+            // The IDs, side by side: the one remembered and the one(s) this page shows.
+            const here = Array.isArray(ids) ? ids : [];
+            if (entry.uidHex) {
+                const tail = result.idMatch ? ' — the same one is on this page'
+                    : here.length ? ' — this page has ' + here.slice(0, 3).join(', ')
+                    : ' — this page shows none';
+                row.append(el('span', 'Unique ID remembered from ' + entry.host + ': ' + entry.uidHex + tail, 'dk-source-ids'));
+            } else if (here.length) {
+                row.append(el('span', 'No Unique ID was in the report on ' + entry.host + '; this page has ' + here.slice(0, 3).join(', '), 'dk-source-ids'));
+            }
+            if (entry.url) {
+                const back = el('a', 'Back to that torrent');
+                back.href = entry.url;
+                row.append(back);
+            }
             wrap.append(row);
         }
-        wrap.append(el('small','Read from this page’s text and the upload remembered from the other tracker. Nothing was fetched or opened.'),
-            button('Close',()=>{closed.add(key);wrap.remove();}));
+        wrap.append(
+            el('small', 'Read from this page’s text and the upload remembered from the other tracker. Nothing was fetched or opened.'),
+            button('Close', () => { closed.add(key); wrap.remove(); }));
         document.body.append(wrap);
+
         // A site that drops the script's stylesheet would leave this as plain text under the
-        // footer; the placement is set on the element too, which a stylesheet rule cannot lose.
-        try{if(getComputedStyle(wrap).position!=='fixed')Object.assign(wrap.style,{position:'fixed',top:'12px',left:'50%',transform:'translateX(-50%)',zIndex:'99999',maxWidth:'min(92vw,760px)',padding:'10px 14px',background:'#1a1020',color:'#eee',border:'1px solid #76548c',borderRadius:'6px',font:'13px/1.5 system-ui,sans-serif'});}catch{}
+        // footer. The placement is set on the element as well, which no stylesheet policy
+        // can take away.
+        try {
+            if (getComputedStyle(wrap).position !== 'fixed') {
+                Object.assign(wrap.style, { position: 'fixed', top: '12px', left: '50%', transform: 'translateX(-50%)', zIndex: '99999',
+                    maxWidth: 'min(92vw,760px)', padding: '10px 14px', background: '#1a1020', color: '#eee',
+                    border: '1px solid #76548c', borderRadius: '6px', font: '13px/1.5 system-ui,sans-serif' });
+            }
+        } catch {}
     }
-    // In the badge's dialog on the upload's own page.
+
     // What this page was searched for on behalf of other trackers, so a banner that did not
-    // appear explains itself here.
+    // appear explains itself.
     function looked() {
-        const l=DKOKTO_SOURCE.last();
-        if(!l)return el('p','This page has not been looked over for other trackers’ uploads yet.','dk-source-looked');
-        if(!l.looked)return el('p','Nothing is remembered from other trackers yet, so there was nothing to look for on this page.','dk-source-looked');
-        return el('p','Looked on this page for '+l.looked+' upload'+(l.looked===1?'':'s')+' remembered from other trackers ('+l.hosts.join(', ')+'): '+
-            (l.found?l.found+(l.found===1?' was':' were')+' about this page and got a banner.':'none was about this page — no remembered title, file name, folder or Unique ID is in its text, so no banner.')+
-            (l.hasId?'':' This page prints no Unique ID.'),'dk-source-looked');
+        const l = DKOKTO_SOURCE.last();
+        if (!l) return el('p', 'This page has not been looked over for other trackers’ uploads yet.', 'dk-source-looked');
+        if (!l.looked) return el('p', 'Nothing is remembered from other trackers yet, so there was nothing to look for on this page.', 'dk-source-looked');
+        const outcome = l.found
+            ? l.found + (l.found === 1 ? ' was' : ' were') + ' about this page and got a banner.'
+            : 'none was about this page — no remembered title, file name, folder or Unique ID is in its text, so no banner.';
+        return el('p', 'Looked on this page for ' + l.looked + ' upload' + (l.looked === 1 ? '' : 's')
+            + ' remembered from other trackers (' + l.hosts.join(', ') + '): ' + outcome
+            + (l.hasId ? '' : ' This page prints no Unique ID.'), 'dk-source-looked');
     }
+
+    // The "Source check" section: what is remembered, what another tracker said if it has,
+    // and what this page was searched for.
     function section(entry) {
-        const wrap=el('div',undefined,'dk-source');
-        wrap.append(el('h3','Source check'));
-        const r=DKOKTO_SOURCE.resultFor(entry);
+        const wrap = el('div', undefined, 'dk-source');
+        wrap.append(el('h3', 'Source check'));
         wrap.append(remembered(entry));
-        if(!r) {
-            wrap.append(el('p',(entry.uidHex?'These are remembered for three days. ':'No Unique ID is in this page’s report, so the rest is remembered for three days. ')+
-                'Open the same release on another tracker you are on — the lookup row above searches them — and that page will say whether it is the same file; the answer then shows here.'));
+        const r = DKOKTO_SOURCE.resultFor(entry);
+        if (!r) {
+            const lead = entry.uidHex ? 'These are remembered for three days. '
+                : 'No Unique ID is in this page’s report, so the rest is remembered for three days. ';
+            wrap.append(el('p', lead + 'Open the same release on another tracker you are on — the lookup row above searches them — and that page will say whether it is the same file; the answer then shows here.'));
             wrap.append(looked());
             return wrap;
         }
-        const good=DKOKTO_SOURCE.allGood(r);
-        wrap.append(el('p',(good&&r.idMatch===true?'Matched on ':good?'Matched by name and size on ':r.idMatch===false&&r.idsOnPage?'Did not match on ':'Compared on ')+r.host+(r.on?' on '+r.on:'')+': '+DKOKTO_SOURCE.summary(r,entry,r.host)+'.'+
-            (r.idMatch===false&&r.idFound?' That page’s Unique ID is '+r.idFound+'.':'')));
-        if(r.url){const link=el('a','Open that page again');link.href=r.url;wrap.append(link);}
+        const good = DKOKTO_SOURCE.allGood(r);
+        const opening = (good && r.idMatch === true) ? 'Matched on '
+            : good ? 'Matched by name and size on '
+            : (r.idMatch === false && r.idsOnPage) ? 'Did not match on '
+            : 'Compared on ';
+        wrap.append(el('p', opening + r.host + (r.on ? ' on ' + r.on : '') + ': ' + DKOKTO_SOURCE.summary(r, entry, r.host) + '.'
+            + ((r.idMatch === false && r.idFound) ? ' That page’s Unique ID is ' + r.idFound + '.' : '')));
+        if (r.url) {
+            const link = el('a', 'Open that page again');
+            link.href = r.url;
+            wrap.append(link);
+        }
         wrap.append(looked());
         return wrap;
     }
-    return {banner,section};
+
+    return { banner, section, pageText, OWN };
 })();
 
 // Torrent detail page: the same naming badge used on the listing, plus a row of
@@ -6617,22 +7146,17 @@ const DKOKTO_DETAIL = (() => {
         try{DKOKTO_FILES_UI.clear();}catch{}
         try{DKOKTO_TEMPLATES.clear();}catch{}
         document.querySelectorAll('.dk-detail-links:not(.dk-request-links),.dk-detail-page,.dk-detail-compare,.dk-detail-files').forEach(n=>n.remove());};
-    // The page's text without this script's own output: textContent rather than innerText, so
-    // a MediaInfo panel the tracker has not displayed yet is read too, but nothing from the
-    // badges, dialogs, hub or the source banner — the banner prints the remembered file name
-    // and ID, and a check that read them back would call its own words a match.
-    // Every element this script makes carries a dk- class or a dkokto- id.
-    const OWN='[class^="dk-"],[class*=" dk-"],[id^="dkokto-"]';
-    function pageText() {
-        const body=document.body;if(!body)return '';
-        const walker=document.createTreeWalker(body,NodeFilter.SHOW_TEXT,{acceptNode:node=>node.parentElement&&node.parentElement.closest(OWN)?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
-        const parts=[];let node;while((node=walker.nextNode()))parts.push(node.nodeValue);
-        return parts.join('\n');
-    }
     function draw() {
         if(!onPage()){dialog?.close();clear();return;}
         const hit=found();
-        if(!hit||!hit.score||!hit.title){clear();return;}
+        // A book or audiobook name ("Andy Weir - Project Hail Mary (Read by Ray Porter)")
+        // does not look like a release, so release-title.js scores it 0 and hands back the
+        // page's own name element instead. On a page the tracker files under Audiobooks or
+        // E-Books that element is the name to judge — HomieHelpDesk's h1.torrent__name
+        // (torrent 78628, seen 22 Sep 2026) — so the 0 is accepted there and nowhere else.
+        const bookPage = /^(?:audiobook|ebook)$/.test(DKOKTO_LISTING_CORE.category(category()));
+        const usable = hit && hit.title && (hit.score || (bookPage && hit.node.matches?.('.torrent__name')));
+        if(!usable){clear();return;}
         badge(hit.node,hit.title);
         // A torrent of more than one file says so under its name, and hands you the list.
         try{DKOKTO_FILES_UI.mark(hit.node,hit.title);}catch{}
@@ -6645,7 +7169,7 @@ const DKOKTO_DETAIL = (() => {
         try{const page=known();const print=fingerprint(page.file,DKOKTO_FILES_UI.list());if(print)DKOKTO_SOURCE.remember(print);}catch{}
         try{const place=DKOKTO_CHECKLIST.where();if(place){// textContent, not innerText: trackers keep the MediaInfo in a panel that is not displayed
         // until clicked, and innerText leaves hidden text out.
-        DKOKTO_SOURCE_UI.banner(DKOKTO_SOURCE.check(pageText(),{host:place.host,url:location.origin+location.pathname}));}}catch{}
+        DKOKTO_SOURCE_UI.banner(DKOKTO_SOURCE.check(DKOKTO_SOURCE_UI.pageText(),{host:place.host,url:location.origin+location.pathname}));}}catch{}
     }
     // A page that keeps changing (chat, timers) must not starve the redraw, and must
     // not be redrawn faster than a person can read: one pass per quarter second.
@@ -6716,6 +7240,11 @@ const DKOKTO_TRACKERS = (() => {
         // search page; the name-search path is UNIT3D's, as on every entry here. Not on the
         // 9 Sep 2026 spreadsheet read above.
         unit('mns','MidnightScene','midnightscene.cc','general'),
+        // Host given 23 Sep 2026 ("also add https://infinityhd.net/") with its banned list and
+        // Naming Guide pasted as text. No page of the site has been seen; the name-search
+        // path is UNIT3D's, as on every entry here, and stands until a search page says
+        // otherwise. Not on the 9 Sep 2026 spreadsheet.
+        unit('ihd','InfinityHD','infinityhd.net'),
         unit('concertos','Concertos','concertos.live','music'),
         unit('acm','AsianCinema','eiga.moi','video','Asian'),
         unit('aw','AnimeWorld','animeworld.cx','anime','German'),
@@ -7608,8 +8137,9 @@ const DKOKTO_GROUP_TAG = ((internals,requests,trackers) => {
     // text node ending in the tag is marked.
     function mark(node,tag) {
         if(!node||!tag)return null;
-        const needle='-'+String(tag);
-        const lower=needle.toLowerCase();
+        // The tag follows a hyphen — "x264-GRP", or "[CD FLAC] - craftwork" on Zenith's music
+        // rows, where a space sits between the two. Either way only the tag is wrapped.
+        const lower=String(tag).toLowerCase();
         // Already marked — unless the page has since written its name back over the text
         // node in front of our tag, which a live re-render does. The name would then read
         // "…H.264-DKOKTODKOKTO", and every lookup built from it would carry that. Take ours
@@ -7621,7 +8151,7 @@ const DKOKTO_GROUP_TAG = ((internals,requests,trackers) => {
             const mine=(already.textContent||'').trim().toLowerCase();
             const before=already.previousSibling;
             if(mine&&before&&before.nodeType===3&&
-               before.nodeValue.replace(/\s+$/,'').toLowerCase().endsWith('-'+mine))already.remove();
+               new RegExp('-\\s?'+mine.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'$').test(before.nodeValue.replace(/\s+$/,'').toLowerCase()))already.remove();
             else return null;
         }
         for(const child of node.childNodes)
@@ -7630,9 +8160,9 @@ const DKOKTO_GROUP_TAG = ((internals,requests,trackers) => {
             child.nodeValue.replace(/\s+$/,'').toLowerCase().endsWith(lower));
         if(!text)return null;
         const value=text.nodeValue, at=value.toLowerCase().lastIndexOf(lower);
-        if(at<0)return null;
-        const after=value.slice(at+needle.length);
-        const span=el('span',value.substr(at+1,needle.length-1),CLASS);
+        if(at<0||!/-\s?$/.test(value.slice(0,at)))return null;
+        const after=value.slice(at+lower.length);
+        const span=el('span',value.substr(at,lower.length),CLASS);
         span.setAttribute('role','button');span.tabIndex=0;
         span.setAttribute('aria-haspopup','dialog');span.setAttribute('aria-expanded','false');
         span.title='Release group — click for its home tracker and other releases';
@@ -7640,7 +8170,7 @@ const DKOKTO_GROUP_TAG = ((internals,requests,trackers) => {
             if(openFor===span)close();else open(span,span.textContent);};
         span.onclick=act;
         span.onkeydown=event=>{if(event.key==='Enter'||event.key===' ')act(event);};
-        text.nodeValue=value.slice(0,at+1);
+        text.nodeValue=value.slice(0,at);
         text.after(span);
         if(after)span.after(document.createTextNode(after));
         return span;
@@ -8196,117 +8726,206 @@ const DKOKTO_REQUESTS = (() => {
     return {mount,draw,settings,ask:askFor};
 })();
 
-// The torrent page on a tracker that is not UNIT3D (elsewhere-core.js says which): the
-// lookup rows and the source check, and nothing that needs a rule set — these sites have
-// none, so nothing is judged here. Reads the page, remembers the upload for source.js,
-// compares the page with uploads remembered from other trackers, and draws the banner and
-// one panel under the name. Opens nothing on its own.
+// The torrent page on a tracker that is not UNIT3D — TorrentLeech and FileList, as listed
+// in elsewhere-core.js. Those sites have no rule set here, so nothing is judged on them.
+// What they get is the useful rest: the lookup rows, your other trackers, and the source
+// check, drawn as one panel under the release name, plus the banner when a remembered
+// upload from another tracker turns out to be this one.
+//
+// Reads the page, remembers the upload for source.js, compares the page with what other
+// trackers left behind, draws. Opens nothing on its own.
 const DKOKTO_ELSEWHERE = (() => {
-    const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
-    let timer=null,mounted=false,lastSignature='';
-    // The page's text without this script's own output (the same rule detail.js uses).
-    const OWN='[class^="dk-"],[class*=" dk-"],[id^="dkokto-"],[id^="dp-inspector"]';
-    function pageText() {
-        const body=document.body;if(!body)return '';
-        const walker=document.createTreeWalker(body,NodeFilter.SHOW_TEXT,{acceptNode:node=>node.parentElement&&node.parentElement.closest(OWN)?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
-        const parts=[];let node;while((node=walker.nextNode()))parts.push(node.nodeValue);
-        return parts.join('\n');
+    const el = (tag, textContent, className) => {
+        const node = document.createElement(tag);
+        if (textContent !== undefined) node.textContent = textContent;
+        if (className) node.className = className;
+        return node;
+    };
+
+    let timer = null;
+    let mounted = false;
+    let lastSignature = '';
+
+    // The selector for everything this script draws, shared with detail.js through
+    // source-ui.js: the page text handed to the source check leaves all of it out.
+    const OWN = DKOKTO_SOURCE_UI.OWN;
+
+    // Where the panel goes. TorrentLeech: right after the <h2 id="torrentnameid"> that holds
+    // the name. FileList: first inside the content box. Its header strip is three pieces
+    // (left cap, header, right cap) and a clearfix, and anything wedged between them breaks
+    // the frame — which is exactly what the first version did (seen on a screenshot,
+    // 22 Sep 2026).
+    function anchor(doc, print) {
+        if (print.host === 'torrentleech.org') {
+            const heading = doc.querySelector('#torrentnameid');
+            return heading ? { after: heading } : null;
+        }
+        const box = doc.querySelector('.cblock-header h4')?.closest('.cblock')?.querySelector('.cblock-innercontent');
+        return box ? { first: box } : null;
     }
-    // Where the panel goes: under the name. TorrentLeech's <h2 id="torrentnameid">, the
-    // panel after it. On FileList the header strip is three pieces (left cap, header, right
-    // cap) and a clearfix, and anything put between them breaks the frame — Khamere's
-    // screenshot, 22 Sep 2026 — so the panel goes first inside the content box instead.
-    function anchor(doc,print) {
-        if(print.host==='torrentleech.org'){const h=doc.querySelector('#torrentnameid');return h?{after:h}:null;}
-        const box=doc.querySelector('.cblock-header h4')?.closest('.cblock')?.querySelector('.cblock-innercontent');
-        return box?{first:box}:null;
-    }
-    function row(label,links,limit=14) {
-        // Its own class, not dk-detail-links: detail.js clears those rows on a page that is
-        // not a UNIT3D torrent page, which every page here is.
-        const nav=el('nav',undefined,'dk-elsewhere-row');nav.setAttribute('aria-label',label);
-        nav.append(el('span',label,'dk-detail-links-label'));
-        for(const link of links.slice(0,limit)){const a=el('a',link.label);a.href=link.url;a.title=link.note||'';if(link.exact)a.dataset.exact='yes';if(/^https:\/\//.test(link.url)){a.target='_blank';a.rel='noopener noreferrer';}nav.append(a);}
+
+    // One row of links with a label in front, like the rows on a UNIT3D torrent page. It
+    // has its own class rather than dk-detail-links because detail.js clears those rows on
+    // any page that is not a UNIT3D torrent page, which every page here is.
+    function row(label, links, limit = 14) {
+        const nav = el('nav', undefined, 'dk-elsewhere-row');
+        nav.setAttribute('aria-label', label);
+        nav.append(el('span', label, 'dk-detail-links-label'));
+        for (const link of links.slice(0, limit)) {
+            const a = el('a', link.label);
+            a.href = link.url;
+            a.title = link.note || '';
+            if (link.exact) a.dataset.exact = 'yes';
+            if (/^https:\/\//.test(link.url)) { a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+            nav.append(a);
+        }
         return nav;
     }
-    function panel(print) {
-        const wrap=el('section',undefined,'dk-elsewhere');wrap.setAttribute('aria-label','Torrent Inspector on '+print.host);
-        wrap.append(el('h3','Torrent Inspector','dk-elsewhere-heading'));
-        wrap.append(el('p',(DKOKTO_ELSEWHERE_CORE.site(print.host)?.label||print.host)+' has no naming rule set in this script, so the name is not judged here; the lookups and the source check are what it offers.','dk-elsewhere-note'));
-        const title=print.title;
-        if(title) {
-            const site=DKOKTO_ELSEWHERE_CORE.site(print.host);
-            const own=(()=>{try{return DKOKTO_TRACKERS.list().find(entry=>entry.key===site?.key)||null;}catch{return null;}})();
-            // The general lookups, without the two relative "this tracker" searches that only
-            // mean something on UNIT3D; this site's own search comes from the catalogue.
-            let general=[];
-            try{general=DKOKTO_LINKS_CORE.links(title,{ids:DKOKTO_LINKS_CORE.ids(document),category:'',site:site?.label||''}).filter(link=>link.key!=='dp'&&link.key!=='exact');}catch{}
-            const fill=(template,q)=>String(template).replace(/\{q\}/g,encodeURIComponent(q));
-            if(own?.search){const term=DKOKTO_LINKS_CORE.parse(title).query||title;general.unshift({key:own.key,label:'Search '+own.label,url:fill(own.search,term),note:'This tracker, same title'},
-                {key:'exact',label:'Exact name',url:fill(own.search,title.trim()),note:'This tracker, this exact release name'});}
-            if(general.length)wrap.append(row('Look up:',general));
-            try{
-                const request={name:title,category:'',url:print.url,source:'torrent'};
-                const result=DKOKTO_REQUESTS_CORE.search(request,{ids:DKOKTO_LINKS_CORE.ids(document),host:print.host});
-                if(result.links.length)wrap.append(row('On your trackers:',result.links.map(link=>({...link,note:link.note}))));
-                const exact=DKOKTO_REQUESTS_CORE.search(request,{exact:true,host:print.host});
-                if(exact.links.length)wrap.append(row('This exact name:',exact.links));
-            }catch{}
-            const copy=el('button','Copy title','dk-detail-copy');copy.type='button';
-            copy.onclick=async()=>{try{await navigator.clipboard.writeText(title);copy.textContent='Copied';setTimeout(()=>copy.textContent='Copy title',1200);}catch{window.prompt('Copy this release title:',title);}};
-            // The same "Trackers you are on" dialog the UNIT3D pages open from their row's
-            // Details button; a tracker ticked there shows here at once.
-            const choose=el('button','Choose trackers…','dk-detail-copy');choose.type='button';choose.setAttribute('aria-haspopup','dialog');
-            choose.title='Tick the trackers you are on; they are searched from here';
-            choose.onclick=()=>{try{DKOKTO_REQUESTS.settings(()=>{lastSignature='';run(address());});}catch{}};
-            wrap.append(copy,choose);
+
+    // The lookups for this release: the site's own search first (from the catalogue, so
+    // the address is one that was supplied, not guessed), then the general lookups without the two
+    // UNIT3D-relative searches that would point nowhere here.
+    function lookups(print, title) {
+        const site = DKOKTO_ELSEWHERE_CORE.site(print.host);
+        let own = null;
+        try { own = DKOKTO_TRACKERS.list().find(entry => entry.key === site?.key) || null; } catch {}
+        let general = [];
+        try {
+            general = DKOKTO_LINKS_CORE.links(title, { ids: DKOKTO_LINKS_CORE.ids(document), category: '', site: site?.label || '' })
+                .filter(link => link.key !== 'dp' && link.key !== 'exact');
+        } catch {}
+        if (own?.search) {
+            const fill = (template, q) => String(template).replace(/\{q\}/g, encodeURIComponent(q));
+            const term = DKOKTO_LINKS_CORE.parse(title).query || title;
+            general.unshift(
+                { key: own.key, label: 'Search ' + own.label, url: fill(own.search, term), note: 'This tracker, same title' },
+                { key: 'exact', label: 'Exact name', url: fill(own.search, title.trim()), note: 'This tracker, this exact release name' });
         }
-        // The source check, as on a UNIT3D torrent page's dialog.
-        try{wrap.append(DKOKTO_SOURCE_UI.section(DKOKTO_SOURCE.entryFor(print)||print));}catch{}
-        if(!print.hasReport&&print.reportLink) {
-            const p=el('p','The MediaInfo for this torrent, with its Unique ID, is on the Media Info page: ','dk-elsewhere-report');
-            const a=el('a','open it');a.href=print.reportLink;p.append(a,' and the ID is remembered for this torrent too.');
+        return general;
+    }
+
+    function panel(print) {
+        const wrap = el('section', undefined, 'dk-elsewhere');
+        wrap.setAttribute('aria-label', 'Torrent Inspector on ' + print.host);
+        wrap.append(el('h3', 'Torrent Inspector', 'dk-elsewhere-heading'));
+        const siteName = DKOKTO_ELSEWHERE_CORE.site(print.host)?.label || print.host;
+        wrap.append(el('p', siteName + ' has no naming rule set in this script, so the name is not judged here; the lookups and the source check are what it offers.', 'dk-elsewhere-note'));
+
+        const title = print.title;
+        if (title) {
+            const general = lookups(print, title);
+            if (general.length) wrap.append(row('Look up:', general));
+
+            // The trackers you are on, searched for the title and for the exact name — the
+            // same two rows a UNIT3D torrent page gets.
+            try {
+                const request = { name: title, category: '', url: print.url, source: 'torrent' };
+                const byTitle = DKOKTO_REQUESTS_CORE.search(request, { ids: DKOKTO_LINKS_CORE.ids(document), host: print.host });
+                if (byTitle.links.length) wrap.append(row('On your trackers:', byTitle.links));
+                const exact = DKOKTO_REQUESTS_CORE.search(request, { exact: true, host: print.host });
+                if (exact.links.length) wrap.append(row('This exact name:', exact.links));
+            } catch {}
+
+            const copy = el('button', 'Copy title', 'dk-detail-copy');
+            copy.type = 'button';
+            copy.onclick = async () => {
+                try {
+                    await navigator.clipboard.writeText(title);
+                    copy.textContent = 'Copied';
+                    setTimeout(() => { copy.textContent = 'Copy title'; }, 1200);
+                } catch { window.prompt('Copy this release title:', title); }
+            };
+
+            // The same "Trackers you are on" dialog the UNIT3D pages open from their row's
+            // Details button. A tracker ticked there shows here as soon as the dialog closes.
+            const choose = el('button', 'Choose trackers…', 'dk-detail-copy');
+            choose.type = 'button';
+            choose.setAttribute('aria-haspopup', 'dialog');
+            choose.title = 'Tick the trackers you are on; they are searched from here';
+            choose.onclick = () => {
+                try { DKOKTO_REQUESTS.settings(() => { lastSignature = ''; run(address()); }); } catch {}
+            };
+            wrap.append(copy, choose);
+        }
+
+        // The source check, as it appears in the badge's dialog on a UNIT3D page. It shows
+        // the upload as remembered, so a Unique ID picked up on FileList's Media Info page
+        // is there even on the details page.
+        try { wrap.append(DKOKTO_SOURCE_UI.section(DKOKTO_SOURCE.entryFor(print) || print)); } catch {}
+
+        if (!print.hasReport && print.reportLink) {
+            const p = el('p', 'The MediaInfo for this torrent, with its Unique ID, is on the Media Info page: ', 'dk-elsewhere-report');
+            const a = el('a', 'open it');
+            a.href = print.reportLink;
+            p.append(a, ' and the ID is remembered for this torrent too.');
             wrap.append(p);
         }
-        if(!print.hasReport&&!print.reportLink)wrap.append(el('p','This tracker prints no MediaInfo, so the Unique ID cannot be compared here; the file names and sizes can.','dk-elsewhere-report'));
+        if (!print.hasReport && !print.reportLink) {
+            wrap.append(el('p', 'This tracker prints no MediaInfo, so the Unique ID cannot be compared here; the file names and sizes can.', 'dk-elsewhere-report'));
+        }
         return wrap;
     }
-    // One pass over the page: read, remember, compare, draw. Safe to run again.
+
+    // One pass over the page: read it, remember the upload, compare it with the uploads
+    // remembered elsewhere, draw the banner and the panel. Safe to run again; the panel is
+    // only rebuilt when something it would show has changed.
     function run(url) {
-        const print=DKOKTO_ELSEWHERE_CORE.read(document,url||location.href);
-        if(!print)return null;
-        try{DKOKTO_SOURCE.remember(print);}catch{}
-        const place={host:print.host,url:print.url};
-        let found=[];
-        try{found=DKOKTO_SOURCE.check(pageText(),place);}catch{}
-        try{DKOKTO_SOURCE_UI.banner(found);}catch{}
-        const signature=[print.title,print.uidHex,(DKOKTO_SOURCE.entryFor(print)||{}).uidHex,print.files.join('|'),print.totalBytes,found.length,JSON.stringify(DKOKTO_SOURCE.resultFor(print)||null)].join('\n');
-        const existing=document.querySelector('.dk-elsewhere');
-        if(existing&&lastSignature===signature)return print;
-        existing?.remove();lastSignature=signature;
-        const at=anchor(document,print);
-        const box=panel(print);
-        if(at?.first)at.first.prepend(box);
-        else if(at?.after&&at.after.parentElement)at.after.parentElement.insertBefore(box,at.after.nextSibling);
+        const print = DKOKTO_ELSEWHERE_CORE.read(document, url || location.href);
+        if (!print) return null;
+        try { DKOKTO_SOURCE.remember(print); } catch {}
+
+        let found = [];
+        try { found = DKOKTO_SOURCE.check(DKOKTO_SOURCE_UI.pageText(), { host: print.host, url: print.url }); } catch {}
+        try { DKOKTO_SOURCE_UI.banner(found); } catch {}
+
+        const remembered = DKOKTO_SOURCE.entryFor(print) || {};
+        const signature = [print.title, print.uidHex, remembered.uidHex, print.files.join('|'), print.totalBytes,
+            found.length, JSON.stringify(DKOKTO_SOURCE.resultFor(print) || null)].join('\n');
+        const existing = document.querySelector('.dk-elsewhere');
+        if (existing && lastSignature === signature) return print;
+        existing?.remove();
+        lastSignature = signature;
+
+        const at = anchor(document, print);
+        const box = panel(print);
+        if (at?.first) at.first.prepend(box);
+        else if (at?.after && at.after.parentElement) at.after.parentElement.insertBefore(box, at.after.nextSibling);
         else document.body.prepend(box);
         return print;
     }
-    // The offline preview is served from loopback, which is neither site; there the page
-    // says which address it stands for in data-dk-elsewhere-url on <body>, and only there.
-    const LOCAL=/^(?:localhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0)$/i;
-    const standsFor=()=>{try{return LOCAL.test(location.hostname)?document.body?.dataset?.dkElsewhereUrl||'':'';}catch{return '';}};
-    const address=()=>standsFor()||location.href;
+
+    // The offline preview is served from loopback, which is neither site. There, and only
+    // there, the page says which address it stands for in data-dk-elsewhere-url on <body>.
+    const LOCAL = /^(?:localhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0)$/i;
+    const standsFor = () => {
+        try { return LOCAL.test(location.hostname) ? (document.body?.dataset?.dkElsewhereUrl || '') : ''; }
+        catch { return ''; }
+    };
+    const address = () => standsFor() || location.href;
+
     function mount() {
-        if(mounted)return;
-        const preview=(()=>{try{return LOCAL.test(location.hostname);}catch{return false;}})();
-        if(!preview&&!DKOKTO_ELSEWHERE_CORE.where(location.href))return;
-        mounted=true;
-        const schedule=()=>{clearTimeout(timer);timer=setTimeout(()=>{try{run(address());}catch{}},250);};
+        if (mounted) return;
+        let preview = false;
+        try { preview = LOCAL.test(location.hostname); } catch {}
+        if (!preview && !DKOKTO_ELSEWHERE_CORE.where(location.href)) return;
+        mounted = true;
+        const schedule = () => {
+            clearTimeout(timer);
+            timer = setTimeout(() => { try { run(address()); } catch {} }, 250);
+        };
         schedule();
-        new MutationObserver(records=>{if(records.some(r=>r.type==='attributes'||![...r.addedNodes,...r.removedNodes].every(n=>n.nodeType===1&&n.closest&&n.closest(OWN))))schedule();})
-            .observe(document.body,{childList:true,subtree:true,attributes:preview,attributeFilter:preview?['data-dk-elsewhere-url']:undefined});
+        // Redraw when the page changes, but not when the change is our own panel or banner.
+        const ours = node => node.nodeType === 1 && node.closest && node.closest(OWN);
+        new MutationObserver(records => {
+            const worth = records.some(r => r.type === 'attributes' || ![...r.addedNodes, ...r.removedNodes].every(ours));
+            if (worth) schedule();
+        }).observe(document.body, {
+            childList: true, subtree: true,
+            attributes: preview, attributeFilter: preview ? ['data-dk-elsewhere-url'] : undefined,
+        });
     }
-    return {mount,run,pageText};
+
+    return { mount };
 })();
 
 // Pure address arithmetic for torrent navigation. No DOM, requests or history writes.

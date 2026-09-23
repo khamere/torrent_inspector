@@ -1,8 +1,8 @@
 # Adding a tracker
 
-Six rule sets ship with the script: **DarkPeers**, **Zenith**, **LUME**, **OnlyEncodes+**,
-**HomieHelpDesk** and **MidnightScene**. All six are in force on their own trackers as they
-ship. All six are listed under *Added trackers → Built into the script*; the last four offer
+Seven rule sets ship with the script: **DarkPeers**, **Zenith**, **LUME**, **OnlyEncodes+**,
+**HomieHelpDesk**, **MidnightScene** and **InfinityHD**. All seven are in force on their own
+trackers as they ship. All seven are listed under *Added trackers → Built into the script*; the last five offer
 **Edit a copy**, which puts an editable copy under *Your trackers*.
 
 Any other tracker is added as a **profile**: a JSON object holding who the tracker is, its
@@ -25,8 +25,9 @@ your copy to the built-in**) and the built-in is back in force.
 | --- | --- | --- |
 | **LUME** (luminarr.me) | its Naming Guide — both title templates, and the vocabulary for every element | no banned-group list: none was supplied |
 | **OnlyEncodes+** (onlyencodes.cc) | its Upload Guide + Rules (`wikis/2`), its naming standard (`wikis/18`) and its banned list (`wikis/1`) — 16 rules, 136 groups | — |
-| **HomieHelpDesk** (homiehelpdesk.net) | its Upload rules (`pages/7`), its banned list (`wikis/8`), its naming standard (`wikis/30`), its E-book and its Comic, Manga and Magazine naming standards, and its Trumping & Quality Tiers page, all supplied 20 Sep 2026 — 35 rules, 48 groups, `books: own` | its Audiobook Naming and Folder Standard was not supplied; its rules page numbers only its sections, so rules are cited by section (§4, §5, §6), not by bullet |
+| **HomieHelpDesk** (homiehelpdesk.net) | its Upload rules (`pages/7`), its banned list (`wikis/8`), its naming standard (`wikis/30`), its E-book and its Comic, Manga and Magazine naming standards, and its Trumping & Quality Tiers page, all supplied 20 Sep 2026 — 38 rules, 48 groups, `books: own` | its Audiobook Naming and Folder Standard was supplied 22 Sep 2026 (`audiobooks: folder-standard`, 3 more rules); its rules page numbers only its sections, so rules are cited by section (§4, §5, §6), not by bullet |
 | **MidnightScene** (midnightscene.cc) | its Upload Naming Guide (video and music) and its Banned Release Groups list, supplied 21 Sep 2026 — 26 rules, 62 groups, `music: own` | its upload rules (content, descriptions, trumping) were not supplied; the banned list gives no reasons; the VideoCodec list has no AV1 though the site's listing carries it, so AV1 is a question |
+| **InfinityHD** (infinityhd.net) | its Banned Release Groups page and its Naming Guide (both title templates and every element's vocabulary), supplied 23 Sep 2026 — 19 rules, 126 groups | its upload rules, description and trumping rules were not supplied; the banned page gives no reason per name; no page of the site has been seen, so the search address is UNIT3D's usual one until told otherwise |
 
 Where a page was not supplied, the profile says so in its own standing notes rather than
 filling the gap with a guess. Paste it in and the checks can quote it instead.
@@ -90,6 +91,7 @@ point.
 | `label` | What the *Rules* list shows, and the name used in every message. |
 | `base` | `dp` or `zenith` — whose naming templates apply. See below. |
 | `music` | Optional. `own` when the tracker names music its own way (MidnightScene's `Artist - Title (Year) [Catalog] [Media - Format]`): the shared music template stands aside and only the profile's `rules` are checked. Omitted, the base's music template applies. |
+| `audiobooks` | Optional. `folder-standard` when the tracker has a layout rule for audiobook payloads (HomieHelpDesk's Audiobook Naming and Folder Standard, supplied 22 Sep 2026): on a torrent page the file list is then checked as well — one root folder named like the release, tracks numbered with two digits (three from a hundred tracks), and no `.nfo`, `.txt` or `.url` among the files. Omitted, only the name is checked. |
 | `books` | Optional. `own` when the tracker names books its own way (HomieHelpDesk's `Author Name - Title.epub` carries no year, format or ISBN): the shared book template then stands aside for ebooks and audiobooks and only the profile's `rules` are checked. Omitted, the base's book templates apply. |
 | `hosts` | Domains. On one of these, this tracker's rules are chosen for you. |
 | `groups.banned` | `["Name"]`, `["Name", "reason"]` or `["Name", "reason", "since"]`. The reason appears in the badge. |

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="420" viewBox="0 0 1600 420">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1b1226"/>
+      <stop offset="0.6" stop-color="#0f0b14"/>
+      <stop offset="1" stop-color="#100a17"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.18" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#8952ab" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#8952ab" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c79bf0"/>
+      <stop offset="1" stop-color="#8952ab"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="420" fill="url(#bg)"/>
+  <rect width="1600" height="420" fill="url(#glow)"/>
+  <rect x="0.5" y="0.5" width="1599" height="419" fill="none" stroke="#3b2a4a"/>
+  <!-- the mark -->
+  <g transform="translate(96,66) scale(0.56)">
+    <circle cx="222" cy="222" r="118" fill="#160f1e" stroke="url(#ring)" stroke-width="26"/>
+    <path d="M312 312 L402 402" stroke="url(#ring)" stroke-width="42" stroke-linecap="round"/>
+    <path d="M160 228 L204 272 L290 172" fill="none" stroke="#67df99" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- the name -->
+  <text x="400" y="172" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-size="84" font-weight="700" fill="#efe7f6" letter-spacing="-1">Torrent Inspector<tspan fill="#ffb454">.</tspan></text>
+  <text x="402" y="228" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-size="30" fill="#c3b2d3">Release naming checks, the MediaInfo Inspector and a cross-tracker lookup.</text>
+  <text x="402" y="272" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-size="30" fill="#c3b2d3">It reads the page. It does not act.</text>
+  <!-- a listing row, as the badges show it -->
+  <g font-family="ui-monospace, Consolas, Cascadia Mono, monospace" font-size="22">
+    <rect x="402" y="306" width="1150" height="86" rx="10" fill="#160f1e" stroke="#3b2a4a"/>
+    <text x="428" y="341" fill="#c79bf0">Some.Film.2024.1080p.BluRay.DD+.5.1.x264-GROUP</text>
+    <text x="1046" y="343" fill="#67df99" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="26">✓</text>
+    <text x="1110" y="341" fill="#c79bf0">Some Show S02E03</text>
+    <text x="1352" y="343" fill="#ffb454" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="26">?</text>
+    <text x="1396" y="341" fill="#c79bf0">x265-EVO</text>
+    <text x="1512" y="343" fill="#ff666d" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="26">✕</text>
+    <text x="428" y="378" fill="#9d8bad" font-size="19" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">Badges on the listing and the torrent page · reads the name, the MediaInfo and the file list · no requests, ever</text>
+  </g>
+</svg>

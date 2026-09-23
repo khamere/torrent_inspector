@@ -84,7 +84,9 @@ own MediaInfo, under General, and the hex in brackets is the form the script mat
 The other page is read whole, including a MediaInfo tab you have not opened; if it truly
 has no Unique ID in it, the banner says *Unique ID – (none on this page)* and only the
 file name and size are compared. The file name sits under the title in the banner, as the
-file is named, so spaces and dots show.
+file is named, so spaces and dots show. The summary line prints the size it compared —
+*size ✓ (20.40 GiB, 21,904,512,000 bytes)* — so a tick can be checked against the page,
+to the byte where the page prints bytes, and a cross says which size it was looking for.
 
 When no banner appears, the dialog's Source check section says why: how many uploads from
 other trackers it looked for on this page and whether any was about it. A page that is a
@@ -123,12 +125,12 @@ never leaves your machine.
 
 ### Whose rules?
 
-Six rule sets ship: **DarkPeers**, **Zenith**, **LUME**, **OnlyEncodes+**, **HomieHelpDesk**
-and **MidnightScene**. Each is the default on its own tracker: the badges appear there without
-any setup, and the *Rules* list carries all five. HomieHelpDesk names books its own way
+Seven rule sets ship: **DarkPeers**, **Zenith**, **LUME**, **OnlyEncodes+**, **HomieHelpDesk**,
+**MidnightScene** and **InfinityHD**. Each is the default on its own tracker: the badges appear
+there without any setup, and the *Rules* list carries all seven. HomieHelpDesk names books its own way
 (`Author Name - Title.epub`), so on it the naming box checks a book against its rules and
 says so, rather than against DarkPeers' book template; MidnightScene names music its own
-way, and its music is checked the same way. All six are listed under *Tracker rules… →
+way, and its music is checked the same way. All seven are listed under *Tracker rules… →
 Added trackers → Built into the script*, each saying where it is in force. To change one,
 press **Edit a copy**: the copy appears under *Your trackers*, applies instead of the
 built-in until you remove it, and can be reset to the built-in from the same row.
@@ -180,6 +182,17 @@ episode, a numbered episode no file carries, or a file from another season is a 
 Specials (S00) and video files with no episode number are questions. Where the file names
 carry no `S##E##` at all, the reminder stays and says so. The dialog lists *its file list*
 among what it read only when it read one for this.
+
+On HomieHelpDesk an audiobook's file list is read as well, against its Audiobook Naming and
+Folder Standard (pasted in on 22 September 2026): the name has to read
+`Author - Title (Read by Narrator)`, every file has to sit in one root folder named like the
+release, the tracks have to be numbered with two digits (three once there are a hundred or
+more), and an NFO, a text file or a URL file among them is flagged. A URL in the name is a
+red ✕; a group tag is an amber ?. Tags, companion files and the like are yours to look at,
+and a standing note in the dialog says so. Until now no book got a badge on a torrent page
+at all: book names never look like releases to the script, so it had nothing to hang one
+on. On a page filed under Audiobooks or E-Books it now takes the page's own name heading,
+on every tracker, so Zenith's and DarkPeers' book rules reach the torrent page too.
 
 ### The comment templates
 

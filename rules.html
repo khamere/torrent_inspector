@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tracker rules — build, check and try a profile · Torrent Inspector</title>
+<link rel="icon" type="image/svg+xml" href="images/logo.svg">
 <meta name="description" content="Build a tracker rules profile for Torrent Inspector, check one you already have, and run a release name through it. Runs entirely in your browser.">
 <style>
   :root{
@@ -94,7 +95,7 @@
 
 <header class="top">
   <div class="wrap">
-    <p class="eyebrow">Torrent Inspector 1.39.3</p>
+    <p class="eyebrow">Torrent Inspector 1.41.2</p>
     <h1>Tracker rules</h1>
     <p class="lede">
       Build a rules profile for a tracker, check one you already have, and run a release name
@@ -210,7 +211,7 @@
 <footer>
   <div class="wrap">
     <p><a href="index.html">← Torrent Inspector</a> · profile format documented in
-      <code>TRACKER-RULES.md</code> · built from the modules of 1.39.3</p>
+      <code>TRACKER-RULES.md</code> · built from the modules of 1.41.2</p>
   </div>
 </footer>
 
@@ -765,6 +766,12 @@ const DKOKTO_PROFILES = (() => {
         // The same for music: MidnightScene's is Artist - Title (Year) [Catalog] [Media - Format].
         const music=text(input.music,10).toLowerCase()||'base';
         if(!['base','own'].includes(music))errors.push('“music” must be "base" (the base’s music template) or "own" (this tracker names music its own way).');
+        // "folder-standard": the tracker has an audiobook folder standard of the HomieHelpDesk
+        // shape (a root folder for a multi-track book, zero-padded track numbers that sort in
+        // story order, no .nfo / .txt / .url in the payload), and naming.js reads the file
+        // list against it.
+        const audiobooks=text(input.audiobooks,20).toLowerCase()||'base';
+        if(!['base','folder-standard'].includes(audiobooks))errors.push('“audiobooks” must be "base" or "folder-standard" (the tracker has an audiobook folder standard the file list is read against).');
         const hosts=(Array.isArray(input.hosts)?input.hosts:[]).slice(0,LIMITS.hosts)
             .map(host=>text(host,80).toLowerCase().replace(/^https?:\/\//,'').replace(/\/.*$/,''))
             .filter(host=>/^[a-z0-9.-]+\.[a-z]{2,}$/.test(host));
@@ -830,11 +837,11 @@ const DKOKTO_PROFILES = (() => {
         // Optional: where these rules came from and when, as one line of text — shown at the
         // point of use so a person knows how old what they are reading against may be.
         const source=text(input.source,200);
-        return {errors,warnings,profile:{key,label,base,books,music,hosts,banned,conditional,sources,resolutions,rules,notes,...(source?{source}:{})}};
+        return {errors,warnings,profile:{key,label,base,books,music,audiobooks,hosts,banned,conditional,sources,resolutions,rules,notes,...(source?{source}:{})}};
     }
     // Back to the JSON you would paste, so a profile can be edited and shared.
     function toJSON(profile) {
-        return {format:FORMAT,version:1,key:profile.key,label:profile.label,base:profile.base,...(profile.books==='own'?{books:'own'}:{}),...(profile.music==='own'?{music:'own'}:{}),hosts:[...profile.hosts],
+        return {format:FORMAT,version:1,key:profile.key,label:profile.label,base:profile.base,...(profile.books==='own'?{books:'own'}:{}),...(profile.music==='own'?{music:'own'}:{}),...(profile.audiobooks==='folder-standard'?{audiobooks:'folder-standard'}:{}),hosts:[...profile.hosts],
             groups:{banned:profile.banned.map(entry=>[...entry]),
                 conditional:profile.conditional.map(entry=>({name:entry.name,allowIf:entry.allow.source,allowed:entry.allowed,otherwise:entry.otherwise})),
                 sources:profile.sources.map(entry=>({name:entry.name,pattern:entry.pattern.source}))},
@@ -1081,6 +1088,12 @@ const DKOKTO_GROUPS = ((profiles) => {
     const TECHNICAL=/^(?:\d{3,4}[pi]|(?:18|19|20)\d{2}|S\d{2}(?:E\d{2})?|E\d{2}|\d+\.\d+|BluRay|BDRip|BRRip|BDMV|ISO|WEB|WEBRip|WEBDL|DL|HDTV|UHDTV|SDTV|DVD|DVDRip|UHD|HD|SD|Rip|Disc|REMUX|Hybrid|x26[45]|H\.?26[45]|AVC|HEVC|AV1|XviD|DivX|VC-?1|MPEG-?\d?|DD|DDP|DD\+|AC3|EAC3|AAC|FLAC|DTS|DTS-HD|DTS-X|MA|TrueHD|Atmos|Opus|LPCM|PCM|MP3|Audio|\d*bits?|\d+(?:\.\d+)?kHz|HDR|HDR10|HDR10\+|DV|SDR|HLG|Hi10P|IMAX|REPACK|PROPER|EXTENDED|UNCUT|Remastered|Criterion|MULTi|SUBBED|DUBBED|Subs?|Dubs?|Complete|Season|Part|AKA|Edition|Cut|NTSC|PAL)$/i;
     function trailingTag(title) {
         const value=String(title||'').replace(DECORATION,'').trim();
+        // Zenith's music shape, "Artist - Album (Year) - [Format] - Group" (two rows on its
+        // moderation queue, 23 Sep 2026): the group follows the bracketed format after a
+        // spaced hyphen, which the loop below rightly refuses to open a tag on. One word
+        // straight after "] - " is that group; two or more is a subtitle and is not.
+        const afterFormat=value.match(/\]\s-\s([A-Za-z0-9][A-Za-z0-9._+]{0,29})\s*$/);
+        if(afterFormat)return afterFormat[1];
         // Each hyphen in turn, earliest first, because a group name can hold hyphens of its
         // own (R-A-R-B-G) and the tag is whatever runs unbroken to the end from the first
         // hyphen that opens one. A tail carrying a technical token is not a tag: that is
@@ -1091,6 +1104,10 @@ const DKOKTO_GROUPS = ((profiles) => {
             if(/\s$/.test(value.slice(0,at)))continue;
             const tail=value.slice(at+1).trim();
             if(!tail||tail.length>40)continue;
+            // A spaced " - " is a name separator, never the inside of a tag: in Zenith's
+            // "[CD FLAC 16bit-44kHz] - craftwork" the hyphen in the sample rate must not
+            // open a tag that runs on through the bracket (seen 23 Sep 2026).
+            if(/\s-\s/.test(tail))continue;
             const words=tail.split(/\s+/);
             if(words.length>4||!/^[A-Za-z0-9]/.test(words[0]))continue;
             // A release name separates its tokens with spaces, dots or hyphens, depending
@@ -1108,7 +1125,7 @@ const DKOKTO_GROUPS = ((profiles) => {
             // tail on its hyphens costs nothing: a group whose own name carries them
             // (R-A-R-B-G) has no technical token among the pieces.
             const parts=tail.split(/[\s.-]+/).filter(Boolean);
-            if(parts.some(word=>TECHNICAL.test(word.replace(/[.,;:]+$/,''))))continue;
+            if(parts.some(word=>TECHNICAL.test(word.replace(/[.,;:\])]+$/,''))))continue;
             return tail;
         }
         return '';
@@ -1215,6 +1232,7 @@ const DKOKTO_RULES = ((profiles) => {
     // Whether a site names books its own way (profiles.js books:"own"); the built-ins never do.
     const booksOf=key=>profiles.get(key)?.books==='own'?'own':'base';
     const musicOf=key=>profiles.get(key)?.music==='own'?'own':'base';
+    const audiobooksOf=key=>profiles.get(key)?.audiobooks==='folder-standard'?'folder-standard':'base';
     const labelOf=key=>sites().find(site=>site.key===key)?.label||'DarkPeers';
     const hostsOf=key=>(sites().find(site=>site.key===key)?.hosts||[]).filter(host=>!/^www\./.test(host));
     // In words, for the panel: "in hand 10 Sep 2026", or the honest absence of a date.
@@ -1363,7 +1381,10 @@ const DKOKTO_RULES = ((profiles) => {
             add('error','zenith-name-author',profile==='music'?'Start with Artist - Album.':'Start with Author - Title, separated by " - ".');
         if(profile==='music') {
             // "Suggested format", in their words, with only the artist and album required.
-            if(!/^.+?\s-\s.+?\s\((?:18|19|20)\d{2}\)\s-\s\[.+\]\s*$/.test(value))
+            // A group tag after the format ("… - [CD FLAC 16bit-44kHz] - craftwork", seen on
+            // a Zenith listing 22 Sep 2026) still follows that shape: rule 1.4 keeps the
+            // original group tag, and the suggested form does not say where it goes.
+            if(!/^.+?\s-\s.+?\s\((?:18|19|20)\d{2}\)\s-\s\[.+\](?:\s-\s\S+)?\s*$/.test(value))
                 add('review','zenith-mu-form','Zenith suggests Artist - Album (Year) - [Format], with the format in square brackets; only the artist and album are required. Format can carry source, codec, bit depth and sample rate, e.g. - [CD FLAC 16bit-44kHz].');
             if(/\w+\.\w+\.\w+/.test(value)&&!value.includes(' - '))
                 add('error','zenith-mu-scene','Zenith names music with words and spaces, not scene-style dot separators.');
@@ -1431,7 +1452,7 @@ const DKOKTO_RULES = ((profiles) => {
     const baseline=()=>[...BUILTIN_BASELINE,...profiles.baseline()];
     // A profile may list the resolutions its tracker accepts; otherwise its base decides.
     const resolutions=site=>profiles.get(site)?.resolutions?.length?profiles.get(site).resolutions:null;
-    return {list,labelOf,hostsOf,guideDate,guideSince,current,choose,forget,check,books,siteFor,baseOf,booksOf,musicOf,baseline,resolutions,added,hasRules,settled,BASELINE,KEY,HOSTS,
+    return {list,labelOf,hostsOf,guideDate,guideSince,current,choose,forget,check,books,siteFor,baseOf,booksOf,musicOf,audiobooksOf,baseline,resolutions,added,hasRules,settled,BASELINE,KEY,HOSTS,
         bannedAuthors:()=>[...BANNED_AUTHORS],bannedWorks:()=>[...BANNED_WORKS],use(store){backing=store;migrated=false;}};
 })(typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./profiles.js'):DKOKTO_PROFILES);
 
@@ -1439,108 +1460,141 @@ const DKOKTO_RULES = ((profiles) => {
 /* ── source-core.js ─────────────────────────────────────────── */
 // Does the report belong to this file, and is this the release the source tracker has?
 //
-// Two page-local questions, answered from text already on the torrent page: the
-// MediaInfo report's Unique ID (a Matroska report writes it as a decimal and the same
-// number in hex — halves that disagree were typed by hand), the report's file size and
-// Complete name against the page's own file list (the page's Type field against the name
-// is page-core.js's job already). Plus the pieces of a cross-tracker check: a fingerprint of
-// an upload (its Unique ID, file names, folder, sizes) and a comparison of that fingerprint
-// with the plain text of another tracker's torrent page, so that opening the same release
-// where it was first published says whether it is the same file. Nothing here reads the
-// DOM or the network: text in, findings out. source.js does the page work.
+// This is the part of the source check with no page in it: text in, findings out, so the
+// Node checks can exercise every line. It answers two kinds of question.
 //
-// The shape of the checks follows the "MidnightScene Mod Helper" userscript Khamere
+// On the torrent page itself: does the MediaInfo report belong to the file? A Matroska
+// report writes its Unique ID twice, as a decimal and as the same number in hex, and
+// MediaInfo never gets the two to disagree — so halves that differ were typed by hand.
+// The report's File size and Complete name are held against the page's own file list.
+// (The page's Type field against the name is page-core.js's job already.)
+//
+// Across trackers: a fingerprint of an upload (Unique ID, file names, folder, sizes) is
+// compared with the plain text of another tracker's torrent page, so that opening the
+// same release where it was first published says whether it is the same file. source.js
+// does the remembering and the page work.
+//
+// The shape of these checks follows the "MidnightScene Mod Helper" userscript that was
 // supplied on 22 Sep 2026; the code is this project's own.
 const DKOKTO_SOURCE_CORE = (() => {
-    const key=s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'');
-    const field=(t,...names)=>names.map(n=>t?.fields?.[key(n)]).find(Boolean)||'';
-    // Unique ID → 32 hex characters. {bad:true} where the decimal and the hex disagree.
+    const key = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
+    // A MediaInfo field by any of its names, as inspector.js keys them.
+    const field = (track, ...names) => names.map(n => track?.fields?.[key(n)]).find(Boolean) || '';
+
+    // A Unique ID as 32 hex characters, from either half of the way MediaInfo writes it:
+    // "228267…926 (0xABBA…CE)", or just the decimal, or just the hex. {bad:true} where the
+    // decimal and the hex are different numbers; null where there is nothing usable.
     function uniqueId(raw) {
-        const s=String(raw||'').trim();
-        if(!s)return null;
-        const hex=s.match(/0x([0-9a-f]{8,40})\b/i);
-        const dec=s.match(/^(\d{10,40})(?=\s|$|\()/);
-        try{
-            if(hex&&dec&&BigInt('0x'+hex[1])!==BigInt(dec[1]))return {bad:true};
-            const value=hex?BigInt('0x'+hex[1]):dec?BigInt(dec[1]):null;
-            if(value===null||value===0n||value>=2n**128n)return null;
-            return {hex:value.toString(16).toUpperCase().padStart(32,'0')};
-        }catch{return null;}
+        const s = String(raw || '').trim();
+        if (!s) return null;
+        const hex = s.match(/0x([0-9a-f]{8,40})\b/i);
+        const dec = s.match(/^(\d{10,40})(?=\s|$|\()/);
+        try {
+            if (hex && dec && BigInt('0x' + hex[1]) !== BigInt(dec[1])) return { bad: true };
+            const value = hex ? BigInt('0x' + hex[1]) : dec ? BigInt(dec[1]) : null;
+            if (value === null || value === 0n || value >= 2n ** 128n) return null;
+            return { hex: value.toString(16).toUpperCase().padStart(32, '0') };
+        } catch { return null; }
     }
-    // "20.4 GiB" / "21 904 512 000 bytes" → bytes, or 0.
-    function bytesOf(text) {
-        const s=String(text||'').replace(/[\s\u00a0\u202f]/g,'');
-        const plain=s.match(/^(\d{4,})(?:bytes)?$/i);
-        if(plain)return Number(plain[1]);
-        const m=s.match(/([\d.,]+)(B|KiB|MiB|GiB|TiB|KB|MB|GB|TB)$/i);
-        if(!m)return 0;
-        const n=parseFloat(m[1].replace(',','.'));
-        const pow={B:0,KIB:1,KB:1,MIB:2,MB:2,GIB:3,GB:3,TIB:4,TB:4}[m[2].toUpperCase()];
-        return Number.isFinite(n)?n*Math.pow(1024,pow):0;
+
+    // "20.4 GiB", "1.08 GB", "21 904 512 000 bytes" → bytes, or 0 when it is not a size.
+    function bytesOf(value) {
+        const s = String(value || '').replace(/[\s\u00a0\u202f]/g, '');
+        const plain = s.match(/^(\d{4,})(?:bytes)?$/i);
+        if (plain) return Number(plain[1]);
+        const m = s.match(/([\d.,]+)(B|KiB|MiB|GiB|TiB|KB|MB|GB|TB)$/i);
+        if (!m) return 0;
+        const n = parseFloat(m[1].replace(',', '.'));
+        const power = { B: 0, KIB: 1, KB: 1, MIB: 2, MB: 2, GIB: 3, GB: 3, TIB: 4, TB: 4 }[m[2].toUpperCase()];
+        return Number.isFinite(n) ? n * Math.pow(1024, power) : 0;
     }
-    const base=name=>String(name||'').replace(/\\/g,'/').split('/').pop();
-    const stem=name=>base(name).replace(/\.[^.]+$/,'');
-    const VIDEO=/\.(?:mkv|mp4|m2ts|avi|ts|m4v|wmv|mov|mpg|vob|iso)$/i;
-    // The report against the page's file rows ({path,bytes}). Matched by the report's
-    // Complete name, or the only video file where there is just one.
-    function reportAgainstFiles(file,rows) {
-        const general=file?.general?.[0];
-        const list=(Array.isArray(rows)?rows:[]).filter(row=>row&&row.path);
-        const out={name:{report:'',found:null},size:{report:0,file:0,match:null}};
-        if(!general||!list.length)return out;
-        const complete=base(field(general,'Complete name','CompleteName'));
-        out.name.report=complete;
-        const videos=list.filter(row=>VIDEO.test(row.path));
-        const byName=complete?list.find(row=>base(row.path)===complete):null;
-        if(complete)out.name.found=!!byName;
-        const target=byName||(videos.length===1?videos[0]:null);
-        const reported=bytesOf(field(general,'File size','FileSize'));
-        const actual=target?Number(target.bytes)||0:0;
-        out.size.report=reported;out.size.file=actual;
-        if(reported&&actual)out.size.match=Math.abs(reported-actual)/actual<=0.02;
+
+    const base = name => String(name || '').replace(/\\/g, '/').split('/').pop();
+    const stem = name => base(name).replace(/\.[^.]+$/, '');
+    const VIDEO = /\.(?:mkv|mp4|m2ts|avi|ts|m4v|wmv|mov|mpg|vob|iso)$/i;
+
+    // The report against the page's file rows ({path, bytes}). The report's file is found
+    // by its Complete name, or it is the only video file when there is just one. Sizes are
+    // compared within two per cent, since the page rounds.
+    function reportAgainstFiles(file, rows) {
+        const general = file?.general?.[0];
+        const list = (Array.isArray(rows) ? rows : []).filter(row => row && row.path);
+        const out = { name: { report: '', found: null }, size: { report: 0, file: 0, match: null } };
+        if (!general || !list.length) return out;
+        const complete = base(field(general, 'Complete name', 'CompleteName'));
+        out.name.report = complete;
+        const videos = list.filter(row => VIDEO.test(row.path));
+        const byName = complete ? list.find(row => base(row.path) === complete) : null;
+        if (complete) out.name.found = !!byName;
+        const target = byName || (videos.length === 1 ? videos[0] : null);
+        const reported = bytesOf(field(general, 'File size', 'FileSize'));
+        const actual = target ? (Number(target.bytes) || 0) : 0;
+        out.size.report = reported;
+        out.size.file = actual;
+        if (reported && actual) out.size.match = Math.abs(reported - actual) / actual <= 0.02;
         return out;
     }
-    // Every Unique ID on a page, as 32 hex characters.
+
+    // Every Unique ID printed on a page, as 32 hex characters. The hex form is tried first
+    // so that "0x…" is not read as a decimal "0".
     function idsIn(text) {
-        const ids=new Set();
-        const rx=/(?:Unique ID|Identifiant unique)\s*:\s*(0x[0-9A-F]+|[0-9]{1,40}(?:\s*\(0x[0-9A-F]+\))?)/gi;
+        const ids = new Set();
+        const rx = /(?:Unique ID|Identifiant unique)\s*:\s*(0x[0-9A-F]+|[0-9]{1,40}(?:\s*\(0x[0-9A-F]+\))?)/gi;
         let m;
-        while((m=rx.exec(text))){const n=uniqueId(m[1]);if(n&&n.hex)ids.add(n.hex);}
+        while ((m = rx.exec(text))) {
+            const id = uniqueId(m[1]);
+            if (id && id.hex) ids.add(id.hex);
+        }
         return ids;
     }
-    // An upload's fingerprint against another page's text.
-    function compare(pageText,entry) {
-        const text=String(pageText||'');
-        const ids=idsIn(text);
-        // No ID on the page is no answer, not a wrong one: null, and idsOnPage says why.
-        const idMatch=entry.uidHex&&ids.size?ids.has(String(entry.uidHex).toUpperCase()):null;
+
+    // An upload's fingerprint against another page's text. Each answer is true, false or
+    // null (nothing to compare). `mentioned` says whether the page is about this upload at
+    // all — by ID, file name, folder or title — so that unrelated pages get no banner.
+    function compare(pageText, entry) {
+        const text = String(pageText || '');
+        const ids = idsIn(text);
+        // No ID on the page is no answer, not a wrong one; idsOnPage says which it was.
+        const idMatch = (entry.uidHex && ids.size) ? ids.has(String(entry.uidHex).toUpperCase()) : null;
+
         // A page that prints file names in lower case (TorrentLeech does) still names the
-        // file; caseOnly says the match needed that allowance.
-        const lower=text.toLowerCase();
-        let caseOnly=false;
-        const has=needle=>{if(!needle)return false;if(text.includes(needle))return true;if(lower.includes(String(needle).toLowerCase())){caseOnly=true;return true;}return false;};
-        const nameMatch=entry.fileBase?has(entry.fileBase):null;
-        const folderMatch=entry.folder?has(entry.folder):null;
-        const files=Array.isArray(entry.files)?entry.files:[];
-        const filesFound=files.filter(name=>has(name)).length;
-        const wanted=[entry.bytes,entry.totalBytes].map(Number).filter(b=>b>1e6);
-        let sizeMatch=wanted.length?false:null,sizesOnPage=0;
-        for(const b of wanted) {
-            const digits=String(Math.round(b)).split('').join('[,.\\s\\u00a0\\u202f]?');
-            if(new RegExp('(?:^|[^\\d])'+digits+'(?:[^\\d]|$)').test(text))sizeMatch=true;
+        // file; caseOnly records that the match needed that allowance.
+        const lower = text.toLowerCase();
+        let caseOnly = false;
+        const has = needle => {
+            if (!needle) return false;
+            if (text.includes(needle)) return true;
+            if (lower.includes(String(needle).toLowerCase())) { caseOnly = true; return true; }
+            return false;
+        };
+        const nameMatch = entry.fileBase ? has(entry.fileBase) : null;
+        const folderMatch = entry.folder ? has(entry.folder) : null;
+        const files = Array.isArray(entry.files) ? entry.files : [];
+        const filesFound = files.filter(name => has(name)).length;
+
+        // Sizes: an exact byte count anywhere in the text (with any thousands separator),
+        // or a rounded "20.40 GiB" within half a per cent.
+        const wanted = [entry.bytes, entry.totalBytes].map(Number).filter(b => b > 1e6);
+        let sizeMatch = wanted.length ? false : null;
+        let sizesOnPage = 0;
+        for (const b of wanted) {
+            const digits = String(Math.round(b)).split('').join('[,.\\s\\u00a0\\u202f]?');
+            if (new RegExp('(?:^|[^\\d])' + digits + '(?:[^\\d]|$)').test(text)) sizeMatch = true;
         }
-        const sizeRx=/(\d+(?:[.,]\d+)?)\s*(KiB|MiB|GiB|TiB|KB|MB|GB|TB)\b/gi;
+        const sizeRx = /(\d+(?:[.,]\d+)?)\s*(KiB|MiB|GiB|TiB|KB|MB|GB|TB)\b/gi;
         let sm;
-        while((sm=sizeRx.exec(text))) {
-            const b=bytesOf(sm[0]);
-            if(b<1e6)continue;
+        while ((sm = sizeRx.exec(text))) {
+            const b = bytesOf(sm[0]);
+            if (b < 1e6) continue;
             sizesOnPage++;
-            if(wanted.some(w=>Math.abs(b-w)/w<0.005))sizeMatch=true;
+            if (wanted.some(w => Math.abs(b - w) / w < 0.005)) sizeMatch = true;
         }
-        const mentioned=!!(idMatch||nameMatch||folderMatch||(entry.title&&text.includes(entry.title)));
-        return {ids,idsOnPage:ids.size,idMatch,nameMatch,folderMatch,filesFound,filesTotal:files.length,sizeMatch,sizesOnPage,mentioned,caseOnly};
+
+        const mentioned = !!(idMatch || nameMatch || folderMatch || (entry.title && text.includes(entry.title)));
+        return { ids, idsOnPage: ids.size, idMatch, nameMatch, folderMatch, filesFound, filesTotal: files.length, sizeMatch, sizesOnPage, mentioned, caseOnly };
     }
-    return {uniqueId,bytesOf,reportAgainstFiles,idsIn,compare,base,stem};
+
+    return { uniqueId, bytesOf, reportAgainstFiles, idsIn, compare, base, stem };
 })();
 
 
@@ -1700,6 +1754,35 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
     }
     // What the file list says about the episodes, against what the name says. Only called
     // when a list is in hand: without one the reminder stands, and this is never reached.
+    // An audiobook's file list against a tracker's folder standard (HomieHelpDesk's Audiobook
+    // Naming and Folder Standard, notes/homiehelpdesk-rules-2026-09-20.md, supplied 22 Sep
+    // 2026): a multi-track book sits in one root folder; a single M4B may be loose; every
+    // audio file starts with a zero-padded track number — two digits under a hundred tracks,
+    // three from a hundred — so that an alphabetical sort is story order; .nfo, .txt and
+    // .url files are stripped. Tags cannot be read from a page and stay a reminder.
+    const AUDIO=/\.(?:mp3|m4a|m4b|flac|ogg|opus|aac|wma)$/i;
+    function audiobookPayload(files,add) {
+        if(!files.length)return;
+        const audio=files.filter(path=>AUDIO.test(path));
+        const name=path=>path.split('/').pop();
+        // The root folder.
+        const tops=new Set(files.map(path=>path.includes('/')?path.split('/')[0]:''));
+        const loose=files.some(path=>!path.includes('/'));
+        const singleM4b=files.length===1&&/\.m4b$/i.test(files[0]);
+        if(audio.length>1&&(loose||tops.size>1))
+            add('error','ab-root-folder','The Audiobook Naming and Folder Standard: a multi-track audiobook sits inside one top-level root folder named Author Name - Title (Read by Narrator), not as loose files'+(tops.size>1?' or across several folders':'')+'. Only a single M4B may be uploaded as a loose file.');
+        // The track numbers.
+        if(audio.length>1||(audio.length===1&&!singleM4b&&!/\.m4b$/i.test(audio[0]))) {
+            const digits=audio.length>=100?3:2;
+            const bad=audio.map(name).filter(file=>!new RegExp('^\\d{'+digits+'}(?!\\d)').test(file));
+            if(bad.length)
+                add('error','ab-track-numbers','The Audiobook Naming and Folder Standard: every audio file starts with a zero-padded track number — '+(digits===3?'three digits for a hundred tracks or more (001 - Prologue.mp3)':'two digits for fewer than a hundred tracks (01 - Prologue.mp3)')+' — so that, sorted alphabetically, the files play in story order. Not numbered that way: '+bad.slice(0,6).join(', ')+(bad.length>6?' and '+(bad.length-6)+' more':'')+'.');
+        }
+        // Junk.
+        const junk=files.filter(path=>/\.(?:nfo|txt|url)$/i.test(path)).map(name);
+        if(junk.length)
+            add('error','ab-junk','The Audiobook Naming and Folder Standard: .nfo files, stray .txt notes and .url links are stripped before the torrent is made — the upload form has an NFO field. In this payload: '+junk.slice(0,6).join(', ')+(junk.length>6?' and '+(junk.length-6)+' more':'')+'.');
+    }
     function episodeFindings(title,token,files,add) {
         const season=Number(String(token).match(/^S(\d+)/i)[1]);
         const videos=files.map(pathOf).filter(path=>VIDEO_FILE.test(path));
@@ -1775,6 +1858,8 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
             // books:"own"), so neither DarkPeers' nor Zenith's book template is held against
             // them; the profile's rules, applied in result(), are what is checked.
             add('review','book-own',(rules.labelOf?rules.labelOf(site):site)+' names books its own way, so no shared book template is applied here: what is checked is its own rule set, below.');
+            if(profile==='audiobook'&&rules.audiobooksOf&&rules.audiobooksOf(site)==='folder-standard')
+                audiobookPayload(Array.isArray(options.files)?options.files.slice(0,2000).map(pathOf).filter(Boolean):[],add);
             return result('own-books');
         }
         if(ownMusic&&profile==='music'){
@@ -1916,7 +2001,7 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         if(!channelLabel&&spacedChannels)add('error','channel-spacing','Write the channel layout with a period: '+spacedChannels[1]+'.'+spacedChannels[2]+', not '+spacedChannels[1]+' '+spacedChannels[2]+'. The layout itself is fine — 3.1 and other discrete layouts are valid when they match the default audio track.');
         else if(!channelLabel)add('error','channels-missing','Include the default track’s discrete channel layout, e.g. 2.0 or 5.1. Do not infer an LFE channel from total channel count alone.');
         if(!video&&!(dvd&&discFamily))add('error','video-missing','Include the video codec using the spelling for this release type.');
-        if(video){const v=video[1].replace(/[ .]/g,'').toLowerCase(),allowed=discFamily?['mpeg-2','vc-1','avc','hevc']:/WEB-DL/i.test(releaseKind)?['h264','h265','vp9','mpeg-2','av1']:/HDTV|UHDTV|SDTV/i.test(releaseKind)?['h264','h265','vp9','mpeg-2','av1','x264','x265','xvid']:['x264','x265','av1','xvid'];
+        if(video){const v=video[1].replace(/[ .]/g,'').toLowerCase(),allowed=discFamily?['mpeg-2','vc-1','avc','hevc']:/WEB-DL/i.test(releaseKind)?['h264','h265','vp9','mpeg-2','av1']:(/HDTV|UHDTV|SDTV/i.test(releaseKind)||releaseKind==='TV capture')?['h264','h265','vp9','mpeg-2','av1','x264','x265','xvid']:['x264','x265','av1','xvid'];
             if(/^h26[45]$/.test(v)&&!/^H\.26[45]$/i.test(video[1]))add('error','h26-spelling','Use H.264 / H.265 with the period in the video codec label.');
             if(!allowed.includes(v))add('error','video-label','Video codec label '+video[1]+' does not match the guide for '+releaseKind+'. Expected: '+allowed.join(', ')+'. This is a naming distinction, not a conversion.');
             if(dvd&&discFamily)add('error','dvd-video','Omit the video codec for DVD full discs/remuxes.');
@@ -2347,7 +2432,7 @@ TORRENTGALAXY TSP TSPxL ViSION VXT WAF WKS x0r YAWNiX YIFY YTS PSA`.split(/\s+/)
         ['FGT','allowed only where no other encode is available']];
 
     const HOMIEHELPDESK={
-        format:FORMAT,version:1,key:'hhd',label:'HomieHelpDesk',base:'dp',books:'own',hosts:['homiehelpdesk.net'],
+        format:FORMAT,version:1,key:'hhd',label:'HomieHelpDesk',base:'dp',books:'own',audiobooks:'folder-standard',hosts:['homiehelpdesk.net'],
         source:'homiehelpdesk.net/pages/7 — Upload rules, with its banned list and naming standard, as supplied 20 Sep 2026.',
         groups:{
             banned:HHD_BANNED,
@@ -2464,6 +2549,18 @@ TORRENTGALAXY TSP TSPxL ViSION VXT WAF WKS x0r YAWNiX YIFY YTS PSA`.split(/\s+/)
             {code:'book-series-pad',severity:'error',profiles:['ebook'],
              forbid:'\\[[^\\]]*\\s\\d\\]',
              message:'A series volume is zero-padded to two digits inside the brackets: [The Stormlight Archive 02], not [The Stormlight Archive 2].'},
+            // The Audiobook Naming and Folder Standard (supplied 22 Sep 2026): the title form,
+            // and the two payload rules a name can show. The folder, numbering and junk rules
+            // are read from the file list by naming.js (audiobooks:'folder-standard').
+            {code:'ab-form',severity:'review',profiles:['audiobook'],
+             require:'^\\S.+?\\s-\\s.+?\\s\\(Read by [^()]+\\)(?:\\.m4b)?$',
+             message:'The Audiobook Naming and Folder Standard: the root folder, or a single M4B, is Author Name - Title (Read by Narrator) — Andy Weir - Project Hail Mary (Read by Ray Porter).'},
+            {code:'ab-url',severity:'error',profiles:['audiobook'],
+             forbid:'(?:^|[ ._-])www\\.|https?://|\\.(?:com|net|org|info|cc|to)(?=$|[ /._-])',
+             message:'The Audiobook Naming and Folder Standard: no website URLs anywhere in file or folder names.'},
+            {code:'ab-group',severity:'review',profiles:['audiobook'],
+             forbid:'\\)-[A-Za-z][A-Za-z0-9]+(?:\\.[a-z0-9]{2,4})?\\s*$|\\S-[A-Z][A-Z0-9]{2,}(?:\\.[a-z0-9]{2,4})?\\s*$',
+             message:'The Audiobook Naming and Folder Standard: no scene or release-group tags in file or folder names — use the upload form’s NFO field for an NFO.'},
             {code:'comic-pad',severity:'error',profiles:['ebook'],
              forbid:'^.+?\\s\\d{1,2}\\s\\((?:18|19|20)\\d{2}\\)',
              message:'The Comic, Manga and Magazine Naming Standard: a comic issue or manga chapter number is zero-padded to three digits — Saga 001 (2012).cbz — and a manga volume is v01.'}
@@ -2479,8 +2576,10 @@ TORRENTGALAXY TSP TSPxL ViSION VXT WAF WKS x0r YAWNiX YIFY YTS PSA`.split(/\s+/)
              message:'§10 Description Requirements: in English; at least three screenshots (optional for a Blu-ray ISO); no advertisements, logos, recruitment or greetz; the MediaInfo of the first episode for a multi-file torrent; for a full Blu-ray the BDInfo Quick Summary, for a full DVD the .IFO MediaInfo plus the largest .VOB’s in a spoiler, for a full HD DVD the first main EVO’s.'},
             {code:'trumping',profiles:['movie','tv','disc'],
              message:'§9: Blu-ray remuxes, WEB-DLs and HDTV releases are one torrent per cut per resolution unless a coexistence rule applies (different masters, a different provider’s best offering, encodes with a meaningful benefit). A complete season pack trumps individual episodes; a WEB-DL trumps a WEBRip of the same source; REPACK, PROPER, RERip and RE-ISSUE trump the original; individual seasons trump a COMPLETE series pack. Its Trumping & Quality Tiers page: sources are categories, not one ladder — the detail decides, and the same tier again is not a trump.'},
-            {code:'books',profiles:['ebook','audiobook'],
-             message:'The E-book and the Comic, Manga and Magazine naming standards, beyond the name: loose files side by side where a book comes in several formats; comics CBZ (preferred) or CBR; magazines PDF; no .nfo, stray .txt or .url in the payload — the upload form has an NFO field; a cover image that belongs to the book is fine; one naming style across a pack. The Audiobook Naming and Folder Standard was not supplied, so nothing is claimed for audiobooks beyond this.'}
+            {code:'books',profiles:['ebook'],
+             message:'The E-book and the Comic, Manga and Magazine naming standards, beyond the name: loose files side by side where a book comes in several formats; comics CBZ (preferred) or CBR; magazines PDF; no .nfo, stray .txt or .url in the payload — the upload form has an NFO field; a cover image that belongs to the book is fine; one naming style across a pack.'},
+            {code:'audiobook',profiles:['audiobook'],
+             message:'The Audiobook Naming and Folder Standard, beyond what the name and the file list show: the audio files’ tags carry the track number and chapter title that match the file names (players read the tags); a companion e-book (EPUB, MOBI, AZW3, PDF) and cover art (JPG, PNG) are welcome inside the folder; .nfo, .txt and .url are stripped.'}
         ]
     };
 
@@ -2608,6 +2707,108 @@ Sicario Silence SM737 STUTTERSHIT Tigole TSP TSPxL UTR ViSION WAF Will1869 x0r Y
         ]
     };
 
+    // --- InfinityHD -----------------------------------------------------------------------
+    // Two pieces, supplied as text on 23 Sep 2026 and kept verbatim in
+    // notes/infinityhd-rules-2026-09-23.md: the Banned Release Groups page and the Naming
+    // Guide. The guide's two templates are the element order the shared checks already know —
+    // audio before VCodec on encodes, VCodec before audio on discs and remuxes, as
+    // OnlyEncodes+, LUME and HomieHelpDesk write them — so base is "dp". No other page of the
+    // site has been seen: the search page, the upload rules, the trumping and description
+    // rules are not in hand, and nothing is claimed about them.
+    //
+    // The banned page gives two reasons for the list as a whole (low quality or dishonest;
+    // naming that breaks automation) and none per name, so no name carries one. BRrip is a
+    // source marker and goes in groups.sources; "NhaNc3" and "nhanc3" are one name, kept
+    // once. Every other name is carried as printed, "in", "Scene" and "1000" included — the
+    // matcher only ever compares a tag that closes a title.
+    //
+    // The guide lists resolutions as "One of: 1080i, 1080p, 2160p, 4320p", so a 720p title
+    // is told it is not on the list; whether the site takes 720p in practice is not known
+    // here. Its HDR list is HDR, HDR10+, DV, DV HDR10+, HLG, PQ10 — no "DV HDR" — and that is
+    // checked as written. The Tag is omitted where there is no group, so nothing asks for one.
+    const IHD_BANNED=`1000 24xHD 41RGB 4K4U AG AOC AROMA aXXo AZAZE BARC0DE BAUCKLEY BdC beAst BONE BRiNK BTM C1NEM4
+C4K CDDHD CHAOS CHD CHX CiNE COLLECTiVE CREATiVE24 CrEwSaDe CTFOH d3g DDR DepraveD DNL DRX EDITH
+EPiC EuReKA EVO FaNGDiNG0 Feranki1980 FGT FiSTER FMD FRDS FZHD GalaxyRG GalaxyTV GHD GHOSTS
+GPTHD GRACE HDHUB4U HDS HDT HDTime HDWinG HiQVE iHYTECH in iNTENSO iPlanet ION10 iVy
+jennaortegaUHD JFF KC KiNGDOM KIRA L0SERNIGHT LAMA Leffe Liber8 LiGaS LT LUCY MarkII MeGusta
+Mesc mHD MTeam mSD MT MySiLU NaNi NhaNc3 nHD nikt0 nSD OFT Paheph PATOMiEL POKE PRODJi PSA PTNK
+RARBG RDN Rifftrax RU4HD SANTi SasukeducK Scene SHD ShieldBearer SM737 STUTTERSHIT SUNSCREEN TBS
+TEKNO3D TG TGx Tigole TIKO TORRENTGALAXY UNiON VIDEOHOLE VISIONPLUSHDR-X VXT WAF WiKi WKS
+worldmkv x0r XLF YIFY YTSMX Zero00 Zeus`
+        .split(/\s+/).map(name=>[name]);
+
+    const INFINITYHD={
+        format:FORMAT,version:1,key:'ihd',label:'InfinityHD',base:'dp',hosts:['infinityhd.net'],
+        source:'infinityhd.net — Banned Release Groups and Naming Guide, as supplied 23 Sep 2026.',
+        groups:{banned:IHD_BANNED,conditional:[],sources:[{name:'BRrip',pattern:'(?:^|[ ._])BR-?rip(?=$|[ ._-])'}]},
+        resolutions:['1080i','1080p','2160p','4320p'],
+        rules:[
+            {code:'no-group',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'-\\s?(?:NOGRP|NOGROUP)\\s*$',
+             message:'The Tag is omitted where there is no group — not written as NOGRP or NOGROUP.'},
+            {code:'acodec-ddp',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])(?:DDP\\d?(?:\\.\\d)?|E-?AC-?3)(?=$|[ .-])',
+             message:'The ACodec element is DD+; DDP and E-AC-3 are not among the names the guide gives (DD, DD EX, DD+, TrueHD, DTS, DTS-HD, FLAC, AAC).'},
+            {code:'acodec-ac3',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])AC-?3(?=$|[ .-])',
+             message:'The ACodec element writes Dolby Digital as DD (or DD EX), not AC3.'},
+            {code:'acodec-dolby',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])Dolby[ .](?:Digital|TrueHD)',
+             message:'The ACodec element uses the short names the guide gives: DD, DD EX, DD+, TrueHD, DTS, DTS-HD, FLAC, AAC.'},
+            {code:'object-atmos',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])Dolby[ .]Atmos(?=$|[ .-])',
+             message:'The Object element is Atmos on its own (the only other value is Auro3D).'},
+            {code:'hdr-vocab',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])(?:HDR10(?!\\+)|DoVi|Dolby[ .]Vision|DV[ .]HDR(?![ .]?10\\+))(?=$|[ .-])',
+             message:'The HDR element is one of HDR, HDR10+, DV, DV HDR10+, HLG or PQ10 — HDR10 on its own is written HDR, Dolby Vision is DV, and "DV HDR" is not on the list (DV HDR10+ is).'},
+            {code:'vcodec-dot',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])H26[45](?=$|[ .-])',
+             message:'The VCodec element writes it H.264 or H.265, with the dot.'},
+            {code:'vcodec-web',severity:'error',profiles:['movie','tv'],
+             forbid:'WEB-DL[\\s\\S]*(?:^|[ .])x26[45](?=$|[ .-])',
+             message:'For a WEB-DL the VCodec is H.264, H.265, VP9 or AV1; x264 and x265 name an encoder and belong to encodes and WEBRips.'},
+            {code:'vcodec-webrip',severity:'error',profiles:['movie','tv'],
+             forbid:'WEBRip[\\s\\S]*(?:^|[ .])H\\.?26[45](?=$|[ .-])',
+             message:'For a WEBRip the VCodec is x264, x265 or AV1 — it has been re-encoded, so the encoder is what is named.'},
+            {code:'vcodec-remux',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'REMUX[\\s\\S]*(?:^|[ .])(?:x26[45]|H\\.?26[45])(?=$|[ .-])',
+             message:'For a remux the VCodec is MPEG-2, VC-1, AVC, HEVC, ProRes, CineForm or JPEG 2000: the stream is untouched, so the format is what is named.'},
+            {code:'type-webdl',severity:'error',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])WEBDL(?=$|[ .-])',
+             message:'The Type is written WEB-DL, with the dash.'},
+            {code:'type-webrip',severity:'error',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])WEB-Rip(?=$|[ .-])',
+             message:'The Type is written WEBRip, as one word.'},
+            {code:'web-service',severity:'review',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])\\d{3,4}[pi][ .]WEB-?(?:DL|Rip)(?=$|[ .-])',
+             message:'For a WEB-DL or WEBRip the Source is the streaming service abbreviation, and none sits between the resolution and the type here.'},
+            {code:'remux-source',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:Blu-ray[\\s\\S]*REMUX|REMUX[\\s\\S]*Blu-ray)',
+             message:'For a remux the Source is BluRay, one word. Blu-ray with the hyphen is the full-disc spelling.'},
+            {code:'encode-source',severity:'error',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])(?:UHD[ .])?Blu-ray(?=$|[ .-])',
+             message:'For encodes and remuxes the Source is BluRay, one word; Blu-ray with the hyphen is the full-disc spelling. If this is a full disc, check the category first.'},
+            {code:'edition-name',severity:'review',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])(?:\\d+(?:th|st|nd|rd)[ .]Anniversary[ .]Edition|Anniversary[ .]Edition|4K[ .]Remaster|Remastered|Criterion(?:[ .]Collection)?|Limited)(?=$|[ .-])',
+             message:'The Edition is omitted for anything that is not a full disc unless it is needed to tell the release apart. Confirm it is needed here.'},
+            {code:'dub-dual-audio',severity:'error',profiles:['movie','tv'],
+             forbid:'(?:^|[ .])Dual[ .]Audio(?=$|[ .-])',
+             message:'Dual-Audio is written hyphenated (Dubbed for an English dub only, Multi for two or more language tracks).'},
+            {code:'repack-number',severity:'error',profiles:['movie','tv','disc'],
+             forbid:'(?:^|[ .])(?:REPACK|PROPER|RERip)[ .](?:2|3|II)(?=$|[ .-])',
+             message:'A second repack, proper or rerip is written REPACK2, PROPER2 or RERip2 — the number joined to the word.'},
+            {code:'multi-season',severity:'error',profiles:['tv'],
+             forbid:'(?:^|[ .])S\\d{2}[ .]?-[ .]?S?\\d{2}(?![ .]*COMPLETE)',
+             message:'A complete season pack is written S01-S03 COMPLETE — the range, then the word COMPLETE.'}
+        ],
+        notes:[
+            {code:'naming-details',profiles:['movie','tv','disc'],
+             message:'What the naming guide states that a title alone cannot settle: the Name is IMDb’s, with its punctuation; AKA Original where the original name differs; LOCALE only to tell apart same-named titles; a TV year only where series share a name; specials S00E## (on TVDB) or S##E00 (not) with the special’s name; extras packs S## Extras or S00 Description; OVAs S## OVA; daily shows YYYY-MM-DD; Cut only where more than one official cut exists; Ratio one of IMAX, Open Matte, MAR; Hybrid where the main streams come from more than one source; Region on full discs only; Hi10P for 10-bit SDR AVC.'},
+            {code:'not-supplied',profiles:['movie','tv','disc'],
+             message:'Only InfinityHD’s banned list and Naming Guide are in hand (23 Sep 2026). Its upload rules, description requirements and trumping rules were not supplied, so nothing is claimed about them; the banned page says to open a Helpdesk ticket when unsure about a release.'}
+        ]
+    };
+
     const ALL=[
         {profile:LUME,summary:'The LUME naming guide: both title templates and the vocabulary for every element.',
          source:'luminarr.me — Naming Guide, as supplied 10 Sep 2026.'},
@@ -2616,7 +2817,9 @@ Sicario Silence SM737 STUTTERSHIT Tigole TSP TSPxL UTR ViSION WAF Will1869 x0r Y
         {profile:HOMIEHELPDESK,summary:'HomieHelpDesk upload rules, banned groups and naming standard: what a title can be checked for, and the rest as standing reminders.',
          source:'homiehelpdesk.net/pages/7 — Upload rules, with its banned list and naming standard, as supplied 20 Sep 2026.'},
         {profile:MIDNIGHTSCENE,summary:'MidnightScene’s Upload Naming Guide, video and music, and its banned list; its upload rules were not supplied.',
-         source:'midnightscene.cc — Upload Naming Guide and Banned Release Groups, as supplied 21 Sep 2026.'}
+         source:'midnightscene.cc — Upload Naming Guide and Banned Release Groups, as supplied 21 Sep 2026.'},
+        {profile:INFINITYHD,summary:'InfinityHD’s Naming Guide and its banned list; its upload rules were not supplied.',
+         source:'infinityhd.net — Banned Release Groups and Naming Guide, as supplied 23 Sep 2026.'}
     ];
     // A fresh copy each time: what the caller does with it must never reach this list.
     const list=()=>ALL.map(entry=>({...entry,profile:JSON.parse(JSON.stringify(entry.profile))}));

@@ -9,6 +9,128 @@ was named until 1.25.0.
 
 ---
 
+## 1.41.2 — images for the repository
+
+- `images/`: `logo.svg` with PNGs at 512/256/128/64/32 (rounded tile, lens, green tick),
+  `banner.svg` + `banner.png` (1600×420, at the top of README.md), `social-preview.png`
+  (1280×640, for GitHub's Settings → Social preview; set by hand). All drawn as SVG in the
+  site's palette and rendered with the checks' own Chromium; no third-party artwork.
+  site/: `images/logo.svg` and a `<link rel="icon">` on both pages. Script unchanged; the
+  Scene edition stays at 1.47.1.
+
+## 1.41.1 — the group after a music title's bracketed format is a tag
+
+- groups.js `trailingTag()`: `] - Word` at the end of a title returns `Word` before the
+  hyphen loop runs (one word of up to 30 tag characters; "] - Deluxe Edition" is not a
+  tag). group-tag.js `mark()`: the tag may follow "-" or "- " — it wraps only the tag and
+  keeps the hyphen and any space in the text node; the already-marked test and the
+  written-back test accept both spellings. 1.40.1's entry said the two Zenith rows were
+  right with no mark; they were not ("its 1.47.0 and still showing no orange for the
+  craftwork part", 23 Sep 2026). groups-check rewritten for the new answer (+1 subtitle
+  case); listing fixture +2 (the mark on that row, the name unchanged).
+
+## 1.41.0 — InfinityHD; the HDTV codec list made reachable
+
+- **InfinityHD** (infinityhd.net; banned list and Naming Guide supplied as text 23 Sep
+  2026, verbatim in `notes/infinityhd-rules-2026-09-23.md`). trackers.js
+  `unit('ihd','InfinityHD','infinityhd.net')` — the host is the one given; the name-search
+  path is UNIT3D's like every unit() entry, with no page seen to confirm it (recorded in
+  TRACKER-ADDRESSES.txt). tracker-guides.js `INFINITYHD`: base `dp`, 126 banned names
+  (128 printed, less BRrip → groups.sources and the NhaNc3/nhanc3 duplicate), no reasons
+  (the page gives none per name), resolutions `1080i 1080p 2160p 4320p`, 19 rules
+  (no-group, acodec-ddp, acodec-ac3, acodec-dolby, object-atmos, hdr-vocab incl. bare
+  "DV HDR", vcodec-dot, vcodec-web, vcodec-webrip, vcodec-remux, type-webdl, type-webrip,
+  web-service, remux-source, encode-source, edition-name (review), dub-dual-audio,
+  repack-number, multi-season) and two notes (naming-details, not-supplied).
+  guides-check: +2 tests (7 template-shaped titles pass its rules and the shared ones; a
+  case per rule; the banned list through groups.find with "in" matched only as a closing
+  tag); links-check +1 (catalogue entry and @match line); the key lists in guides-,
+  profiles- and rules-check gain `ihd`. Counts: 45 UNIT3D hosts, 63 searchable, 48 @match.
+- **naming.js**: the HDTV/UHDTV/SDTV video-codec allow list tested those words against
+  `releaseKind`, which for a capture is the string "TV capture", so the branch was
+  unreachable and captures were held to the encode list. It now also matches
+  `releaseKind==='TV capture'`. naming-check +1 test.
+- Docs: README, GUIDE, TRACKER-RULES (row; "seven"), TRACKER-ADDRESSES, dk/README, site
+  index page (counts and the shipped list), CLAUDE.md.
+
+## 1.40.1 — the byte count beside the rounded size
+
+- source.js `sizeText()`: `20.40 GiB, 21,904,512,000 bytes` — the exact count grouped in
+  threes after the rounded form, in the summary line's three shapes (✓, ✗, none shown).
+  Asked 23 Sep 2026 ("I want the byte size to be able to compare as well"). source-check's
+  four size assertions and the elsewhere fixture's size check now expect both.
+- groups.js `trailingTag()`: a tail containing a spaced " - " is not a tag, and the
+  per-word technical test strips a closing `]` or `)` before matching. Two rows on Zenith's
+  moderation queue (23 Sep 2026) had `44kHz] - craftwork` marked as the group: the hyphen
+  in `16bit-44kHz` opened a tag, `44kHz]` did not read as technical with the bracket on, and
+  the tail ran to the end. groups-check +4 (three no-tag titles, one tags() result).
+
+## 1.40.0 — HomieHelpDesk's audiobook standard; the size on the banner line; a group tag after Zenith's music format
+
+- **HomieHelpDesk audiobooks** (its Audiobook Naming and Folder Standard, supplied 22 Sep
+  2026, now at the end of `notes/homiehelpdesk-rules-2026-09-20.md`). Profiles gain an
+  `audiobooks` field (`base` | `folder-standard`; profiles.js validates it, rules.js
+  `audiobooksOf(key)` reads it) and the HHD profile sets it. tracker-guides.js: rules
+  `ab-form` (review: `Author - Title (Read by Narrator)`, optionally `.m4b`), `ab-url`
+  (error) and `ab-group` (review) on the audiobook profile; the `books:'own'` note now
+  covers ebooks only, and a new `audiobook` note carries the tags / companion-files / junk
+  reminders. naming.js `audiobookPayload(files, add)` runs when the profile is `audiobook`,
+  the tracker's `audiobooksOf` is `folder-standard` and a file list was handed in:
+  `ab-root-folder` (more than one audio file not under one root folder), `ab-track-numbers`
+  (audio names not starting with two digits, or three once there are 100 or more),
+  `ab-junk` (`.nfo`, `.txt`, `.url`). detail.js `draw()`: a name that release-title.js
+  scores 0 is accepted when the page's category is audiobook or ebook and the fallback is
+  the page's own `.torrent__name` (HomieHelpDesk torrent 78628, seen 22 Sep 2026) — before
+  this no book or audiobook name ever got a badge on a torrent page. Checks: guides-check
+  (+1 test, 4 firing cases), naming-check (+1 test), detail fixture (+4).
+- **source.js `summary()`** prints the compared size beside the mark: `size ✓ (20.40 GiB)`,
+  `size ✗ (20.40 GiB)`, `size – (none shown; 20.40 GiB here)`; GiB from a gibibyte up,
+  MiB below; `entry.bytes` first, `entry.totalBytes` when there is no one file; nothing in
+  brackets when neither is known. source-check (+6 assertions), elsewhere fixture (+1).
+- **rules.js Zenith music** (`zenith-mu-form`): the suggested-shape pattern allows one
+  `- Tag` after the bracketed format. Seen on a Zenith listing 22 Sep 2026: `Aphex Twin -
+  ...I Care Because You Do (2009) - [CD FLAC 16bit-44kHz] - craftwork` was amber only for
+  ending in a group tag; Zenith's rule 1.4 keeps the original group tag and only artist and
+  album are required. Two words after the bracket still get the note. The leading dots are
+  the album's own title; listing-core.js's shortened-title test is end-anchored and never
+  fired on it (moderation-check now says so, +2). rules-check +4.
+- tools/run-fixtures.mjs: the detail fixture's wait is 95 s (was 75; the audiobook block
+  pushed the run over).
+- Counts: Node 928 per edition (was 924); fixtures — see VALIDATION-1.40.0.txt.
+
+## 1.39.5 — the README cut down; the source-check modules made readable
+
+- **README.md**: 90 KB → 15 KB. Everything above "Fixed in 1.39.0" is kept (intro,
+  screenshots, install, what to read, the 1.39.x notes); the 75 older version sections are
+  gone, with a pointer to CHANGELOG.md; the tail ("What it does", "What it will not do",
+  "Scope and limits", "Run only one copy", "Source and checks") is rewritten for the script
+  as it stands — the old "What it does" still described 1.8, listed 20 check commands by
+  hand and named the transcript files removed in 1.39.4. The coverage sentences the
+  links-check reads are unchanged.
+- **source.js**, **source-core.js**, **source-ui.js**, **elsewhere.js**,
+  **elsewhere-core.js**: reformatted one statement per line with spaces, comments rewritten
+  as explanations (what, why, and which saved page a selector came from); `verdict()` and
+  `lookups()` split out of `banner()` and `panel()` for legibility. No behaviour change:
+  Node 924, every fixture at its 1.39.4 count, 82 shared modules. Two comments that said
+  "the user" were reworded — the built-script check refuses that phrase — and no comment in
+  the published file names a person.
+
+## 1.39.4 — cleanup
+
+- Every `*-check.cjs` (both editions) and `dk/source/check.cjs` stop writing their
+  `*-CHECKS.txt` transcript; the 67 committed transcripts are deleted (29 in the package
+  root, 38 in dk/, among them `MOBILE-1.3-CHECKS.txt` and the `*-BROWSER-CHECKS.txt` files
+  that nothing had written for some time). run-checks.mjs's comment updated.
+- **source-ui.js**: `pageText()` and `OWN` (the selector for everything this script draws,
+  now including `[id^="dp-inspector"]`) live here; **detail.js** and **elsewhere.js** call
+  it instead of carrying their own copies, which had drifted by that one selector.
+- **elsewhere-core.js**: the unread `lowercases` field removed. **elsewhere.js**: a no-op
+  `.map()` on the trackers row removed; `run` and `pageText` no longer exported.
+- `PENDING-NEXT-VERSION.txt` → `TRACKER-ADDRESSES.txt` (both editions, identical), with a
+  new heading saying what it is and the FileList entry of 22 Sep 2026 added. CLAUDE.md
+  rule 4 points at the new name; its "Open items" is condensed to what is open.
+- Checks unchanged in count: Node 924, all fixtures as at 1.39.3, 82 shared modules.
+
 ## 1.39.3 — the FileList panel sits inside the content box
 
 - **elsewhere.js** `anchor()`: on FileList the panel is prepended to `.cblock-innercontent`
