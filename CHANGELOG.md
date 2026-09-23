@@ -9,6 +9,19 @@ was named until 1.25.0.
 
 ---
 
+## 1.42.1 — the banner can wait for the Source check button
+
+- source.js: `options.quiet` in the `dkokto_source_v1` record (read() takes only `true`,
+  write() always carries it, every write goes through read() so it survives remember()
+  and check()); `quiet()` / `setQuiet(on)` exported. source-ui.js: `banner()` records the
+  rows and returns without drawing when quiet is on and the call is not from the button;
+  `quietBox()` — a labelled checkbox "Only show this when I press Source check" — sits in
+  the footer of the banner and of the "looked for" box. inspector.css (shared) and
+  scene.css: `.dk-source-quiet`. Asked 23 Sep 2026 ("I want that setting please").
+  source-check +1 test (Node 938); detail fixture +6 (255): off by default, ticking is stored, a new
+  answer stays quiet, the button shows it, unticking restores. Red with the quiet return
+  removed (229, at "a new answer does not put the banner up by itself").
+
 ## 1.42.0 — a Source check button in the tools bar
 
 - source-ui.js: `toolsButton()` adds `.dk-source-launch` ("Source check") after

@@ -1,4 +1,4 @@
-# Torrent Inspector 1.42.0
+# Torrent Inspector 1.42.1
 
 ![Torrent Inspector — release naming checks, the MediaInfo Inspector and a cross-tracker lookup. It reads the page; it does not act.](images/banner.png)
 
@@ -97,6 +97,23 @@ JSON somewhere before you update.
   it does.
 - **CHANGELOG.md** — every version, newest first, in more detail than here. The version
   notes below stop at 1.39.0; everything earlier is there.
+
+## New in 1.42.1
+
+**The banner can wait to be asked.** By default the source-check banner appears on its own
+the moment you open a page that matches an upload remembered from another tracker. If you
+would rather it stayed out of the way until you ask, there is now a box for that, in the
+banner itself:
+
+1. On any torrent page, press **Source check** in the tools bar (or wait for a banner to
+   appear on its own).
+2. At the bottom of the banner, tick **Only show this when I press Source check**.
+
+From then on nothing appears by itself; the page is still read and remembered, and
+pressing **Source check** shows what it found. To go back, press **Source check**, untick
+the box, and the banner appears on its own again. The setting is kept with the source
+check's own record, so it holds across every tracker the script runs on and travels with
+**Backup…**. Off by default.
 
 ## New in 1.42.0
 

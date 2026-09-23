@@ -90,7 +90,11 @@ to the byte where the page prints bytes, and a cross says which size it was look
 
 A **Source check** button sits in the tools bar beside *Nav* and *Inspect torrent*: it
 brings the banner back after you close it, and where none appeared it says what the page
-was looked over for. When no banner appears, the dialog's Source check section says why: how many uploads from
+was looked over for. If you would rather the banner never appeared on its own, tick **Only
+show this when I press Source check** at the bottom of the banner (press the button to see
+it); the page is still read and remembered, and the button shows the answer when you want
+it. Untick the box to have the banner appear by itself again. The setting holds across
+every tracker and goes with **Backup…**. When no banner appears, the dialog's Source check section says why: how many uploads from
 other trackers it looked for on this page and whether any was about it. A page that is a
 different encode of the same title — H.264 where you remembered the H.265 — is not about
 them, and stays quiet on purpose.
