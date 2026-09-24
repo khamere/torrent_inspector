@@ -9,6 +9,28 @@ was named until 1.25.0.
 
 ---
 
+## 1.43.10 — cleaner review and reference lookups
+
+- Add CinemaZ, AvistaZ, PrivateHD and AnimeZ torrent-page adapters. Inspect torrent
+  opens MediaInfo directly and reads the posted report even when its panel is collapsed.
+  Include video/audio/subtitle details, title/report warnings, source evidence and notes.
+  Selectors are confirmed against supplied CinemaZ detail and listing HTML; the other
+  three use the same shared markup and have been tested with matching offline fixtures.
+  Missing reports remain unknown. No naming rules are invented for these sites.
+- Keep one local decision dropdown per moderation row, including when its badge moves
+  inside the title or a row changes. Tracker approval buttons are untouched.
+- Replace TorrentLeech/FileList inline source evidence and automatic popup with compact
+  page actions opening the same five-tab Review panel, including private notes.
+- Put srrDB next to Compare releases on the torrent page.
+- Exact title searches use title + season/episode or year + release group, omitting
+  resolution, source, codec and audio tags. Queries remain editable.
+- Show Goodreads and Google Books for books/audiobooks, preferring a checksum-valid
+  ISBN-10/13 in the title, then the loaded UNIT3D description, otherwise title/author.
+  Discogs is available for music and IGDB for games. These are click-to-open links.
+- Add AnimeZ to the tracker picker and verify the existing CinemaZ, AvistaZ and PrivateHD
+  templates against the user-supplied format. There are now 64 searchable trackers.
+- Shared with personal Scene Edition 1.49.10. No background requests or site submissions.
+
 ## 1.43.9 — a shorter README
 
 - Keep installation, the current Review workflow, source comparisons and one panel

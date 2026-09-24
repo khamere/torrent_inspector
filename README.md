@@ -1,4 +1,4 @@
-# Torrent Inspector 1.43.9
+# Torrent Inspector 1.43.10
 
 ![Torrent Inspector](images/banner.png)
 
@@ -30,7 +30,7 @@ For older installations and upgrades across the script rename, see the [guide](G
 3. Tick **Reviewed by me** and use **Next unchecked** to continue through the loaded
    queue. This records your progress; it does not approve the torrent or hide errors.
 
-**Find other releases** opens an editable search with Title / Exact release modes,
+**Find other releases** opens an editable search with Title / Exact title modes,
 quality choices, and your selected trackers. **Compare releases** compares two captures.
 **Settings & tools** contains setup, rules, audits, and backups; advanced inspection
 and naming templates remain under **Findings → More tools & naming template**.
@@ -52,8 +52,9 @@ by the same installed Tampermonkey script; the browser-storage fallback is per s
 
 ## Supported trackers and limits
 
-It runs on **45 UNIT3D trackers** and can search **63**, with additional lookup and
-source-check support on TorrentLeech and FileList. Built-in naming rules cover
+It runs on **45 UNIT3D trackers** and can search **64**, with additional lookup and
+source-check support on TorrentLeech and FileList. CinemaZ, AvistaZ, PrivateHD and AnimeZ
+also offer Review and MediaInfo checks on their torrent pages. Built-in naming rules cover
 DarkPeers, Zenith, LUME, OnlyEncodes+, HomieHelpDesk, MidnightScene, and InfinityHD.
 Use [tracker rules profiles](TRACKER-RULES.md) to add rules for another tracker.
 
@@ -64,13 +65,8 @@ navigation, templates, and the advanced Inspector are covered in the [guide](GUI
 
 ## Latest release
 
-**1.43.9:** documentation cleanup. The README now focuses on getting started;
-older release notes live in the [changelog](CHANGELOG.md). Script behavior is
-unchanged from 1.43.8, including shared FileList evidence and automatic source refresh.
-
-For walkthroughs use [GUIDE.md](GUIDE.md); for older fixes and features use
-[CHANGELOG.md](CHANGELOG.md). The [website](https://torrent.dkokto.dev/) has the full
-screenshot gallery and interactive demos.
-
-With thanks to T.R.A.V.I.S and Chungus Edition, where this work began. The standalone
-uses this project’s own modules; the separate Scene Edition retains its upstream credits.
+**1.43.10:** fixes duplicate moderation dropdowns and moves TorrentLeech/FileList
+source evidence into Review. Adds a page-level **srrDB** button, compact **Exact title**
+searches, ISBN-aware Goodreads/Google Books, Discogs, IGDB, and AnimeZ searches.
+CinemaZ, AvistaZ and PrivateHD retain your supplied search format.
+MediaInfo support for that four-site network uses CinemaZ’s saved page structure.

@@ -1,6 +1,14 @@
 <!-- Source check workflow updated in 1.43.8. -->
 # Torrent Inspector — using it
 
+**Current lookups:** srrDB sits beside Compare releases. Books expose Goodreads and
+Google Books, using a valid ISBN from the title or loaded UNIT3D description when present.
+Music exposes Discogs and games expose IGDB. Searches open only when clicked.
+Choose your trackers includes CinemaZ, AvistaZ, PrivateHD and AnimeZ.
+On TorrentLeech/FileList, Inspect torrent, Find other releases and Source check open
+the same Review panel; the old inline source listing and automatic popup are removed.
+
+
 For a quick start, see the [README](README.md). This guide holds the detailed
 walkthrough; older version notes are in the [changelog](CHANGELOG.md).
 
@@ -149,8 +157,8 @@ Most of what a moderator wants to know about an upload comes down to one questio
 the same file the source tracker has? The torrent page now remembers what makes the upload
 what it is — the report's Unique ID, the file name, the folder, the file names and the
 sizes — for three days. Open the same release on any other tracker the script runs on, by
-Find releases or on your own, and a banner at the top of that page says whether it is the
-same thing, item by item, with a link back. On the first page the badge's dialog then
+Find releases or on your own, then open Source check for the item-by-item evidence
+and a link back. On the first page the badge's dialog then
 carries the answer under **Source check**, and a Unique ID that turned out different is a
 red finding. Nothing is fetched or opened for you; the script reads the page you went to.
 
@@ -160,7 +168,7 @@ IDs compared. Collapse rows when finished. **Last saved check on another page** 
 from a tracker you visited. The Unique ID itself is on the page's
 own MediaInfo, under General, and the hex in brackets is the form the script matches.
 The other page is read whole, including a MediaInfo tab you have not opened; if it truly
-has no Unique ID in it, the banner says *Unique ID – (none on this page)* and only the
+has no Unique ID in it, Source check says *Unique ID – (none on this page)* and only the
 file name and size are compared. Expand a tracker row to see its file name, as the
 file is named, so spaces and dots show. The summary line prints the size it compared —
 *size ✓ (20.40 GiB, 21,904,512,000 bytes)* — so a tick can be checked against the page,
@@ -170,7 +178,8 @@ A **Source check** button sits in the tools bar beside *Nav* and *Inspect torren
 opens the unified panel's Source check tab with every current comparison. On pages without
 Review, it opens a matching source dialog. To hide automatic notices, tick **Only show this
 when I press Source check** in the panel or notice; the page is still read and remembered.
-Untick the box to have the notice appear by itself again. The setting holds across
+Untick the box to have the notice appear by itself again on UNIT3D pages. TorrentLeech
+and FileList always keep the evidence in Review, without an automatic popup. The setting holds across
 every tracker and goes with **Backup…**. The Source check tab also reports how many uploads from
 other trackers it looked for on this page and whether any was about it. A page that is a
 different encode of the same title — H.264 where you remembered the H.265 — is not about
@@ -183,13 +192,26 @@ of the file in the page's own list (the report is from another file).
 ### TorrentLeech and FileList
 
 These two are not UNIT3D, so there are no badges and nothing is judged there. What you get
-on their torrent pages is a panel under the name with the lookups and the Source check
-section, and the banner when you arrive from another tracker with the same release
-remembered. TorrentLeech has no MediaInfo on the page, so only the name, files and size can
+on their torrent pages is a compact set of actions under the name. Inspect torrent,
+Find other releases and Source check open the same Review panel. The old inline source
+listing and automatic popup are gone. TorrentLeech has no MediaInfo on the page, so only the name, files and size can
 be compared; it prints file names in lower case, and the check says so rather than failing
 them. On FileList the MediaInfo is on its own page — the panel links to it — and opening it
 fills in the Unique ID for that torrent. **Choose trackers…** in the panel opens the same
 "Trackers you are on" dialog as the Details button does elsewhere.
+
+### CinemaZ, AvistaZ, PrivateHD and AnimeZ
+
+On a torrent detail page, **Inspect torrent** opens Review’s **MediaInfo** tab directly.
+The report can stay collapsed on the tracker: its loaded text is enough. Video, audio
+and subtitle details are shown, with warnings when the release name conflicts with
+the report. **Source check** includes its Unique ID; **Find releases** uses the site’s
+own search format. Private notes work in the same panel. No naming rules are applied.
+
+CinemaZ’s saved detail/listing pages supplied the selectors. The other three network
+sites use the same adapter, tested against that shared structure rather than live
+signed-in pages. Missing or changed report markup shows **No readable MediaInfo**.
+Reload the tracker after updating the userscript so its new site matches take effect.
 
 ### Ticking off the manual checks
 
@@ -244,7 +266,7 @@ Under the release name:
   upload.cx's and on OnlyEncodes+'s (each laid out differently); a tracker whose Files
   dialog is another shape again shows no marker, and its markup is what is needed to add it.
 - **Find other releases** — opens **Find releases** in the unified panel. Start with the
-  title, year or episode already filled in, or choose **Exact release** for the full name.
+  title, year or episode already filled in, or choose **Exact title** for title, season/episode or year, and group.
   Edit the search if needed. In Title mode, a quality button adds 2160p, 1080p, REMUX,
   BluRay or WEB-DL to the search. Each tracker runs its own text matching; these buttons
   do not guarantee results or apply a tracker-specific quality filter.
@@ -253,8 +275,8 @@ Under the release name:
   blocks tabs, use the individual links. **Choose your trackers** reuses your saved choices.
   **More lookup sites** holds srrDB and other category-appropriate reference sites and
   **Copy title**. Metadata lookups refer to the original torrent, even if you edit the
-  tracker-search query. On TorrentLeech and FileList, Find other releases opens these same
-  controls in a lookup dialog beside their existing source-check panel.
+  tracker-search query. TorrentLeech, FileList and the four AvistaZ-family sites use these
+  same controls in Review, alongside MediaInfo, source evidence and notes.
 - **Compare releases** — capture this release, capture another on a second page, and compare the two side by
   side: the names, the sizes to the byte, the file counts, the MediaInfo. If one page never
   rendered its file list, it says so rather than reporting nothing as zero.
