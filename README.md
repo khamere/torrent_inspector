@@ -1,4 +1,4 @@
-# Torrent Inspector 1.43.11
+# Torrent Inspector 1.43.12
 
 ![Torrent Inspector](images/banner.png)
 
@@ -65,6 +65,6 @@ navigation, templates, and the advanced Inspector are covered in the [guide](GUI
 
 ## Latest release
 
-**1.43.11:** fixes Exact title searches for games and books. Game release groups
-appear once. Books use a valid ISBN from the title or loaded description when
-available, falling back to the compact title and year. Search text remains editable.
+**1.43.12:** restores compact title/year queries for book Exact title searches.
+Goodreads and Google Books still use ISBN when available. MidnightScene now accepts
+AV1 without the old codec warning. The fix for repeated game release tags remains.

@@ -100,7 +100,7 @@
 <header class="top">
   <div class="wrap">
     <nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/torrents/">Review demo</a><a href="/torrents/101/">Torrent demo</a><a href="/requests/">Request demo</a><a href="/rules.html">Rules builder</a><a href="/GUIDE.md">Guide</a><a href="/CHANGELOG.md">Release notes</a></nav>
-    <p class="eyebrow">Torrent Inspector 1.43.11</p>
+    <p class="eyebrow">Torrent Inspector 1.43.12</p>
     <h1>Tracker rules</h1>
     <p class="lede">
       Build a rules profile for a tracker, check one you already have, and run a release name
@@ -225,7 +225,7 @@
 <footer>
   <div class="wrap">
     <p><a href="index.html">← Torrent Inspector</a> · profile format documented in
-      <code>TRACKER-RULES.md</code> · built from the modules of 1.43.11</p>
+      <code>TRACKER-RULES.md</code> · built from the modules of 1.43.12</p>
   </div>
 </footer>
 
@@ -2627,10 +2627,8 @@ TORRENTGALAXY TSP TSPxL ViSION VXT WAF WKS x0r YAWNiX YIFY YTS PSA`.split(/\s+/)
     // not DarkPeers' " - Format" — so music is "own" (profiles.js) and the rules below carry
     // the guide's music page; every one of its twelve examples passes them.
     //
-    // The VideoCodec list is MPEG-2, VC-1, AVC, HEVC, x264, H.264, x265, H.265 — no AV1 —
-    // while the site's listing that day carried AV1 encodes on nearly every row. That is a
-    // question (review), not a finding: the list and the site disagree, and which one staff
-    // mean is not for this script to decide.
+    // AV1 is allowed, as confirmed 24 Sep 2026 in notes/midnightscene-av1-2026-09-24.md.
+    // This resolves its omission from the original guide. VP9 remains unconfirmed.
     //
     // The banned list has an empty Reason column on every row, so no reason is carried.
     // BRrip is a source marker and goes in groups.sources; "msd" and "mSD" are one name and
@@ -2643,7 +2641,7 @@ Sicario Silence SM737 STUTTERSHIT Tigole TSP TSPxL UTR ViSION WAF Will1869 x0r Y
 
     const MIDNIGHTSCENE={
         format:FORMAT,version:1,key:'mns',label:'MidnightScene',base:'dp',music:'own',hosts:['midnightscene.cc'],
-        source:'midnightscene.cc — Upload Naming Guide and Banned Release Groups, as supplied 21 Sep 2026.',
+        source:'midnightscene.cc — Upload Naming Guide and Banned Release Groups, as supplied 21 Sep 2026; AV1 allowed, confirmed 24 Sep 2026.',
         groups:{banned:MNS_BANNED,conditional:[],sources:[{name:'BRrip',pattern:'(?:^|[ ._])BR-?rip(?=$|[ ._-])'}]},
         resolutions:['480i','480p','576i','576p','720p','1080i','1080p','2160p'],
         rules:[
@@ -2675,14 +2673,14 @@ Sicario Silence SM737 STUTTERSHIT Tigole TSP TSPxL UTR ViSION WAF Will1869 x0r Y
              forbid:'(?:^|[ .])H26[45](?=$|[ .-])',
              message:'The VideoCodec list writes it H.264 or H.265, with the dot.'},
             {code:'vcodec-list',severity:'review',profiles:['movie','tv','disc'],
-             forbid:'(?:^|[ .])(?:AV1|VP9)(?=$|[ .-])',
-             message:'The VideoCodec list is MPEG-2, VC-1, AVC, HEVC, x264, H.264, x265, H.265 — AV1 and VP9 are not on it. The site’s own listing carried AV1 encodes on 21 Sep 2026, so the list and the site disagree: ask rather than assume.'},
+             forbid:'(?:^|[ .])VP9(?=$|[ .-])',
+             message:'VP9 is not on the supplied VideoCodec list and has not been confirmed as allowed. Ask rather than assume. AV1 is allowed, confirmed 24 Sep 2026.'},
             {code:'vcodec-web',severity:'error',profiles:['movie','tv'],
              forbid:'WEB-DL[\\s\\S]*(?:^|[ .])x26[45](?=$|[ .-])',
-             message:'For a WEB-DL the VideoCodec is H.264 or H.265; x264 and x265 name an encoder and belong to encodes and WEBRips.'},
+             message:'For a WEB-DL the VideoCodec is H.264, H.265 or AV1; x264 and x265 name an encoder and belong to encodes and WEBRips.'},
             {code:'vcodec-webrip',severity:'error',profiles:['movie','tv'],
              forbid:'WEBRip[\\s\\S]*(?:^|[ .])H\\.?26[45](?=$|[ .-])',
-             message:'For a WEBRip the VideoCodec is x264 or x265 — it has been re-encoded, so the encoder is what is named.'},
+             message:'For a WEBRip the VideoCodec is x264, x265 or AV1 — it has been re-encoded.'},
             {code:'vcodec-remux',severity:'error',profiles:['movie','tv','disc'],
              forbid:'REMUX[\\s\\S]*(?:^|[ .])(?:x26[45]|H\\.?26[45])(?=$|[ .-])',
              message:'For a remux the VideoCodec is MPEG-2, VC-1, AVC or HEVC: the stream is untouched, so the format is what is named.'},

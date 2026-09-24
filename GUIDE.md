@@ -1,9 +1,12 @@
 <!-- Source check workflow updated in 1.43.8. -->
 
-**Exact title searches:** games keep their release group once. For books, Exact
-title uses a valid ISBN from the release title, then the loaded description if
-needed. Without an ISBN it keeps the compact title/year/group query. Title mode
-remains available for a broader search, and either query can be edited.
+**Exact title searches:** games keep their release group once. Books use the
+compact title/year/group query; automatic ISBN selection for tracker searches is
+disabled. Goodreads and Google Books still use a valid ISBN from the title or
+loaded description. Either tracker search query can be edited.
+
+MidnightScene accepts AV1, confirmed 24 September 2026. Its shipped rules no longer
+raise the unconfirmed-codec warning for AV1.
 
 # Torrent Inspector — using it
 

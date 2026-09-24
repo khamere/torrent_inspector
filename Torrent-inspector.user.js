@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.43.11
+// @version      1.43.12
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       DKOKTO
 // This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,
@@ -3466,10 +3466,8 @@ TORRENTGALAXY TSP TSPxL ViSION VXT WAF WKS x0r YAWNiX YIFY YTS PSA`.split(/\s+/)
     // not DarkPeers' " - Format" — so music is "own" (profiles.js) and the rules below carry
     // the guide's music page; every one of its twelve examples passes them.
     //
-    // The VideoCodec list is MPEG-2, VC-1, AVC, HEVC, x264, H.264, x265, H.265 — no AV1 —
-    // while the site's listing that day carried AV1 encodes on nearly every row. That is a
-    // question (review), not a finding: the list and the site disagree, and which one staff
-    // mean is not for this script to decide.
+    // AV1 is allowed, as confirmed 24 Sep 2026 in notes/midnightscene-av1-2026-09-24.md.
+    // This resolves its omission from the original guide. VP9 remains unconfirmed.
     //
     // The banned list has an empty Reason column on every row, so no reason is carried.
     // BRrip is a source marker and goes in groups.sources; "msd" and "mSD" are one name and
@@ -3482,7 +3480,7 @@ Sicario Silence SM737 STUTTERSHIT Tigole TSP TSPxL UTR ViSION WAF Will1869 x0r Y
 
     const MIDNIGHTSCENE={
         format:FORMAT,version:1,key:'mns',label:'MidnightScene',base:'dp',music:'own',hosts:['midnightscene.cc'],
-        source:'midnightscene.cc — Upload Naming Guide and Banned Release Groups, as supplied 21 Sep 2026.',
+        source:'midnightscene.cc — Upload Naming Guide and Banned Release Groups, as supplied 21 Sep 2026; AV1 allowed, confirmed 24 Sep 2026.',
         groups:{banned:MNS_BANNED,conditional:[],sources:[{name:'BRrip',pattern:'(?:^|[ ._])BR-?rip(?=$|[ ._-])'}]},
         resolutions:['480i','480p','576i','576p','720p','1080i','1080p','2160p'],
         rules:[
@@ -3514,14 +3512,14 @@ Sicario Silence SM737 STUTTERSHIT Tigole TSP TSPxL UTR ViSION WAF Will1869 x0r Y
              forbid:'(?:^|[ .])H26[45](?=$|[ .-])',
              message:'The VideoCodec list writes it H.264 or H.265, with the dot.'},
             {code:'vcodec-list',severity:'review',profiles:['movie','tv','disc'],
-             forbid:'(?:^|[ .])(?:AV1|VP9)(?=$|[ .-])',
-             message:'The VideoCodec list is MPEG-2, VC-1, AVC, HEVC, x264, H.264, x265, H.265 — AV1 and VP9 are not on it. The site’s own listing carried AV1 encodes on 21 Sep 2026, so the list and the site disagree: ask rather than assume.'},
+             forbid:'(?:^|[ .])VP9(?=$|[ .-])',
+             message:'VP9 is not on the supplied VideoCodec list and has not been confirmed as allowed. Ask rather than assume. AV1 is allowed, confirmed 24 Sep 2026.'},
             {code:'vcodec-web',severity:'error',profiles:['movie','tv'],
              forbid:'WEB-DL[\\s\\S]*(?:^|[ .])x26[45](?=$|[ .-])',
-             message:'For a WEB-DL the VideoCodec is H.264 or H.265; x264 and x265 name an encoder and belong to encodes and WEBRips.'},
+             message:'For a WEB-DL the VideoCodec is H.264, H.265 or AV1; x264 and x265 name an encoder and belong to encodes and WEBRips.'},
             {code:'vcodec-webrip',severity:'error',profiles:['movie','tv'],
              forbid:'WEBRip[\\s\\S]*(?:^|[ .])H\\.?26[45](?=$|[ .-])',
-             message:'For a WEBRip the VideoCodec is x264 or x265 — it has been re-encoded, so the encoder is what is named.'},
+             message:'For a WEBRip the VideoCodec is x264, x265 or AV1 — it has been re-encoded.'},
             {code:'vcodec-remux',severity:'error',profiles:['movie','tv','disc'],
              forbid:'REMUX[\\s\\S]*(?:^|[ .])(?:x26[45]|H\\.?26[45])(?=$|[ .-])',
              message:'For a remux the VideoCodec is MPEG-2, VC-1, AVC or HEVC: the stream is untouched, so the format is what is named.'},
@@ -5735,11 +5733,7 @@ const DKOKTO_LINKS_CORE = (() => {
         :(typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./groups.js'):null);}catch{return null;}};
     const groupOf=name=>{try{return String(groupsModule()?.trailingTag(name)||'').trim();}catch{return '';}};
     const isBook = (name, category) => /book|comic|magazine/i.test(category) || /\b(?:EPUB|MOBI|AZW3|M4B)\b/i.test(name);
-    function exact(name, {category = '', description = ''} = {}) {
-        if (isBook(name, category)) {
-            const number = isbn(name, description);
-            if (number) return number;
-        }
+    function exact(name) {
         const group = groupOf(name);
         const value = String(name || '').normalize('NFKC').trim();
         // Remove the identified suffix before parsing; title words can equal the group.
@@ -5776,7 +5770,7 @@ const DKOKTO_LINKS_CORE = (() => {
         // be named — "Search DarkPeers" on Zenith is simply wrong.
         add('dp','Search '+(String(site||'').trim()||'this tracker'),'/torrents?name='+q(term),'This tracker, same title');
         // The title with its episode/year and group, without quality or codec tags.
-        add('exact','Exact title','/torrents?name='+q(exact(name,{category,description})),book?'ISBN when available; otherwise title, year and release group':'Title, season/episode or year, and release group');
+        add('exact','Exact title','/torrents?name='+q(exact(name)),'Title, season/episode or year, and release group');
         if(ids.imdb)add('imdb','IMDb','https://www.imdb.com/title/'+q(ids.imdb)+'/','From the ID on this page');
         else if(!music&&!book&&!game)add('imdb','IMDb','https://www.imdb.com/find/?q='+q(withYear)+'&s=tt');
         if(ids.tmdb&&(tv||!music))add('tmdb','TMDB','https://www.themoviedb.org/'+(tv?'tv':'movie')+'/'+q(ids.tmdb),'From the ID on this page');
@@ -8451,7 +8445,7 @@ const DKOKTO_LOOKUPS = (() => {
         const parsed = DKOKTO_REQUESTS_CORE.parse(title, category);
         const titleQuery = DKOKTO_REQUESTS_CORE.term(parsed) || title;
         let mode = 'title', filter = 'Any';
-        const drafts = {title: titleQuery, exact: DKOKTO_LINKS_CORE.exact(title, {category, description:pageDescription})};
+        const drafts = {title: titleQuery, exact: DKOKTO_LINKS_CORE.exact(title)};
         const wrap = el('div', undefined, 'dk-lookups');
         const label = el('label', 'Search for');
         const query = el('input');

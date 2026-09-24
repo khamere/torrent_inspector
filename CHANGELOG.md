@@ -9,6 +9,17 @@ was named until 1.25.0.
 
 ---
 
+## 1.43.12 — book search rollback and MidnightScene AV1
+
+- Remove automatic ISBN selection from Exact title in Review and legacy tracker
+  search links. Restore the compact title/year/group query. Goodreads and Google
+  Books retain their validated title/description ISBN lookups.
+- Retain the fix that includes game release groups only once.
+- MidnightScene permits AV1, as confirmed on 24 September 2026. Remove its
+  unconfirmed-codec warning for AV1 and update the source note and codec wording.
+  VP9 keeps its existing review warning; other tracker rules are unchanged.
+- Shared with personal Scene Edition 1.49.12.
+
 ## 1.43.11 — Exact title fixes for games and books
 
 - Strip the identified trailing group before parsing an Exact title query, then
