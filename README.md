@@ -1,4 +1,4 @@
-# Torrent Inspector 1.43.7
+# Torrent Inspector 1.43.8
 
 ![Torrent Inspector — release naming checks, the MediaInfo Inspector and a cross-tracker lookup. It reads the page; it does not act.](images/banner.png)
 
@@ -17,6 +17,13 @@ It runs on **45 UNIT3D trackers** and can search **63**, and it also runs on Tor
 FileList for the lookups and the source check. Naming rules for DarkPeers, Zenith, LUME,
 OnlyEncodes+, HomieHelpDesk, MidnightScene and InfinityHD ship with it; any other tracker is added by
 pasting its rules, as data, never as code.
+
+## New in 1.43.8
+
+FileList now compares the ID remembered from its own Media Info page when you return
+to torrent details. Saved evidence is labelled, and full report filenames are shared
+with the other supported trackers. FileList and TorrentLeech also refresh their source
+panels on tab return. Each tracker keeps its own facts so differences remain visible.
 
 ## New in 1.43.7
 

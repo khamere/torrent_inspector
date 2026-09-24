@@ -9,6 +9,16 @@ was named until 1.25.0.
 
 ---
 
+## 1.43.8 — shared source evidence on FileList and TorrentLeech
+
+- Compare parsed adapter evidence, including FileList tooltip filenames and the ID
+  saved from this same torrent’s separate Media Info page. Label remembered IDs.
+- Preserve and share the report’s complete filename separately from the file list.
+- Refresh inline source panels and open source dialogs on tab return and page changes,
+  preserving disclosure choices. Exclude script output from page observations.
+- Observed IDs take precedence over remembered IDs; expired report evidence is not
+  revived by returning to details. No cross-tracker copying of missing facts.
+
 ## 1.43.7 — keep open source comparisons current
 
 - Refresh the open Source check panel after page evidence changes, when returning

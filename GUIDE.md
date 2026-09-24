@@ -1,4 +1,4 @@
-<!-- Source check workflow updated in 1.43.7. -->
+<!-- Source check workflow updated in 1.43.8. -->
 # Torrent Inspector — using it
 
 The website’s install link downloads the script from that same site release. Check its
@@ -402,3 +402,10 @@ remembered for the source check with what the source said. All of it on your mac
 store where the manager has it, so the setup is the same on every tracker it runs on, and
 ordinary browser storage otherwise. Nothing is sent anywhere, and every list can be exported as
 JSON and taken with you.
+
+On FileList, open the torrent’s **Media Info** page once to remember its ID and full
+filename. Return to details: Source check compares that saved ID with other trackers
+and labels it as remembered evidence. FileList and TorrentLeech panels also update
+when you return from another tracker tab. Evidence is kept for three days in the same
+userscript’s shared Tampermonkey storage. Each tracker retains its own filename, ID
+and size; missing fields are not filled with another tracker’s values.

@@ -27,17 +27,17 @@ h2{font-size:16px;margin:18px 0 6px;color:#c3b2d3}.dialog__form table{width:auto
 <script>
 // Demo shell: the rule set for this host, a few trackers ticked, and on one page the
 // remembered upload. All of it is this site's own localStorage; nothing is fetched.
-window.GM_info={script:{version:"1.43.7"}};
+window.GM_info={script:{version:"1.43.8"}};
 window.GM_registerMenuCommand=()=>0;window.GM_unregisterMenuCommand=()=>{};
 window.GM_addStyle=css=>{const s=document.createElement("style");s.textContent=css;document.head.append(s);return s;};
-try{localStorage.setItem("dp_dkokto_last_seen_version","1.43.7");
+try{localStorage.setItem("dp_dkokto_last_seen_version","1.43.8");
 localStorage.setItem("dkokto_rules_host_v1",JSON.stringify({[location.hostname]:"dp"}));
 if(!localStorage.getItem("dkokto_trackers_v1"))localStorage.setItem("dkokto_trackers_v1",JSON.stringify({enabled:["aither","blu","ptp","hdb"],search:{},custom:[],popups:{}}));
 const r={"v":1,"pending":[{"host":"example-tracker.org","id":"4821","url":"https://example-tracker.org/torrents/4821","title":"The Whisper Man 2026 2160p NF WEB-DL DD+ 5.1 Atmos DV HDR H.265-DKOKTO","uidHex":"ABBAABBAABBAABBAABBAABBAABBAABCE","fileBase":"The.Whisper.Man.2026.2160p.NF.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-DKOKTO","folder":"","files":["The.Whisper.Man.2026.2160p.NF.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-DKOKTO.mkv"],"bytes":19756777472,"totalBytes":19756777472}],"results":{},"options":{"quiet":false}};r.pending[0].t=Date.now();localStorage.setItem("dkokto_source_v1",JSON.stringify(r));
 }catch{}
 </script></head><body>
-<div class="demo-strip"><nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/torrents/">Review demo</a><a href="/torrents/101/">Torrent demo</a><a href="/requests/">Request demo</a><a href="/rules.html">Rules builder</a><a href="/GUIDE.md">Guide</a><a href="/CHANGELOG.md">Release notes</a></nav><p><b>Torrent Inspector 1.43.7 · Demo</b></p>
-<p><b>A torrent page</b> — try the unified panel: Inspect torrent opens Findings, MediaInfo, Find releases, Source check and My notes. Source check in the tools bar opens the same panel directly, with the filename, ID, size and expanded comparison evidence. Find other releases opens the tracker search grid. Made-up releases, the real 1.43.7 script; nothing here is a tracker, and nothing is fetched or sent.</p></div>
+<div class="demo-strip"><nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/torrents/">Review demo</a><a href="/torrents/101/">Torrent demo</a><a href="/requests/">Request demo</a><a href="/rules.html">Rules builder</a><a href="/GUIDE.md">Guide</a><a href="/CHANGELOG.md">Release notes</a></nav><p><b>Torrent Inspector 1.43.8 · Demo</b></p>
+<p><b>A torrent page</b> — try the unified panel: Inspect torrent opens Findings, MediaInfo, Find releases, Source check and My notes. Source check in the tools bar opens the same panel directly, with the filename, ID, size and expanded comparison evidence. Find other releases opens the tracker search grid. Made-up releases, the real 1.43.8 script; nothing here is a tracker, and nothing is fetched or sent.</p></div>
 <nav class="top-nav">TRACKER / THE WHISPER MAN (2026)</nav>
 <main>
 <h1 class="torrent__name">The Whisper Man (2026)</h1>
@@ -54,7 +54,7 @@ const r={"v":1,"pending":[{"host":"example-tracker.org","id":"4821","url":"https
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.43.7
+// @version      1.43.8
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       DKOKTO
 // This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,
@@ -2477,6 +2477,7 @@ const DKOKTO_ELSEWHERE_CORE = (() => {
             title: s.title(doc),
             uidHex,
             fileBase,
+            fileName: complete || (main ? core.base(main.path) : ''),
             folder,
             files: files.map(row => core.base(row.path)),
             bytes: main ? (Number(main.bytes) || 0) : 0,
@@ -7036,6 +7037,7 @@ const DKOKTO_SOURCE = (() => {
             title: text(e.title, 300),
             uidHex: HEX.test(uidHex) ? uidHex : '',
             fileBase: text(e.fileBase, 300),
+            fileName: text(e.fileName, 300),
             folder: text(e.folder, 300),
             files,
             bytes: Number(e.bytes) || 0,
@@ -7058,6 +7060,7 @@ const DKOKTO_SOURCE = (() => {
             on: /^\d{4}-\d{2}-\d{2}$/.test(String(r.on || '')) ? r.on : '',
             t: Number(r.t) || 0,
             caseOnly: r.caseOnly === true,
+            rememberedId: r.rememberedId === true,
             idMatch: tri(r.idMatch),
             idFound: HEX.test(idFound) ? idFound : '',
             idsOnPage: Number(r.idsOnPage) || 0,
@@ -7116,7 +7119,7 @@ const DKOKTO_SOURCE = (() => {
         const incoming = cleanEntry({ ...entry, t: Date.now() });
         if (!incoming) return false;
         const data = read();
-        const previous = data.pending.find(p => keyOf(p) === keyOf(incoming));
+        const previous = data.pending.find(p => keyOf(p) === keyOf(incoming) && isFresh(p));
         let merged = incoming;
         if (previous) {
             // Keep what the earlier visit had wherever this visit has nothing.
@@ -7140,7 +7143,7 @@ const DKOKTO_SOURCE = (() => {
     // The upload as remembered, with whatever an earlier visit filled in.
     const entryFor = (entry) => {
         const e = cleanEntry(entry);
-        return e ? (read().pending.find(p => keyOf(p) === keyOf(e)) || null) : null;
+        return e ? (read().pending.find(p => keyOf(p) === keyOf(e) && isFresh(p)) || null) : null;
     };
 
     // What the last check on this page looked for and found, so the dialog can say why a
@@ -7149,10 +7152,25 @@ const DKOKTO_SOURCE = (() => {
 
     // Compare this page's text with every fresh fingerprint from another tracker. Keep an
     // answer for each fingerprint the page turns out to be about, and return those.
-    function check(pageText, here) {
+    function check(pageText, here, evidence) {
         if (!core) return [];
         const host = String(here?.host || '').toLowerCase().replace(/^www\./, '');
         const data = read();
+        // Adapter evidence belongs to THIS tracker and torrent, never copied from a
+        // matching upload elsewhere. FileList splits its report and details across pages.
+        let comparedText = String(pageText || '');
+        const current = cleanEntry(evidence?.entry);
+        const ownEvidence = current && current.host === host && current.id === String(here?.id || '');
+        let rememberedId = false;
+        if (ownEvidence) {
+            const fields = [current.fileBase, current.fileName, current.folder, ...current.files];
+            for (const bytes of [current.bytes, current.totalBytes]) if (bytes > 0) fields.push(bytes + ' bytes');
+            if (current.uidHex && !core.idsIn(comparedText).size) {
+                fields.push('Unique ID : 0x' + current.uidHex);
+                rememberedId = evidence.rememberedId === true;
+            }
+            comparedText += '\n' + fields.join('\n');
+        }
         const found = [];
         const others = data.pending.filter(isFresh).filter(e => e.host !== host);
         last = {
@@ -7161,10 +7179,15 @@ const DKOKTO_SOURCE = (() => {
             hosts: [...new Set(others.map(e => e.host))].sort(),
             found: 0,
             hasId: /Unique ID\s*:/i.test(String(pageText || '')),
+            rememberedId,
         };
         for (const entry of others) {
-            const v = core.compare(pageText, entry);
+            const v = core.compare(comparedText, entry);
             if (!v.mentioned) continue;
+            // A remembered ID can establish a comparison even when FileList has not
+            // exposed a filename or folder. Missing evidence is not a filename mismatch.
+            if (ownEvidence && !current.fileBase && !current.fileName && !current.files.length) v.nameMatch = null;
+            if (ownEvidence && !current.folder) v.folderMatch = null;
             const ids = [...v.ids];
             const result = {
                 host,
@@ -7183,6 +7206,7 @@ const DKOKTO_SOURCE = (() => {
                 filesFound: v.filesFound,
                 filesTotal: v.filesTotal,
                 caseOnly: v.caseOnly === true,
+                rememberedId,
             };
             data.results[keyOf(entry)] = result;
             found.push({ entry, result, ids });
@@ -7326,12 +7350,33 @@ const DKOKTO_SOURCE_UI = (() => {
         return parts.join('\n');
     }
 
+    function checkPage(here) {
+        let evidence;
+        try {
+            const local = /^(?:localhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0)$/i.test(location.hostname);
+            const url = (local && document.body?.dataset.dkElsewhereUrl) || location.href;
+            const current = DKOKTO_ELSEWHERE_CORE.read(document, url);
+            if (current) {
+                here = current;
+                // Only FileList has a separate report page for the same torrent ID.
+                const kept = current.host === 'filelist.io' ? DKOKTO_SOURCE.entryFor(current) : null;
+                evidence = {entry: {...current,
+                    uidHex: current.uidHex || kept?.uidHex || '',
+                    fileBase: current.fileBase || kept?.fileBase || '',
+                    fileName: current.fileName || kept?.fileName || '',
+                    files: current.files.length ? current.files : kept?.files || []},
+                    rememberedId: !current.uidHex && !!kept?.uidHex};
+            }
+        } catch {}
+        return DKOKTO_SOURCE.check(pageText(), here, evidence);
+    }
+
     // What was remembered about this upload, spelled out so it can be compared by eye.
     function remembered(entry) {
         const list = el('dl', undefined, 'dk-source-what');
         const row = (label, value) => { if (value) list.append(el('dt', label), el('dd', value)); };
         row('Unique ID', entry.uidHex || 'none in the report');
-        row('File name', (Array.isArray(entry.files) && entry.files.length === 1 ? entry.files[0] : '') || entry.fileBase);
+        row('File name', entry.fileName || (Array.isArray(entry.files) && entry.files.length === 1 ? entry.files[0] : '') || entry.fileBase);
         row('Folder', entry.folder);
         row('Size', gib(entry.bytes) || gib(entry.totalBytes));
         return list;
@@ -7348,7 +7393,7 @@ const DKOKTO_SOURCE_UI = (() => {
             evidence.append(el('span', entry.title, 'dk-source-title'));
 
             // The file as it is named, under the release title, so spaces and dots show.
-            const fileName = ((Array.isArray(entry.files) && entry.files.length === 1) ? entry.files[0] : '') || entry.fileBase;
+            const fileName = entry.fileName || ((Array.isArray(entry.files) && entry.files.length === 1) ? entry.files[0] : '') || entry.fileBase;
             if (fileName) evidence.append(el('span', fileName, 'dk-source-file'));
             if (fileName && / /.test(fileName)) evidence.append(el('span', 'The file name has spaces in it.', 'dk-source-spaces'));
 
@@ -7357,7 +7402,7 @@ const DKOKTO_SOURCE_UI = (() => {
             // The IDs, side by side: the one remembered and the one(s) this page shows.
             const here = Array.isArray(ids) ? ids : [];
             if (entry.uidHex) {
-                const tail = result.idMatch ? ' — the same one is on this page'
+                const tail = result.idMatch ? (result.rememberedId ? ' — matches the ID remembered from this torrent’s Media Info page' : ' — the same one is on this page')
                     : here.length ? ' — this page has ' + here.slice(0, 3).join(', ')
                     : ' — this page shows none';
                 evidence.append(el('span', 'Unique ID remembered from ' + entry.host + ': ' + entry.uidHex + tail, 'dk-source-ids'));
@@ -7528,7 +7573,7 @@ const DKOKTO_SOURCE_UI = (() => {
             : 'none was about this page — no remembered title, file name, folder or Unique ID is in its text, so no banner.';
         return el('p', 'Looked on this page for ' + l.looked + ' upload' + (l.looked === 1 ? '' : 's')
             + ' remembered from other trackers (' + l.hosts.join(', ') + '): ' + outcome
-            + (l.hasId ? '' : ' This page prints no Unique ID.'), 'dk-source-looked');
+            + (l.rememberedId ? ' Uses the Unique ID remembered from this torrent’s Media Info page.' : l.hasId ? '' : ' This page prints no Unique ID.'), 'dk-source-looked');
     }
 
     // A saved answer is a check made on a different page, not the current comparison list.
@@ -7560,7 +7605,7 @@ const DKOKTO_SOURCE_UI = (() => {
         const wrap = el('div', undefined, 'dk-source dk-source-unified');
         wrap.append(el('h3', 'Source comparisons'));
         const here = entry || {host: location.hostname, url: location.href};
-        const rows = DKOKTO_SOURCE.check(pageText(), here)
+        const rows = checkPage(here)
             .sort((a, b) => a.entry.host.localeCompare(b.entry.host) || a.entry.id.localeCompare(b.entry.id));
         lastRows = rows;
         wrap.append(totals(rows), looked());
@@ -7593,7 +7638,7 @@ const DKOKTO_SOURCE_UI = (() => {
     // Background checks must update an open Review, not just the automatic banner.
     // Compare rendered evidence (no changing storage timestamps) before touching DOM.
     function refreshOpen(entry) {
-        for (const wrap of document.querySelectorAll('dialog[open] .dk-source-unified')) {
+        for (const wrap of document.querySelectorAll('dialog[open] .dk-source-unified,.dk-elsewhere .dk-source-unified')) {
             const state = sections.get(wrap);
             if (!state) continue;
             if (entry !== undefined) state.entry = entry;
@@ -7623,7 +7668,7 @@ const DKOKTO_SOURCE_UI = (() => {
         }
     }
 
-    return { banner, section, refreshOpen, pageText, toolsButton, reveal, OWN };
+    return { banner, section, refreshOpen, checkPage, pageText, toolsButton, reveal, OWN };
 })();
 
 // Torrent detail page: the listing's naming badge, compact reference links and
@@ -9720,15 +9765,16 @@ const DKOKTO_ELSEWHERE = (() => {
         try { DKOKTO_SOURCE.remember(print); } catch {}
 
         let found = [];
-        try { found = DKOKTO_SOURCE.check(DKOKTO_SOURCE_UI.pageText(), { host: print.host, url: print.url }); } catch {}
+        try { found = DKOKTO_SOURCE_UI.checkPage(print); } catch {}
         try { DKOKTO_SOURCE_UI.banner(found); } catch {}
         try { DKOKTO_SOURCE_UI.toolsButton(); } catch {}
 
-        const remembered = DKOKTO_SOURCE.entryFor(print) || {};
-        const signature = [print.title, print.uidHex, remembered.uidHex, print.files.join('|'), print.totalBytes,
-            found.length, JSON.stringify(DKOKTO_SOURCE.resultFor(print) || null)].join('\n');
+        const signature = [print.host, print.id, print.title, print.hasReport, print.reportLink].join('\n');
         const existing = document.querySelector('.dk-elsewhere');
-        if (existing && lastSignature === signature) return print;
+        if (existing && lastSignature === signature) {
+            DKOKTO_SOURCE_UI.refreshOpen(DKOKTO_SOURCE.entryFor(print) || print);
+            return print;
+        }
         existing?.remove();
         lastSignature = signature;
 
@@ -9737,6 +9783,7 @@ const DKOKTO_ELSEWHERE = (() => {
         if (at?.first) at.first.prepend(box);
         else if (at?.after && at.after.parentElement) at.after.parentElement.insertBefore(box, at.after.nextSibling);
         else document.body.prepend(box);
+        DKOKTO_SOURCE_UI.refreshOpen(DKOKTO_SOURCE.entryFor(print) || print);
         return print;
     }
 
@@ -9760,13 +9807,19 @@ const DKOKTO_ELSEWHERE = (() => {
             timer = setTimeout(() => { try { run(address()); } catch {} }, 250);
         };
         schedule();
+        window.addEventListener('focus',schedule);
+        document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
+        window.addEventListener('storage',event=>{if(event.key===DKOKTO_SOURCE.KEY||event.key===null)schedule();});
         // Redraw when the page changes, but not when the change is our own panel or banner.
         const ours = node => node.nodeType === 1 && node.closest && node.closest(OWN);
         new MutationObserver(records => {
-            const worth = records.some(r => r.type === 'attributes' || ![...r.addedNodes, ...r.removedNodes].every(ours));
+            const worth = records.some(r => {
+                const target = r.target.nodeType === 1 ? r.target : r.target.parentElement;
+                return !target?.closest(OWN) && (r.type === 'attributes' || r.type === 'characterData' || ![...r.addedNodes, ...r.removedNodes].every(ours));
+            });
             if (worth) schedule();
         }).observe(document.body, {
-            childList: true, subtree: true,
+            childList: true, subtree: true, characterData: true,
             attributes: preview, attributeFilter: preview ? ['data-dk-elsewhere-url'] : undefined,
         });
     }
