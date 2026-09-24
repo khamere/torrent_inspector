@@ -1,4 +1,4 @@
-<!-- Source check workflow updated in 1.43.4. -->
+<!-- Source check workflow updated in 1.43.7. -->
 # Torrent Inspector — using it
 
 The website’s install link downloads the script from that same site release. Check its
@@ -17,7 +17,9 @@ appears in a row that starts expanded, showing its filename, ID evidence and ret
 distinguish ID matches from name/size-only matches; a missing ID is not a verified ID
 match. Read each row's exact evidence and use its link to open the tracker yourself.
 **Current torrent fingerprint** starts open above the comparisons. **Last saved check
-on another page** stays in a separate disclosure. Refresh page evidence reruns the comparison against what is loaded now.
+on another page** stays in a separate disclosure. On individual torrent pages, the open panel updates when page evidence changes and
+when you return from another tracker tab. You do not need to close and reopen it.
+Refresh page evidence is also available to reread the loaded page manually.
 The optional automatic notice uses the same compact rows; the existing quiet checkbox
 keeps it hidden until requested. On pages without unified Review, the button opens a
 matching source dialog. No lookup or tracker request runs in the background.

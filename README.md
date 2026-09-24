@@ -1,4 +1,4 @@
-# Torrent Inspector 1.43.6
+# Torrent Inspector 1.43.7
 
 ![Torrent Inspector — release naming checks, the MediaInfo Inspector and a cross-tracker lookup. It reads the page; it does not act.](images/banner.png)
 
@@ -17,6 +17,12 @@ It runs on **45 UNIT3D trackers** and can search **63**, and it also runs on Tor
 FileList for the lookups and the source check. Naming rules for DarkPeers, Zenith, LUME,
 OnlyEncodes+, HomieHelpDesk, MidnightScene and InfinityHD ship with it; any other tracker is added by
 pasting its rules, as data, never as code.
+
+## New in 1.43.7
+
+The open Source check panel now updates when page evidence loads or changes and when
+you return from another tracker tab. No closing and reopening is needed. Your notes,
+expanded or collapsed comparisons, and checkbox focus stay in place.
 
 ## New in 1.43.6
 

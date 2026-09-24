@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.43.6
+// @version      1.43.7
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       DKOKTO
 // This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,
@@ -7503,7 +7503,7 @@ const DKOKTO_SOURCE_UI = (() => {
         return wrap;
     }
 
-    function section(entry) {
+    function renderSection(entry) {
         const wrap = el('div', undefined, 'dk-source dk-source-unified');
         wrap.append(el('h3', 'Source comparisons'));
         const here = entry || {host: location.hostname, url: location.href};
@@ -7531,7 +7531,46 @@ const DKOKTO_SOURCE_UI = (() => {
         return wrap;
     }
 
-    return { banner, section, pageText, toolsButton, reveal, OWN };
+    const sections = new WeakMap();
+    function section(entry) {
+        const wrap = renderSection(entry);
+        sections.set(wrap, {entry, signature: wrap.innerHTML, details: new Map()});
+        return wrap;
+    }
+    // Background checks must update an open Review, not just the automatic banner.
+    // Compare rendered evidence (no changing storage timestamps) before touching DOM.
+    function refreshOpen(entry) {
+        for (const wrap of document.querySelectorAll('dialog[open] .dk-source-unified')) {
+            const state = sections.get(wrap);
+            if (!state) continue;
+            if (entry !== undefined) state.entry = entry;
+            const fresh = renderSection(state.entry);
+            const signature = fresh.innerHTML;
+            if (signature === state.signature) continue;
+            state.signature = signature;
+            const key = node => node.className + '|' + (node.querySelector('a')?.href || '');
+            const details = state.details;
+            for (const node of wrap.querySelectorAll('details')) details.set(key(node), node.open);
+            // Keep disclosure choices through a brief unload/reload, with a fixed bound.
+            while (details.size > 300) details.delete(details.keys().next().value);
+            for (const node of fresh.querySelectorAll('details')) if (details.has(key(node))) node.open = details.get(key(node));
+            const quiet = wrap.querySelector('.dk-source-quiet');
+            const active = document.activeElement;
+            const focusedDetail = wrap.contains(active) ? active.closest('details') : null;
+            const focusKey = focusedDetail ? key(focusedDetail) : null;
+            const focusTag = active?.tagName === 'A' ? 'a' : 'summary';
+            const scroll = [];
+            for (let node = wrap; node; node = node.parentElement) scroll.push([node, node.scrollTop]);
+            // Keep the actual checkbox and its focus; the other Review tabs are untouched.
+            if (quiet) fresh.querySelector('.dk-source-quiet').replaceWith(quiet);
+            wrap.replaceChildren(...fresh.childNodes);
+            if (quiet?.contains(active)) active.focus({preventScroll: true});
+            else if (focusKey) [...wrap.querySelectorAll('details')].find(node => key(node) === focusKey)?.querySelector(focusTag)?.focus({preventScroll: true});
+            for (const [node, top] of scroll) node.scrollTop = top;
+        }
+    }
+
+    return { banner, section, refreshOpen, pageText, toolsButton, reveal, OWN };
 })();
 
 // Torrent detail page: the listing's naming badge, compact reference links and
@@ -7850,6 +7889,7 @@ const DKOKTO_DETAIL = (() => {
         try{const place=DKOKTO_CHECKLIST.where();if(place){// textContent, not innerText: trackers keep the MediaInfo in a panel that is not displayed
         // until clicked, and innerText leaves hidden text out.
         DKOKTO_SOURCE_UI.banner(DKOKTO_SOURCE.check(DKOKTO_SOURCE_UI.pageText(),{host:place.host,url:location.origin+location.pathname}));}}catch{}
+        try{if(dialog?.open)DKOKTO_SOURCE_UI.refreshOpen(fingerprint(known().file,DKOKTO_FILES_UI.list()));}catch{}
     }
     // A page that keeps changing (chat, timers) must not starve the redraw, and must
     // not be redrawn faster than a person can read: one pass per quarter second.
@@ -7869,6 +7909,10 @@ const DKOKTO_DETAIL = (() => {
             if(records.some(r=>{const n=r.target.nodeType===1?r.target:r.target.parentElement;return n&&!n.closest(OURS)&&!n.closest(NOISE);}))schedule();
         }).observe(document.body,{subtree:true,childList:true,characterData:true});
         window.addEventListener('popstate',schedule);document.addEventListener('livewire:navigated',schedule);
+        // Other tracker tabs share userscript storage; reread it when returning here.
+        window.addEventListener('focus',schedule);
+        document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
+        window.addEventListener('storage',event=>{if(event.key===DKOKTO_SOURCE.KEY||event.key===null)schedule();});
     }
     return {mount,draw,openReview};
 })();

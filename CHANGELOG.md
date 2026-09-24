@@ -9,6 +9,15 @@ was named until 1.25.0.
 
 ---
 
+## 1.43.7 — keep open source comparisons current
+
+- Refresh the open Source check panel after page evidence changes, when returning
+  to the tracker tab, and on local source-storage notifications.
+- Update filenames, current fingerprint and comparison counts without reopening
+  Review. Preserve notes, disclosure choices, focus and scroll position.
+- Leave unchanged evidence untouched and keep excluding the script’s own text from
+  source comparisons. No new network requests, storage keys or tracker actions.
+
 ## 1.43.6 — website and release synchronization
 
 - Put the unified Review panel first on the website; update queue, lookup, source and
