@@ -27,17 +27,17 @@ h2{font-size:16px;margin:18px 0 6px;color:#c3b2d3}.dialog__form table{width:auto
 <script>
 // Demo shell: the rule set for this host, a few trackers ticked, and on one page the
 // remembered upload. All of it is this site's own localStorage; nothing is fetched.
-window.GM_info={script:{version:"1.43.10"}};
+window.GM_info={script:{version:"1.43.11"}};
 window.GM_registerMenuCommand=()=>0;window.GM_unregisterMenuCommand=()=>{};
 window.GM_addStyle=css=>{const s=document.createElement("style");s.textContent=css;document.head.append(s);return s;};
-try{localStorage.setItem("dp_dkokto_last_seen_version","1.43.10");
+try{localStorage.setItem("dp_dkokto_last_seen_version","1.43.11");
 localStorage.setItem("dkokto_rules_host_v1",JSON.stringify({[location.hostname]:"dp"}));
 if(!localStorage.getItem("dkokto_trackers_v1"))localStorage.setItem("dkokto_trackers_v1",JSON.stringify({enabled:["aither","blu","ptp","hdb"],search:{},custom:[],popups:{}}));
 
 }catch{}
 </script></head><body>
-<div class="demo-strip"><nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/torrents/">Review demo</a><a href="/torrents/101/">Torrent demo</a><a href="/requests/">Request demo</a><a href="/rules.html">Rules builder</a><a href="/GUIDE.md">Guide</a><a href="/CHANGELOG.md">Release notes</a></nav><p><b>Torrent Inspector 1.43.10 · Demo</b></p>
-<p><b>A request page</b> — a music request: only trackers that carry music get a link, and one that cannot is left out with the reason. Made-up releases, the real 1.43.10 script; nothing here is a tracker, and nothing is fetched or sent.</p></div>
+<div class="demo-strip"><nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/torrents/">Review demo</a><a href="/torrents/101/">Torrent demo</a><a href="/requests/">Request demo</a><a href="/rules.html">Rules builder</a><a href="/GUIDE.md">Guide</a><a href="/CHANGELOG.md">Release notes</a></nav><p><b>Torrent Inspector 1.43.11 · Demo</b></p>
+<p><b>A request page</b> — a music request: only trackers that carry music get a link, and one that cannot is left out with the reason. Made-up releases, the real 1.43.11 script; nothing here is a tracker, and nothing is fetched or sent.</p></div>
 <nav class="top-nav">TRACKER / JULIEN BAKER - SUGAR IN THE TANK (2024)</nav>
 <main>
 <h1>Julien Baker - Sugar in the Tank (2024)</h1>
@@ -50,7 +50,7 @@ if(!localStorage.getItem("dkokto_trackers_v1"))localStorage.setItem("dkokto_trac
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.43.10
+// @version      1.43.11
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       DKOKTO
 // This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,
@@ -5783,9 +5783,21 @@ const DKOKTO_LINKS_CORE = (() => {
     const groupsModule=()=>{try{return typeof DKOKTO_GROUPS!=='undefined'?DKOKTO_GROUPS
         :(typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./groups.js'):null);}catch{return null;}};
     const groupOf=name=>{try{return String(groupsModule()?.trailingTag(name)||'').trim();}catch{return '';}};
-    function exact(name) {
-        const p=parse(name), part=p.season?'S'+p.season+(p.episode?'E'+p.episode:''):p.year;
-        return [p.query,part,groupOf(name)].filter(Boolean).join(' ');
+    const isBook = (name, category) => /book|comic|magazine/i.test(category) || /\b(?:EPUB|MOBI|AZW3|M4B)\b/i.test(name);
+    function exact(name, {category = '', description = ''} = {}) {
+        if (isBook(name, category)) {
+            const number = isbn(name, description);
+            if (number) return number;
+        }
+        const group = groupOf(name);
+        const value = String(name || '').normalize('NFKC').trim();
+        // Remove the identified suffix before parsing; title words can equal the group.
+        const title = group && value.endsWith(group)
+            ? value.slice(0, -group.length).replace(/-\s*$/, '').trim()
+            : value;
+        const p = parse(title);
+        const part = p.season ? 'S' + p.season + (p.episode ? 'E' + p.episode : '') : p.year;
+        return [p.query, part, group].filter(Boolean).join(' ');
     }
     // Check digits prevent ordinary numbers in a description becoming ISBN searches.
     function isbn(...texts) {
@@ -5804,7 +5816,7 @@ const DKOKTO_LINKS_CORE = (() => {
     // ids: only what the page already links to.
     function links(name,{ids={},category='',site='',description=''}={}) {
         const p=parse(name),out=[],term=p.query||clean(name),tv=/tv|show|series|anime/i.test(category)||!!p.season;
-        const anime=/anime/i.test(category),book=/book|comic|magazine/i.test(category)||/\b(?:EPUB|MOBI|AZW3|M4B)\b/i.test(name),music=!book&&/music|podcast/i.test(category),game=/game|software|app/i.test(category);
+        const anime=/anime/i.test(category),book=isBook(name,category),music=!book&&/music|podcast/i.test(category),game=/game|software|app/i.test(category);
         const add=(key,label,url,note='')=>{if(url)out.push({key,label,url,note});};
         if(!term)return out;
         const withYear=p.year?term+' '+p.year:term;
@@ -5813,7 +5825,7 @@ const DKOKTO_LINKS_CORE = (() => {
         // be named — "Search DarkPeers" on Zenith is simply wrong.
         add('dp','Search '+(String(site||'').trim()||'this tracker'),'/torrents?name='+q(term),'This tracker, same title');
         // The title with its episode/year and group, without quality or codec tags.
-        add('exact','Exact title','/torrents?name='+q(exact(name)),'Title, season/episode or year, and release group');
+        add('exact','Exact title','/torrents?name='+q(exact(name,{category,description})),book?'ISBN when available; otherwise title, year and release group':'Title, season/episode or year, and release group');
         if(ids.imdb)add('imdb','IMDb','https://www.imdb.com/title/'+q(ids.imdb)+'/','From the ID on this page');
         else if(!music&&!book&&!game)add('imdb','IMDb','https://www.imdb.com/find/?q='+q(withYear)+'&s=tt');
         if(ids.tmdb&&(tv||!music))add('tmdb','TMDB','https://www.themoviedb.org/'+(tv?'tv':'movie')+'/'+q(ids.tmdb),'From the ID on this page');
@@ -8488,7 +8500,7 @@ const DKOKTO_LOOKUPS = (() => {
         const parsed = DKOKTO_REQUESTS_CORE.parse(title, category);
         const titleQuery = DKOKTO_REQUESTS_CORE.term(parsed) || title;
         let mode = 'title', filter = 'Any';
-        const drafts = {title: titleQuery, exact: DKOKTO_LINKS_CORE.exact(title)};
+        const drafts = {title: titleQuery, exact: DKOKTO_LINKS_CORE.exact(title, {category, description:pageDescription})};
         const wrap = el('div', undefined, 'dk-lookups');
         const label = el('label', 'Search for');
         const query = el('input');

@@ -1,4 +1,10 @@
 <!-- Source check workflow updated in 1.43.8. -->
+
+**Exact title searches:** games keep their release group once. For books, Exact
+title uses a valid ISBN from the release title, then the loaded description if
+needed. Without an ISBN it keeps the compact title/year/group query. Title mode
+remains available for a broader search, and either query can be edited.
+
 # Torrent Inspector — using it
 
 **Current lookups:** srrDB sits beside Compare releases. Books expose Goodreads and

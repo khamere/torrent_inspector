@@ -9,6 +9,17 @@ was named until 1.25.0.
 
 ---
 
+## 1.43.11 — Exact title fixes for games and books
+
+- Strip the identified trailing group before parsing an Exact title query, then
+  append it once. Preserve title words that happen to match the group name.
+- Exact title for books uses a checksum-valid ISBN-10/13 from the title first,
+  then the current torrent's loaded description. Without an ISBN, retain the
+  compact title/year/group fallback. Other media never use a description ISBN.
+- Pass category and description into both Review and legacy exact-search links;
+  keep editable queries and existing movie/TV search behavior.
+- Shared with personal Scene Edition 1.49.11. No tracker rules changed.
+
 ## 1.43.10 — cleaner review and reference lookups
 
 - Add CinemaZ, AvistaZ, PrivateHD and AnimeZ torrent-page adapters. Inspect torrent

@@ -1,4 +1,4 @@
-# Torrent Inspector 1.43.10
+# Torrent Inspector 1.43.11
 
 ![Torrent Inspector](images/banner.png)
 
@@ -65,8 +65,6 @@ navigation, templates, and the advanced Inspector are covered in the [guide](GUI
 
 ## Latest release
 
-**1.43.10:** fixes duplicate moderation dropdowns and moves TorrentLeech/FileList
-source evidence into Review. Adds a page-level **srrDB** button, compact **Exact title**
-searches, ISBN-aware Goodreads/Google Books, Discogs, IGDB, and AnimeZ searches.
-CinemaZ, AvistaZ and PrivateHD retain your supplied search format.
-MediaInfo support for that four-site network uses CinemaZ’s saved page structure.
+**1.43.11:** fixes Exact title searches for games and books. Game release groups
+appear once. Books use a valid ISBN from the title or loaded description when
+available, falling back to the compact title and year. Search text remains editable.

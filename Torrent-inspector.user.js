@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.43.10
+// @version      1.43.11
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       DKOKTO
 // This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,
@@ -5734,9 +5734,21 @@ const DKOKTO_LINKS_CORE = (() => {
     const groupsModule=()=>{try{return typeof DKOKTO_GROUPS!=='undefined'?DKOKTO_GROUPS
         :(typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./groups.js'):null);}catch{return null;}};
     const groupOf=name=>{try{return String(groupsModule()?.trailingTag(name)||'').trim();}catch{return '';}};
-    function exact(name) {
-        const p=parse(name), part=p.season?'S'+p.season+(p.episode?'E'+p.episode:''):p.year;
-        return [p.query,part,groupOf(name)].filter(Boolean).join(' ');
+    const isBook = (name, category) => /book|comic|magazine/i.test(category) || /\b(?:EPUB|MOBI|AZW3|M4B)\b/i.test(name);
+    function exact(name, {category = '', description = ''} = {}) {
+        if (isBook(name, category)) {
+            const number = isbn(name, description);
+            if (number) return number;
+        }
+        const group = groupOf(name);
+        const value = String(name || '').normalize('NFKC').trim();
+        // Remove the identified suffix before parsing; title words can equal the group.
+        const title = group && value.endsWith(group)
+            ? value.slice(0, -group.length).replace(/-\s*$/, '').trim()
+            : value;
+        const p = parse(title);
+        const part = p.season ? 'S' + p.season + (p.episode ? 'E' + p.episode : '') : p.year;
+        return [p.query, part, group].filter(Boolean).join(' ');
     }
     // Check digits prevent ordinary numbers in a description becoming ISBN searches.
     function isbn(...texts) {
@@ -5755,7 +5767,7 @@ const DKOKTO_LINKS_CORE = (() => {
     // ids: only what the page already links to.
     function links(name,{ids={},category='',site='',description=''}={}) {
         const p=parse(name),out=[],term=p.query||clean(name),tv=/tv|show|series|anime/i.test(category)||!!p.season;
-        const anime=/anime/i.test(category),book=/book|comic|magazine/i.test(category)||/\b(?:EPUB|MOBI|AZW3|M4B)\b/i.test(name),music=!book&&/music|podcast/i.test(category),game=/game|software|app/i.test(category);
+        const anime=/anime/i.test(category),book=isBook(name,category),music=!book&&/music|podcast/i.test(category),game=/game|software|app/i.test(category);
         const add=(key,label,url,note='')=>{if(url)out.push({key,label,url,note});};
         if(!term)return out;
         const withYear=p.year?term+' '+p.year:term;
@@ -5764,7 +5776,7 @@ const DKOKTO_LINKS_CORE = (() => {
         // be named — "Search DarkPeers" on Zenith is simply wrong.
         add('dp','Search '+(String(site||'').trim()||'this tracker'),'/torrents?name='+q(term),'This tracker, same title');
         // The title with its episode/year and group, without quality or codec tags.
-        add('exact','Exact title','/torrents?name='+q(exact(name)),'Title, season/episode or year, and release group');
+        add('exact','Exact title','/torrents?name='+q(exact(name,{category,description})),book?'ISBN when available; otherwise title, year and release group':'Title, season/episode or year, and release group');
         if(ids.imdb)add('imdb','IMDb','https://www.imdb.com/title/'+q(ids.imdb)+'/','From the ID on this page');
         else if(!music&&!book&&!game)add('imdb','IMDb','https://www.imdb.com/find/?q='+q(withYear)+'&s=tt');
         if(ids.tmdb&&(tv||!music))add('tmdb','TMDB','https://www.themoviedb.org/'+(tv?'tv':'movie')+'/'+q(ids.tmdb),'From the ID on this page');
@@ -8439,7 +8451,7 @@ const DKOKTO_LOOKUPS = (() => {
         const parsed = DKOKTO_REQUESTS_CORE.parse(title, category);
         const titleQuery = DKOKTO_REQUESTS_CORE.term(parsed) || title;
         let mode = 'title', filter = 'Any';
-        const drafts = {title: titleQuery, exact: DKOKTO_LINKS_CORE.exact(title)};
+        const drafts = {title: titleQuery, exact: DKOKTO_LINKS_CORE.exact(title, {category, description:pageDescription})};
         const wrap = el('div', undefined, 'dk-lookups');
         const label = el('label', 'Search for');
         const query = el('input');
