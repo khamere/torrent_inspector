@@ -1,6 +1,9 @@
 <!-- Source check workflow updated in 1.43.8. -->
 # Torrent Inspector — using it
 
+For a quick start, see the [README](README.md). This guide holds the detailed
+walkthrough; older version notes are in the [changelog](CHANGELOG.md).
+
 The website’s install link downloads the script from that same site release. Check its
 version against this release’s README, install it in your userscript manager and reload
 the tracker. Updating the local preview does not publish changes to the public site.

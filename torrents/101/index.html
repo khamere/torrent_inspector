@@ -27,17 +27,17 @@ h2{font-size:16px;margin:18px 0 6px;color:#c3b2d3}.dialog__form table{width:auto
 <script>
 // Demo shell: the rule set for this host, a few trackers ticked, and on one page the
 // remembered upload. All of it is this site's own localStorage; nothing is fetched.
-window.GM_info={script:{version:"1.43.8"}};
+window.GM_info={script:{version:"1.43.9"}};
 window.GM_registerMenuCommand=()=>0;window.GM_unregisterMenuCommand=()=>{};
 window.GM_addStyle=css=>{const s=document.createElement("style");s.textContent=css;document.head.append(s);return s;};
-try{localStorage.setItem("dp_dkokto_last_seen_version","1.43.8");
+try{localStorage.setItem("dp_dkokto_last_seen_version","1.43.9");
 localStorage.setItem("dkokto_rules_host_v1",JSON.stringify({[location.hostname]:"dp"}));
 if(!localStorage.getItem("dkokto_trackers_v1"))localStorage.setItem("dkokto_trackers_v1",JSON.stringify({enabled:["aither","blu","ptp","hdb"],search:{},custom:[],popups:{}}));
 const r={"v":1,"pending":[{"host":"example-tracker.org","id":"4821","url":"https://example-tracker.org/torrents/4821","title":"The Whisper Man 2026 2160p NF WEB-DL DD+ 5.1 Atmos DV HDR H.265-DKOKTO","uidHex":"ABBAABBAABBAABBAABBAABBAABBAABCE","fileBase":"The.Whisper.Man.2026.2160p.NF.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-DKOKTO","folder":"","files":["The.Whisper.Man.2026.2160p.NF.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-DKOKTO.mkv"],"bytes":19756777472,"totalBytes":19756777472}],"results":{},"options":{"quiet":false}};r.pending[0].t=Date.now();localStorage.setItem("dkokto_source_v1",JSON.stringify(r));
 }catch{}
 </script></head><body>
-<div class="demo-strip"><nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/torrents/">Review demo</a><a href="/torrents/101/">Torrent demo</a><a href="/requests/">Request demo</a><a href="/rules.html">Rules builder</a><a href="/GUIDE.md">Guide</a><a href="/CHANGELOG.md">Release notes</a></nav><p><b>Torrent Inspector 1.43.8 · Demo</b></p>
-<p><b>A torrent page</b> — try the unified panel: Inspect torrent opens Findings, MediaInfo, Find releases, Source check and My notes. Source check in the tools bar opens the same panel directly, with the filename, ID, size and expanded comparison evidence. Find other releases opens the tracker search grid. Made-up releases, the real 1.43.8 script; nothing here is a tracker, and nothing is fetched or sent.</p></div>
+<div class="demo-strip"><nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/torrents/">Review demo</a><a href="/torrents/101/">Torrent demo</a><a href="/requests/">Request demo</a><a href="/rules.html">Rules builder</a><a href="/GUIDE.md">Guide</a><a href="/CHANGELOG.md">Release notes</a></nav><p><b>Torrent Inspector 1.43.9 · Demo</b></p>
+<p><b>A torrent page</b> — try the unified panel: Inspect torrent opens Findings, MediaInfo, Find releases, Source check and My notes. Source check in the tools bar opens the same panel directly, with the filename, ID, size and expanded comparison evidence. Find other releases opens the tracker search grid. Made-up releases, the real 1.43.9 script; nothing here is a tracker, and nothing is fetched or sent.</p></div>
 <nav class="top-nav">TRACKER / THE WHISPER MAN (2026)</nav>
 <main>
 <h1 class="torrent__name">The Whisper Man (2026)</h1>
@@ -54,7 +54,7 @@ const r={"v":1,"pending":[{"host":"example-tracker.org","id":"4821","url":"https
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.43.8
+// @version      1.43.9
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       DKOKTO
 // This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,

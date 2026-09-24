@@ -9,6 +9,15 @@ was named until 1.25.0.
 
 ---
 
+## 1.43.9 — a shorter README
+
+- Keep installation, the current Review workflow, source comparisons and one panel
+  screenshot in the README. Link to the guide, website gallery and this changelog
+  instead of repeating detailed instructions and historical release notes.
+- Preserve an exact pre-cleanup README in the development archive. All removed
+  version sections already have entries in this changelog.
+- Script behavior is unchanged from 1.43.8; both edition numbers advance together.
+
 ## 1.43.8 — shared source evidence on FileList and TorrentLeech
 
 - Compare parsed adapter evidence, including FileList tooltip filenames and the ID

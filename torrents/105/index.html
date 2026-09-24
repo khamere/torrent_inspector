@@ -27,17 +27,17 @@ h2{font-size:16px;margin:18px 0 6px;color:#c3b2d3}.dialog__form table{width:auto
 <script>
 // Demo shell: the rule set for this host, a few trackers ticked, and on one page the
 // remembered upload. All of it is this site's own localStorage; nothing is fetched.
-window.GM_info={script:{version:"1.43.8"}};
+window.GM_info={script:{version:"1.43.9"}};
 window.GM_registerMenuCommand=()=>0;window.GM_unregisterMenuCommand=()=>{};
 window.GM_addStyle=css=>{const s=document.createElement("style");s.textContent=css;document.head.append(s);return s;};
-try{localStorage.setItem("dp_dkokto_last_seen_version","1.43.8");
+try{localStorage.setItem("dp_dkokto_last_seen_version","1.43.9");
 localStorage.setItem("dkokto_rules_host_v1",JSON.stringify({[location.hostname]:"dp"}));
 if(!localStorage.getItem("dkokto_trackers_v1"))localStorage.setItem("dkokto_trackers_v1",JSON.stringify({enabled:["aither","blu","ptp","hdb"],search:{},custom:[],popups:{}}));
 
 }catch{}
 </script></head><body>
-<div class="demo-strip"><nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/torrents/">Review demo</a><a href="/torrents/101/">Torrent demo</a><a href="/requests/">Request demo</a><a href="/rules.html">Rules builder</a><a href="/GUIDE.md">Guide</a><a href="/CHANGELOG.md">Release notes</a></nav><p><b>Torrent Inspector 1.43.8 · Demo</b></p>
-<p><b>A torrent page</b> — an anime season pack whose files agree with its name: twelve episodes, E01 to E12, and the name says S01. The page’s original language is Japanese and the report’s only audio track is English, so the badge asks whether this is a dub that should say so — a question, because a report cannot tell a dub from a commentary track. Made-up releases, the real 1.43.8 script; nothing here is a tracker, and nothing is fetched or sent.</p></div>
+<div class="demo-strip"><nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/torrents/">Review demo</a><a href="/torrents/101/">Torrent demo</a><a href="/requests/">Request demo</a><a href="/rules.html">Rules builder</a><a href="/GUIDE.md">Guide</a><a href="/CHANGELOG.md">Release notes</a></nav><p><b>Torrent Inspector 1.43.9 · Demo</b></p>
+<p><b>A torrent page</b> — an anime season pack whose files agree with its name: twelve episodes, E01 to E12, and the name says S01. The page’s original language is Japanese and the report’s only audio track is English, so the badge asks whether this is a dub that should say so — a question, because a report cannot tell a dub from a commentary track. Made-up releases, the real 1.43.9 script; nothing here is a tracker, and nothing is fetched or sent.</p></div>
 <nav class="top-nav">TRACKER / SOME SHOW (2024)</nav>
 <main>
 <h1 class="torrent__name">Some Show (2024)</h1>
@@ -55,7 +55,7 @@ if(!localStorage.getItem("dkokto_trackers_v1"))localStorage.setItem("dkokto_trac
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.43.8
+// @version      1.43.9
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       DKOKTO
 // This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,
