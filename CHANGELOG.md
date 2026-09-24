@@ -9,6 +9,13 @@ was named until 1.25.0.
 
 ---
 
+## 1.43.13 — draggable Review panel
+
+- Drag the header with mouse, pen or touch; keep the dialog within the viewport.
+- Ignore header buttons, stop on pointer release/cancel, and double-click to centre.
+- Reopening or resizing recentres the dialog. No storage or dependency added.
+- Shared with personal Scene Edition 1.49.13.
+
 ## 1.43.12 — book search rollback and MidnightScene AV1
 
 - Remove automatic ISBN selection from Exact title in Review and legacy tracker

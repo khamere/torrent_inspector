@@ -1,5 +1,8 @@
 <!-- Source check workflow updated in 1.43.8. -->
 
+**Move Review:** drag its title bar. Double-click the title bar to centre it.
+Reopening or resizing also restores the centred position.
+
 **Exact title searches:** games keep their release group once. Books use the
 compact title/year/group query; automatic ISBN selection for tracker searches is
 disabled. Goodreads and Google Books still use a valid ISBN from the title or
