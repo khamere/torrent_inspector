@@ -1,4 +1,4 @@
-# Torrent Inspector 1.42.5
+# Torrent Inspector 1.43.6
 
 ![Torrent Inspector — release naming checks, the MediaInfo Inspector and a cross-tracker lookup. It reads the page; it does not act.](images/banner.png)
 
@@ -18,11 +18,88 @@ FileList for the lookups and the source check. Naming rules for DarkPeers, Zenit
 OnlyEncodes+, HomieHelpDesk, MidnightScene and InfinityHD ship with it; any other tracker is added by
 pasting its rules, as data, never as code.
 
+## New in 1.43.6
+
+The website now leads with the unified review workflow. Its tutorials, screenshots,
+demo instructions and navigation match the current panel. The install link downloads
+the script bundled with that site release, and the site includes the current guide
+and changelog. Upload the complete website folder together to publish the update.
+
+## New in 1.43.5
+
+Fixed a false Dual-Audio warning when the page says **Primary Language es** and its
+audio tracks include **Spanish** and **English**. The field label is removed before
+checking; ISO language codes and their names are compared consistently. Genuine
+missing-original and English-original warnings remain.
+
+## New in 1.43.4
+
+Source check shows the current torrent's filename, Unique ID, folder and size at the
+top, with the available full filename preserved. Tracker comparison rows start open,
+so their filenames, ID evidence and return links are visible immediately. Collapse
+individual rows when finished. Automatic notices remain compact.
+
+## New in 1.43.3
+
+**Source check** in the tools bar now opens the unified panel directly. Its Source check
+tab shows every current comparison, with separate counts for ID matches, name/size
+matches and ID mismatches. Expand a tracker row for the full filename, IDs and link.
+The current fingerprint and the last saved check from another page are folded below,
+so a single older answer is no longer mistaken for the complete source results.
+
+Automatic source notices, if enabled, also use compact expandable rows. Your existing
+**Only show this when I press Source check** preference is kept.
+
+## New in 1.43.2
+
+Torrent pages are quieter now. Under the release name, **Inspect torrent**, **Find other
+releases** and **Compare releases** replace the rows of lookup buttons. IMDb, TMDB and
+TVDb remain small reference links where the category makes them useful.
+
+**Find other releases** opens the new **Find releases** tab in the unified panel. Edit
+the search, choose **Title** or **Exact release**, and use one grid of your enabled
+trackers. Title searches keep the season or episode. Quality choices add a search term;
+exact searches keep the full release name. **More lookup sites** holds srrDB and the
+other reference sites, plus Copy title. The same search controls are available on
+TorrentLeech and FileList. Request pages keep their existing cross-check tools.
+
+![Find releases with an editable query, match modes, quality filters and tracker grid](screenshots/18-find-releases.png)
+
+## New in 1.43.1
+
+**Inspect torrent** on an individual torrent page now opens the same unified Review
+panel as the listing. There is one inspection button in the tools bar. The panel also
+works when no naming rule set is selected: MediaInfo, Source check and My notes stay
+available, while Findings clearly says that naming checks were not run.
+
+MediaInfo now has summary cards, video details and audio/subtitle tables. The full
+technical report is folded below them. Pasted reports and comparisons remain available
+through **More tools & naming template → Open Inspector for advanced tools**.
+
+## The unified review workflow
+
+**Review loaded titles** opens one panel with **Findings**, **MediaInfo**, **Find releases**, **Source check**
+and **My notes** tabs. On a torrent page, use **Inspect torrent** or click its naming badge.
+The queue follows actual links from the listing you loaded. **Previous** and **Next unchecked**
+continue the panel on the next page; your tab, manual checks and private notes stay with the
+torrent. Notes save as you type, and older Inspector notes remain available.
+
+**Reviewed by me** records your progress locally. It does not change the naming verdict,
+hide errors, approve a torrent or invoke **Mark as conforming**. The report button stays in
+the footer. Naming templates and the full Inspector are under **More tools & naming template**.
+
+**Settings & tools** keeps automatic checks, audits, tracker choices, rules, backups and
+logs together. The full Inspector still handles pasted reports and detailed comparisons.
+
 ## What it looks like
 
 Every image here is rendered from this project's own offline demo pages — synthetic release
 names, no tracker branding, no usernames, no ratios, nothing from a real site. They are
 regenerated from the current build, so they cannot drift away from what the script does.
+
+**The Review panel** keeps the queue, evidence tabs and next step together:
+
+![The unified Review panel with its saved queue, evidence tabs and review actions](screenshots/16-review-panel.png)
 
 **On a listing** — a badge per loaded title, and the bar that turns them on:
 
@@ -37,24 +114,29 @@ A banned or low-quality group is named with the list it is on, and the reason th
 
 ![A badge reporting a banned release group](screenshots/03-banned-group.png)
 
-**On a torrent page** — the badge on the release name, the cross-tracker lookup row, the
-**vs** capture button, and the file marker with the exact byte count:
+**On a torrent page** — the badge on the release name, the compact inspection and lookup actions, the
+**Compare releases** button, and the file marker with the exact byte count:
 
-![A torrent page with the badge, lookup row and file marker](screenshots/05-torrent-page.png)
+![A torrent page with the badge, compact actions and file marker](screenshots/05-torrent-page.png)
 
 **The source check** — open the same release on a second tracker and the banner says whether
 it is the same file: Unique ID, file name, size to the byte, and a link back:
 
 ![The source-check banner: same release as the other tracker's upload](screenshots/14-source-banner.png)
 
-Back on the first page, the badge's dialog says what was remembered and what the other
-tracker answered. The **Source check** button in the tools bar brings the banner back:
+The **Source check** button in the tools bar opens the unified panel with every current
+comparison in an expandable row. The current fingerprint and the last saved answer
+from another page are labelled separately below the comparisons:
 
 ![The Source check section of the badge dialog](screenshots/15-source-section.png)
 
 ![The tools bar: Nav, Inspect torrent, Source check](screenshots/13-tools-bar.png)
 
-**The Inspector** reads the MediaInfo already on the page and checks the name against it:
+**MediaInfo on a torrent page**, in the unified panel:
+
+![MediaInfo summary cards, video details and track tables in the Review panel](screenshots/17-detail-mediainfo.png)
+
+**The advanced Inspector** reads the MediaInfo already on the page and checks the name against it:
 
 ![The Inspector's naming review](screenshots/06-inspector-naming.png)
 
@@ -102,11 +184,7 @@ JSON somewhere before you update.
 - **This file** — what it does, and what changed in the latest versions.
 - **GUIDE.md** — the walkthrough, written for this script: the badges, the rules, the torrent
   page, the templates, the Inspector, and what it will never do. Start people here.
-- **GUIDE-1.22.md** — the older walkthrough, written for the fuller DKOKTO Scene Edition. Kept
-  for reference; its theme, artwork and chat-game sections do not apply to this script.
 - **TRACKER-RULES.md** — how to add a tracker of your own, as a rules profile.
-- **CHANGES-1.12.4-to-1.22.3.md** — what changed across the older versions, grouped by what
-  it does.
 - **CHANGELOG.md** — every version, newest first, in more detail than here. The version
   notes below stop at 1.39.0; everything earlier is there.
 
@@ -153,6 +231,15 @@ rows, the same links. On a page where no banner appeared, it puts a small box in
 banner's place saying what the page was looked over for and why nothing matched, so a
 quiet page is never a mystery. Close works on both. Nothing is fetched by pressing it; it
 shows what the page already told the script.
+
+## Fixed in 1.42.6
+
+**The profile builder can say everything a profile can.** Three fields had crept into the
+format that the *Build one* form — in the script and on the rules page — had no box for:
+a tracker that names its books its own way, one that names its music its own way, and one
+with a folder standard for audiobooks. A profile with them pasted in fine, but you could
+not build one. The form now has the three boxes and a field for the resolutions the
+tracker's guide lists, and the *Added trackers* summary says when a profile uses them.
 
 ## Fixed in 1.42.5
 
@@ -327,31 +414,32 @@ rule of the tracker you are on, a green ✓ when it passes the checks the script
 amber ? when there is something you need to decide yourself. Click one and it says what it
 found, what it could not decide, what the tracker's template asks for, and which manual
 checks are left — each of those with a tick box that stays ticked for that torrent. A banned
-or low-quality group is named with the list it is on. A bar at the top keeps the counts and
-the on/off switch, and the badges follow filtering and paging without any request of their
-own.
+or low-quality group is named with the list it is on. The bar keeps Rules, Review loaded
+titles and counts visible. Settings & tools contains the on/off switch, setup and audits.
+The badges follow filtering and paging without any request of their own.
 
-**On a torrent page.** The same badge on the release name, then a row of lookups — this
-tracker's own search, the exact name, IMDb, TMDB, TVDb, Trakt, JustWatch, Blu-ray.com,
-srrDB — then the other trackers you are on, with **Search all**, and the same trackers
-searched for the exact release name. A marker under the name reads the file list and says
-what the torrent actually holds, to the byte. **vs** captures this release so you can open
+**On a torrent page.** The same badge on the release name, compact metadata links and three
+actions: **Inspect torrent**, **Find other releases** and **Compare releases**. Find releases
+holds the editable query, Title / Exact release modes, quality choices and tracker grid;
+More lookup sites keeps the remaining references. A marker reads the file list and says
+what the torrent actually holds, to the byte. **Compare releases** captures this release so you can open
 another and compare the two side by side. The page's own MediaInfo is read and checked
 against the name, and the file list is read and checked against the name too, so a pack
 that says S01 and holds three episodes is caught.
 
 **The source check.** Opening a torrent remembers what makes the upload what it is — the
 report's Unique ID, the file name, the folder, the files and the sizes — for three days. Open
-the same release on another tracker you are on and a banner there says whether it is the same
-file, item by item, with the IDs shown so you can compare by eye; back on the first page the
-badge's dialog carries the answer, and a Unique ID that turned out different is a red finding.
-If no banner appears, the dialog says what the page was searched for and why nothing
-matched. A hand-edited report — one whose Unique ID's decimal and hex halves disagree — and a
+the same release on another tracker and **Source check** opens the unified comparison tab.
+Current filename, ID and size appear above expanded tracker rows. ID matches, name/size-only
+matches and mismatches are distinguished, and the last saved check on another page is labelled
+separately. Automatic notices can be hidden using the quiet checkbox. When nothing matches,
+the tab explains what was checked. A report whose Unique ID's decimal and hex halves disagree — and a
 report whose file size is not the file on the page are caught on the page itself.
 
-**The Inspector** (the floating button, or Alt+Shift+I) is the same check for a report you
-paste in, with the General, Video, Audio and Text tracks laid out, a naming review you can
-copy or save as text, and private notes per torrent that stay in your browser.
+**Inspect torrent** opens unified Review on a supported torrent page, with Findings,
+MediaInfo, Find releases, Source check and My notes. MediaInfo shows summary cards and
+track tables. Pasted reports and advanced inspection remain under Findings → More tools →
+Open Inspector for advanced tools. The standalone shortcut is Alt+Shift+I.
 
 **Rules.** DarkPeers, Zenith, LUME, OnlyEncodes+, HomieHelpDesk, MidnightScene and InfinityHD ship with
 the script and are in force on their own trackers. Any other tracker is added by pasting its

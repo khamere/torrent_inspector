@@ -9,6 +9,144 @@ was named until 1.25.0.
 
 ---
 
+## 1.43.6 — website and release synchronization
+
+- Put the unified Review panel first on the website; update queue, lookup, source and
+  setup tutorials, captions and demo introductions to use the current controls.
+- Share navigation and version labels across the home page, rules builder and demos.
+- Ship the userscript, GUIDE.md and CHANGELOG.md with the website. Install links use
+  that local userscript so the download cannot silently point to an older GitHub build.
+- Version screenshot URLs and constrain the workflow gallery on narrow screens.
+- Remove references to the retired legacy walkthrough and older grouped change notes
+  from the public documentation, as requested.
+- Userscript behavior is unchanged from 1.43.5; this release synchronizes delivery.
+
+## 1.43.5 — original-language comparison correction
+
+- Strip the Primary Language label before passing the page value to naming and page
+  checks. Treat existing ISO language aliases (including es/spa/Spanish) consistently.
+- Fix the false missing-original warning reported for Queen of Coal / Miss Carbón,
+  with Spanish and English audio. Keep genuine mismatches and English-original
+  Dual-Audio findings, including after the page changes.
+- Invalidate cached page findings when loaded evidence changes, and update wording
+  when a finding keeps its code but names a different language or track.
+
+## 1.43.4 — source details visible immediately
+
+- Open current torrent details above the comparisons, preserving the full filename
+  when the loaded file list provides one. Keep ID, folder and size visible.
+- Start tracker comparison rows expanded in Source check, showing filename, exact ID
+  evidence and return link without another click. Rows can still be collapsed.
+- Keep automatic notices compact and the older saved answer separately labelled.
+
+## 1.43.3 — one complete Source check view
+
+- Route the tools-bar Source check button into the unified Source check tab on supported
+  UNIT3D detail pages. Other pages use a matching source dialog instead of reviving the
+  old unbounded popup. Dismiss the current automatic notice when opening the full view.
+- Show all comparisons against the current loaded page using the existing source
+  matcher, not only the last saved answer about this torrent. Separate ID matches,
+  name/size-only matches, ID mismatches and cases needing review.
+- Use shared expandable evidence rows in the panel and optional automatic notices.
+  Keep exact filenames, sizes, IDs and safe tracker links inside each row. Bound the
+  automatic notice's height; preserve the existing quiet preference and storage format.
+- Label the current fingerprint and last saved check on another page separately.
+  Stop claiming that every match displayed a banner when notices were suppressed.
+- Reproduce eight remembered trackers plus one older saved result in both browser
+  editions. Cover mismatch refresh, missing evidence, empty state, mobile width,
+  preference preservation and exclusion of the panel's own text from comparisons.
+- Shared with personal Scene Edition 1.49.3. No tracker rule or matching threshold changed.
+
+## 1.43.2 — shared lookup controls and a quieter torrent page
+
+- Replace the four torrent lookup rows with compact metadata links and three actions:
+  Inspect torrent, Find other releases and Compare releases. Keep comparison capture,
+  source checking, file markers and the advanced Inspector working through their existing tools.
+- Add Find releases as the fifth Review tab, including keyboard navigation and restored
+  tab selection. Use one shared search pane on UNIT3D, TorrentLeech and FileList pages.
+- Build searches from an editable title or exact release name. Keep the episode in title
+  searches and apply quality terms to every destination. Edited searches use the text
+  query instead of an IMDb shortcut. Retain catalogue addresses and category eligibility.
+- Show every eligible enabled tracker in a responsive grid, with the existing chooser,
+  Search all and blocked-popup feedback. Move reference sites and Copy title into More
+  lookup sites. Read metadata IDs only from the actual torrent page, never a listing.
+- Remove the obsolete lookup-row builders, exact-name row and unused variants helper.
+  Remove the description-copy prototype modules, sample, tests and guarded Scene hook:
+  neither build shipped that feature. Keep the legacy storage exclusion; erase no data.
+- Shared with personal Scene Edition 1.49.2. No tracker rules or network operations added.
+
+## 1.43.1 — the unified panel on individual torrent pages
+
+- Route the normal Inspect torrent launcher and the standalone Alt+Shift+I shortcut
+  into the unified Review panel on supported UNIT3D detail pages. Remove the extra
+  Review torrent launcher. Other pages retain the existing pasted-report Inspector.
+- Open Review without a selected naming rule set. The neutral Findings state and
+  copied report explicitly say checks were not run; no foreign naming guide, badge or
+  conforming action is applied. MediaInfo, source evidence and private notes remain usable.
+- Keep progress made without rules in a reserved context distinct from every valid
+  tracker-profile key. Notes remain available when the rule set changes.
+- Present MediaInfo using the existing parser: four summary cards, video details,
+  audio/subtitle tables and a collapsible technical report. Track tables scroll on narrow
+  screens and show at most 100 rows; the report retains the parsed tracks.
+- The Scene Edition's home and away launchers follow the same flow. Advanced pasted
+  reports and comparisons remain inside More tools. Shared with Scene Edition 1.49.1.
+- Extend navigation regressions to cover the default detail launcher, no-rules mode,
+  truthful copied reports, rule-context changes and a locally fulfilled YU-Scene-shaped
+  fixture. No live tracker was contacted and no tracker rules or new selectors were added.
+
+## 1.43.0 — one Review panel and a saved queue
+
+- review-core.js and review-ui.js: bring the existing findings, MediaInfo reader, source
+  section and private notes into four tabs. Copy report and local review progress stay in
+  the footer. Templates and advanced tools are folded away. Keyboard tabs, focus and
+  narrow-screen layout use the script's own dialog.
+- listing.js and detail.js: Review loaded titles captures up to 200 actual same-origin
+  torrent links; Review torrent opens the panel on a supported detail page. Explicit queue
+  navigation reopens it once on the selected destination, with a two-minute continuation
+  limit. No numeric ID guessing, crawling or added requests.
+- Local progress and tab state are isolated by origin, torrent, rule set and release name.
+  Reviewed by me never changes a verdict or calls the older Mark as conforming feature.
+- Notes save as typed and remain compatible with the old Inspector. New note overrides
+  include the tracker origin; clearing one does not resurrect its legacy note. Backup
+  includes both new keys and omits private review notes when asked.
+- Storage bounds: eight queues, 200 links per queue, 500 progress records, 200 note entries,
+  20,000 characters per note and 200,000 note characters in total. Oldest entries leave
+  first. Reads validate data and writes report failure. No tracker rules changed.
+- New core checks and full-page browser navigation checks cover restoration, sparse links,
+  note compatibility, unchanged red verdicts, keyboard use and mobile layout. Fixture
+  runners now fail on uncaught errors and counts below the recorded baseline.
+- Shared implementation also ships in personal Scene Edition 1.49.0.
+
+## 1.42.7 — fewer controls between you and the review
+
+- listing.js: group automatic checks, tracker choices, internal groups, tracker rules,
+  backup and log actions in a closed native Settings & tools disclosure. Keep the active
+  rules, audit action and result counts visible. The tracker chooser uses the existing
+  settings dialog and storage. No new storage keys.
+- listing.js and detail.js: place report/open actions before the long findings.
+- capture.js and inspector-ui.js: label the capture entry point Compare releases and
+  use that wording in the Inspector's empty-capture message.
+- inspector.css and scene.css: wrap the settings controls on narrow screens; keep all
+  styling inside the script's own UI. Shared modules copied to Scene 1.48.3.
+- Local browser runners accept PYTHON and PLAYWRIGHT_CHROMIUM_EXECUTABLE overrides,
+  allowing verification with installed runtimes on Windows.
+- Existing checks exposed three workspace inconsistencies: the unbuilt description
+  prototype's key was missing its backup exclusion, Scene startup called its absent UI,
+  and the title finder missed a known heading after 6,000 candidates. The prototype is
+  explicitly excluded, its optional startup call guarded, and known name headings and
+  their inner text checked before the bounded general walk.
+
+## 1.42.6 — the profile builder learns books, music, audiobooks and resolutions
+
+- profiles.js `build()` takes `ownBooks`, `ownMusic`, `audiobookFolders` and
+  `resolutions` (a string or list; entries not of the form `\d{3,4}[pi]` dropped) and
+  writes `books`, `music`, `audiobooks` and `resolutions` accordingly — before, it wrote
+  none of the three and an empty list. profiles-ui.js: a "Where this tracker goes its own
+  way" fieldset with the three boxes and a resolutions field; the *Added trackers* summary
+  adds "audiobook folder standard" and the resolution list. site/rules-page.html: the same
+  fieldset and field, wired into the draft and the untouched test; the Check summary's
+  Templates line names the folder standard and the resolutions. profiles-check: the builder test gains the defaults and the all-four-set case (938 in all); rules-page-check +3 (55). Both seen red first.
+
 ## 1.42.5 — the demo: a page for every torrent and request
 
 - site/build-site.mjs: `TORRENTS` (101–106) and `REQUESTS` (12–14) tables; a shell()
@@ -1096,7 +1234,7 @@ was named until 1.25.0.
   Export your added trackers first if you have set up a lot.
 - **A new GUIDE.md**, written for this script rather than for the fuller Scene Edition: the
   badges, the rules, the torrent page, the templates, the Inspector, what it stores and what it
-  will never do. `GUIDE-1.22.md` stays for reference and now says at the top what it is.
+  will never do.
 - **The README was rewritten at both ends.** A real front page — what it is, how to install it,
   what to read — and the module list, the suite list and the check reports brought up to date.
 - **A correction.** The README claimed the script "matches only HTTPS darkpeers.org and

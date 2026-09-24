@@ -89,13 +89,18 @@
     border-left:3px solid var(--violet-2); border-radius:0 8px 8px 0; color:var(--dim); font-size:14.5px}
   footer{padding:22px 0 40px; border-top:1px solid var(--line); color:var(--faint); font-size:14px}
   @media (max-width:560px){ .grid{grid-template-columns:1fr} }
+    .site-nav{display:flex;flex-wrap:wrap;gap:10px 18px;margin:0 0 24px;font-size:14px}
+    .site-nav a{color:var(--violet-2,#c79bf0);text-decoration:none;padding:6px 0}
+    .workflow-shots{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+    .shots figure{min-width:0}
 </style>
 </head>
 <body>
 
 <header class="top">
   <div class="wrap">
-    <p class="eyebrow">Torrent Inspector 1.42.5</p>
+    <nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/torrents/">Review demo</a><a href="/torrents/101/">Torrent demo</a><a href="/requests/">Request demo</a><a href="/rules.html">Rules builder</a><a href="/GUIDE.md">Guide</a><a href="/CHANGELOG.md">Release notes</a></nav>
+    <p class="eyebrow">Torrent Inspector 1.43.6</p>
     <h1>Tracker rules</h1>
     <p class="lede">
       Build a rules profile for a tracker, check one you already have, and run a release name
@@ -137,6 +142,15 @@
           <label class="field"><span>Naming templates</span>
             <select id="f-base"></select>
             <small>Whichever this tracker's naming is closer to. The banned list and the rules are yours either way.</small></label>
+          <fieldset id="f-own"><legend>Where this tracker goes its own way</legend>
+            <label><input type="checkbox" id="f-own-books"> <span>Names books its own way</span></label>
+            <label><input type="checkbox" id="f-own-music"> <span>Names music its own way</span></label>
+            <label><input type="checkbox" id="f-ab-folders"> <span>Has a folder standard for audiobooks</span></label>
+            <small>The shared book or music template then stands aside and only the rules judge them; the folder standard has a torrent page's file list checked too (one root folder, numbered tracks, no NFO/TXT/URL).</small>
+          </fieldset>
+          <label class="field"><span>Resolutions the guide lists (optional)</span>
+            <input id="f-resolutions" placeholder="720p 1080p 2160p">
+            <small>Space or comma separated. Left empty, the base's list applies; a resolution not on the list is an error.</small></label>
           <label class="field"><span>Standing note (optional)</span>
             <textarea id="f-notes" rows="2" placeholder="Anything true of every upload there that a title cannot show."></textarea>
             <small>Shown as a reminder on every check. It never turns a badge red.</small></label>
@@ -211,7 +225,7 @@
 <footer>
   <div class="wrap">
     <p><a href="index.html">← Torrent Inspector</a> · profile format documented in
-      <code>TRACKER-RULES.md</code> · built from the modules of 1.42.5</p>
+      <code>TRACKER-RULES.md</code> · built from the modules of 1.43.6</p>
   </div>
 </footer>
 
@@ -380,7 +394,12 @@ const DKOKTO_INSPECTOR = (() => {
         if(!r.audio.length)lines.push('Audio: no tracks reported');if(!r.text.length)lines.push('Subtitles: no tracks reported (not proof that none exist)');
         const checks=warnings(name,file);lines.push(...checks.map(w=>'Review: '+w),'Based on supplied MediaInfo; source and REMUX claims are not independently verified.');return lines.join('\n');
     }
-    function readPage(doc){return [...doc.querySelectorAll('.torrent-mediainfo-dump code,.torrent-mediainfo-dump pre,code[x-ref="mediainfo"]')].filter(n=>!n.closest('#dkokto-hub')).map(n=>n.textContent.trim()).filter((t,i,a)=>t&&a.indexOf(t)===i);}
+    // The dump where UNIT3D puts it, and '[x-ref="mediainfo"]' on whatever element carries
+    // it, which is how ZenGuard 1.9.1 reads Zenith (notes/zenguard-1.9.1-excerpts.js,
+    // ZENITH_SITE.selectors.mediainfo — not verified against the live page). Where one
+    // carrier wraps another, the innermost is the report; the wrapper would add its heading.
+    function readPage(doc){const all=[...doc.querySelectorAll('.torrent-mediainfo-dump code,.torrent-mediainfo-dump pre,[x-ref="mediainfo"]')].filter(n=>!n.closest('#dkokto-hub'));
+        return all.filter(n=>!all.some(o=>o!==n&&n.contains(o))).map(n=>n.textContent.trim()).filter((t,i,a)=>t&&a.indexOf(t)===i);}
     function searchLink(name){const words=str(name).replace(/\s*[([](?:18|19|20)\d{2}[)\]]/g,'').replace(/[’']/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim().split(/\s+/).filter(Boolean);return words.length?'https://www.srrdb.com/browse/'+words.map(encodeURIComponent).join('/')+'/1':'https://www.srrdb.com/';}
     return {parse,rows,warnings,summary,readPage,glossary,searchLink};
 })();
@@ -962,13 +981,22 @@ const DKOKTO_PROFILES = (() => {
             forbid:'(?:^|[ .])(?:RAR|ZIP|7z|R\\d{2})(?=$|[ .-])',
             message:'This tracker takes no archived uploads.'}}
     ];
-    // A profile assembled from the form, ready to validate like any other.
-    function build({key,label,hosts,base,groupList,recipes=[],notes=[]}={}) {
+    // A profile assembled from the form, ready to validate like any other. The three "own
+    // way" boxes and the resolutions list were added 23 Sep 2026: a tracker that names its
+    // books or music its own way (HomieHelpDesk, MidnightScene), one with a folder standard
+    // for audiobook payloads, or one whose guide lists the resolutions it takes, could not
+    // be built from the form before — only pasted as JSON.
+    function build({key,label,hosts,base,groupList,recipes=[],notes=[],ownBooks=false,ownMusic=false,audiobookFolders=false,resolutions=''}={}) {
+        const listed=(Array.isArray(resolutions)?resolutions:String(resolutions||'').split(/[\s,]+/))
+            .map(value=>String(value).trim()).filter(value=>/^\d{3,4}[pi]$/i.test(value));
         return {format:FORMAT,version:1,key:String(key||'').toLowerCase().trim(),label:String(label||'').trim(),
             base:base==='zenith'?'zenith':'dp',
+            books:ownBooks?'own':'base',
+            music:ownMusic?'own':'base',
+            audiobooks:audiobookFolders?'folder-standard':'base',
             hosts:String(hosts||'').split(/[\s,]+/).map(host=>host.trim()).filter(Boolean),
             groups:{banned:parseGroupList(groupList),conditional:[],sources:[]},
-            resolutions:[],
+            resolutions:listed,
             rules:RECIPES.filter(recipe=>recipes.includes(recipe.id)).map(recipe=>recipe.rule),
             notes:notes.filter(Boolean).map((message,index)=>({code:'note-'+(index+1),profiles:['any'],message}))};
     }
@@ -2925,11 +2953,13 @@ const DKOKTO_LISTING_CORE = ((naming,rules) => {
     key:$('f-key').value,label:$('f-label').value,hosts:$('f-hosts').value,base:$('f-base').value,
     groupList:$('f-groups').value,
     recipes:[...boxes].filter(([,box])=>box.checked).map(([id])=>id),
-    notes:$('f-notes').value.split(/\n+/).map(line=>line.trim()).filter(Boolean)});
+    notes:$('f-notes').value.split(/\n+/).map(line=>line.trim()).filter(Boolean),
+    ownBooks:$('f-own-books').checked,ownMusic:$('f-own-music').checked,audiobookFolders:$('f-ab-folders').checked,resolutions:$('f-resolutions').value});
 
   let built=null;
-  const FIELDS=['f-key','f-label','f-hosts','f-groups','f-notes'];
-  const untouched=()=>FIELDS.every(id=>!$(id).value.trim())&&![...boxes.values()].some(box=>box.checked);
+  const FIELDS=['f-key','f-label','f-hosts','f-groups','f-notes','f-resolutions'];
+  const OWN=['f-own-books','f-own-music','f-ab-folders'];
+  const untouched=()=>FIELDS.every(id=>!$(id).value.trim())&&![...boxes.values()].some(box=>box.checked)&&!OWN.some(id=>$(id).checked);
   // Which of the two required fields are simply blank. This is about the form, not about the
   // format: a validator message written for a key that is wrong ("must be 2–24 characters")
   // reads as a telling-off on a field you have not reached yet.
@@ -2954,8 +2984,9 @@ const DKOKTO_LISTING_CORE = ((naming,rules) => {
     else say($('b-say'),'This profile is complete and would be accepted.'+
       (check.warnings.length?' Worth a look: '+check.warnings.join(' · '):''),'good');
   }
-  for(const id of ['f-key','f-label','f-hosts','f-groups','f-notes'])$(id).oninput=draw;
+  for(const id of ['f-key','f-label','f-hosts','f-groups','f-notes','f-resolutions'])$(id).oninput=draw;
   $('f-base').onchange=draw;
+  for(const id of OWN)$(id).onchange=draw;
 
   const copy=async(text,where)=>{
     try{await navigator.clipboard.writeText(text);say(where,'Copied.','good');}
@@ -3010,7 +3041,7 @@ const DKOKTO_LISTING_CORE = ((naming,rules) => {
     const facts=[
       ['Name',profile.label+' ('+profile.key+')'],
       ['Applies on',profile.hosts.length?profile.hosts.join(', '):'no address given — you would pick it from the Rules list'],
-      ['Templates',(profile.base==='zenith'?'Zenith':'DarkPeers')+(profile.books==='own'?' — books named this tracker’s own way':'')+(profile.music==='own'?' — music named its own way':'')],
+      ['Templates',(profile.base==='zenith'?'Zenith':'DarkPeers')+(profile.books==='own'?' — books named this tracker’s own way':'')+(profile.music==='own'?' — music named its own way':'')+(profile.audiobooks==='folder-standard'?' — audiobooks to a folder standard':'')+(profile.resolutions.length?' — resolutions '+profile.resolutions.join(', '):'')],
       ['Rules',String(profile.rules.length)],
       ['Banned groups',String(profile.banned.length)+
         (profile.conditional.length?' (+'+profile.conditional.length+' conditional)':'')+

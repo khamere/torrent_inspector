@@ -111,33 +111,36 @@
     .shots figcaption{color:#b9a7c7;font-size:13.5px;line-height:1.55}
     .shots .wide{grid-column:1/-1}
     @media(max-width:640px){.shots{grid-template-columns:1fr}}
+    .site-nav{display:flex;flex-wrap:wrap;gap:10px 18px;margin:0 0 24px;font-size:14px}
+    .site-nav a{color:var(--violet-2,#c79bf0);text-decoration:none;padding:6px 0}
+    .workflow-shots{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+    .shots figure{min-width:0}
 </style>
 </head>
 <body>
 
 <header class="top">
   <div class="wrap">
-    <p class="eyebrow">Tampermonkey userscript · UNIT3D trackers</p>
+    <nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/torrents/">Review demo</a><a href="/torrents/101/">Torrent demo</a><a href="/requests/">Request demo</a><a href="/rules.html">Rules builder</a><a href="/GUIDE.md">Guide</a><a href="/CHANGELOG.md">Release notes</a></nav>
+    <p class="eyebrow">Tampermonkey userscript · unified review workflow</p>
     <h1>Torrent Inspector<span class="dot">.</span></h1>
-    <p class="lede">
-      It reads the page you are on. Every release name is checked against the tracker's naming
-      rules, the MediaInfo is checked against what the name claims, the group tag links to where
-      that group is internal, and a release you open on a second tracker is checked against the
-      one you came from. Nothing is fetched, posted or changed.
-    </p>
+    <p class="lede">Review loaded torrents in one panel. Check naming and MediaInfo, find other
+      releases, compare source evidence and keep your notes together. Start from a listing or
+      open a torrent directly. Searches open when you click; nothing is posted to a tracker.</p>
     <ul class="pills">
-      <li class="pill"><b>1.42.5</b></li>
+      <li class="pill"><b>1.43.6</b></li>
       <li class="pill"><b>45</b> UNIT3D trackers it runs on · <b>63</b> it can search · TorrentLeech and FileList too</li>
       <li class="pill">No requests, no posting</li>
       <li class="pill">Nothing judged without that tracker’s rules</li>
       <li class="pill">Everything stays in your browser</li>
     </ul>
     <div class="cta">
-      <a class="btn primary" href="https://raw.githubusercontent.com/khamere/torrent_inspector/main/Torrent-inspector.user.js" rel="noreferrer noopener">Install the script</a>
+      <a class="btn primary" href="Torrent-inspector.user.js" rel="noreferrer noopener">Install the script</a>
       <a class="btn" href="torrents/101/">Try it without installing</a>
       <a class="btn" href="https://github.com/khamere/torrent_inspector/blob/main/Torrent-inspector.user.js" rel="noreferrer noopener">View the source</a>
     </div>
     <nav aria-label="On this page"><ul class="toc">
+      <li><a href="#review">Unified panel</a></li>
       <li><a href="#shots">What it looks like</a></li>
       <li><a href="#badges">The badges</a></li>
       <li><a href="#source">Source check</a></li>
@@ -156,24 +159,44 @@
 <section id="start">
   <div class="wrap">
     <h2>What you get, in one minute</h2>
-    <p class="sub">Install it, open a listing, and four things are different.</p>
+    <p class="sub">From a loaded listing to a reviewed torrent, with setup kept in one place.</p>
     <div class="grid">
       <div class="card lead">
-        <h3>1 · Every title is judged</h3>
-        <p>A <span style="color:var(--green)">✓</span>, <span style="color:var(--red)">✕</span> or <span style="color:var(--amber)">?</span> beside each release name. Hover for the reason; click for the full explanation, the corrections and a copyable report.</p>
+        <h3>1 · Start a review queue</h3>
+        <p>A <span style="color:var(--green)">✓</span>, <span style="color:var(--red)">✕</span> or <span style="color:var(--amber)">?</span> beside each release name. Choose <b>Review loaded titles</b> to save the loaded links, or click a badge to open Findings. Use <b>Next unchecked</b> to continue.</p>
       </div>
       <div class="card lead">
-        <h3>2 · The group is a link</h3>
-        <p>The <span class="tag">-GROUP</span> at the end of a name opens where that group is internal, its other releases here, and the same search on your trackers.</p>
+        <h3>2 · Find other releases</h3>
+        <p><b>Find other releases</b> opens one search pane: Title or Exact release, quality choices, an editable query and your saved tracker grid.</p>
       </div>
       <div class="card lead">
-        <h3>3 · The MediaInfo is checked</h3>
+        <h3>3 · Inspect the evidence</h3>
         <p>On a torrent page, what the name claims is compared with the report the uploader posted — resolution, codecs, audio, HDR, languages.</p>
       </div>
       <div class="card lead">
-        <h3>4 · The source is checked</h3>
-        <p>Open the same release on a second tracker and a banner says whether it is the same file: Unique ID, file name, size to the byte.</p>
+        <h3>4 · Record your progress</h3>
+        <p>Read <b>Source check</b>, add private notes and tick <b>Reviewed by me</b>. It records that you looked; it does not approve the torrent or hide naming errors.</p>
       </div>
+    </div>
+  </div>
+</section>
+
+<section id="review">
+  <div class="wrap">
+    <h2>One panel for the whole review</h2>
+    <p>Language checks now recognize <b>Primary Language es</b> as Spanish, fixing a false Dual-Audio warning when Spanish and English audio are both present.</p>
+    <p><b>Source check</b> in the tools bar opens this same panel. Its source tab shows the current filename, ID, folder and size above every comparison. Tracker rows start expanded with filename, ID evidence and return link, with separate counts for ID matches, name/size matches and mismatches. The last saved check on another page is clearly labelled below.</p>
+    <p>Individual torrent pages keep three actions: <b>Inspect torrent</b>, <b>Find other releases</b>, and <b>Compare releases</b>. Find other releases opens the new <b>Find releases</b> tab, with one editable query, Title / Exact release modes, quality choices and a grid of your enabled trackers. More lookup sites keeps the extra references close without filling the page with buttons.</p>
+    <div class="shots workflow-shots">
+    <figure><img src="screenshots/18-find-releases.png?v=1.43.6" alt="Find releases: editable query, Title and Exact release modes, quality choices and one grid of enabled trackers." loading="lazy" width="980" height="1048"><figcaption>One search pane replaces the repeated lookup rows. Every search opens only when clicked.</figcaption></figure>
+    <figure><img src="screenshots/17-detail-mediainfo.png?v=1.43.6" alt="The unified Inspector on a torrent detail page, with MediaInfo summary cards, video details and track tables." loading="lazy" width="980" height="846"><figcaption>Inspect torrent now opens this same panel on the torrent page. MediaInfo and notes remain available without naming rules.</figcaption></figure>
+    <figure><img src="screenshots/16-review-panel.png?v=1.43.6" alt="Review panel with saved queue, Findings, MediaInfo, Find releases, Source check and My notes tabs, and Previous, Copy report and Next unchecked actions." loading="lazy" width="980" height="788"><figcaption>The running Review panel, using this project’s offline demo.</figcaption></figure>
+    </div>
+    <p class="sub">Choose <b>Review loaded titles</b> on a listing, or <b>Inspect torrent</b> on a torrent page. The same panel opens in both places, even without a selected naming rule set.</p>
+    <div class="grid">
+      <div class="card"><h3>Keep the evidence together</h3><p>Switch between <b>Findings</b>, <b>MediaInfo</b>, <b>Find releases</b>, <b>Source check</b> and <b>My notes</b>. Notes save as typed; the report button stays in the footer. Open More tools for naming templates and the full Inspector.</p></div>
+      <div class="card"><h3>Continue where you left off</h3><p><b>Previous</b> and <b>Next unchecked</b> follow actual links saved from the loaded listing and continue the panel on the selected page. The queue, current tab and notes stay with the torrent and tracker.</p></div>
+      <div class="card"><h3>Your progress stays separate</h3><p><b>Reviewed by me</b> records that you looked. It never hides an error, changes a naming verdict or approves a torrent. Setup and the audit live under <b>Settings &amp; tools</b>.</p></div>
     </div>
   </div>
 </section>
@@ -182,54 +205,55 @@
   <div class="wrap">
     <h2>What it looks like</h2>
     <p class="sub">
-      Taken from the project's own offline demo pages on the current build, so they cannot drift
-      from what the script does. Made-up releases throughout; nothing from a real site.
+      Taken from the project's own offline demo pages on the current build, with captions describing the same workflow. Made-up releases throughout; nothing from a real site.
       <a href="torrents/101/">The same pages are live here</a>, running the real script, if you would rather click than look.
     </p>
     <div class="shots">
       <figure class="wide">
-        <img src="screenshots/01-listing-badges.png" alt="A torrent listing where each loaded title carries a green tick, a red cross or an amber question mark, above a bar with the rules chooser and the audit button." loading="lazy" width="1180" height="657">
-        <figcaption>A badge on every loaded title, and the bar that switches them on. The count is of the titles on screen — nothing else is read.</figcaption>
+        <img src="screenshots/01-listing-badges.png?v=1.43.6" alt="A torrent listing where each loaded title carries a green tick, a red cross or an amber question mark, above Rules, Review loaded titles and Settings &amp; tools." loading="lazy" width="1180" height="616">
+        <figcaption>The listing bar keeps Rules, Review loaded titles and counts visible; Settings &amp; tools holds setup and audits. The count is of the titles on screen — nothing else is read.</figcaption>
       </figure>
       <figure>
-        <img src="screenshots/02-naming-explained.png" alt="A dialog explaining a naming error, listing the manual checks that remain and the tracker's title template." loading="lazy" width="940" height="828">
-        <figcaption>Click a badge: what it found, what it could not decide, and the template the tracker asks for.</figcaption>
+        <img src="screenshots/02-naming-explained.png?v=1.43.6" alt="A dialog explaining a naming error, listing the manual checks that remain and the tracker's title template." loading="lazy" width="980" height="846">
+        <figcaption>Click a badge to open Findings in Review. Corrections and manual checks stay with the torrent; templates are under More tools.</figcaption>
       </figure>
       <figure>
-        <img src="screenshots/03-banned-group.png" alt="A dialog naming a release group that appears on a tracker's banned list, with the reason that list gives." loading="lazy" width="940" height="828">
+        <img src="screenshots/03-banned-group.png?v=1.43.6" alt="A dialog naming a release group that appears on a tracker's banned list, with the reason that list gives." loading="lazy" width="980" height="846">
         <figcaption>A banned or low-quality group is named with the list it is on and the reason that list gives — never an accusation of its own.</figcaption>
       </figure>
       <figure class="wide">
-        <img src="screenshots/05-torrent-page.png" alt="A torrent page showing the badge beside the release name, the lookup rows, the vs capture button and the MediaInfo." loading="lazy" width="1180" height="770">
-        <figcaption>A torrent page: the badge, the lookup rows, the <b>vs</b> capture button, and the MediaInfo the checks read.</figcaption>
+        <img src="screenshots/05-torrent-page.png?v=1.43.6" alt="A torrent page showing the badge beside the release name, the compact lookup actions, the Compare releases button and the MediaInfo." loading="lazy" width="1180" height="693">
+        <figcaption>A torrent page: the badge, the compact lookup actions, the <b>Compare releases</b> capture button, and the MediaInfo the checks read.</figcaption>
       </figure>
       <figure>
-        <img src="screenshots/14-source-banner.png" alt="The source-check banner: same release as the other tracker's upload, with the Unique ID, file name and size ticked, the exact byte count, and a link back." loading="lazy" width="590" height="257">
-        <figcaption>The source check. Open a release on a second tracker and the banner says whether it is the same file — Unique ID, file name, size to the byte — with a link back to the first.</figcaption>
+        <img src="screenshots/14-source-banner.png?v=1.43.6" alt="The source-check banner: same release as the other tracker's upload, with the Unique ID, file name and size ticked, the exact byte count, and a link back." loading="lazy" width="564" height="217">
+        <figcaption>The optional compact source notice. Open Source check for the full comparison view; the quiet checkbox hides automatic notices.</figcaption>
       </figure>
       <figure>
-        <img src="screenshots/15-source-section.png" alt="The Source check section of the badge dialog: the Unique ID and file name remembered, and what the page was looked over for." loading="lazy" width="898" height="173">
-        <figcaption>Back on the first page, the badge's dialog says what was remembered and what the other tracker answered.</figcaption>
+        <img src="screenshots/15-source-section.png?v=1.43.6" alt="The Source check section of the badge dialog: the Unique ID and file name remembered, and what the page was looked over for." loading="lazy" width="934" height="501">
+        <figcaption>Source check shows the current filename, ID and size, expanded tracker comparisons, and a separate last saved check from another page.</figcaption>
       </figure>
       <figure>
-        <img src="screenshots/13-tools-bar.png" alt="The tools bar with three buttons: Nav, Inspect torrent and Source check." loading="lazy" width="361" height="39">
-        <figcaption>The tools bar, bottom right of every page: Nav, the Inspector, and Source check.</figcaption>
+        <img src="screenshots/13-tools-bar.png?v=1.43.6" alt="The tools bar with Nav, Inspect torrent and Source check." loading="lazy" width="309" height="39">
+        <figcaption>Inspect torrent opens the unified Review panel on supported torrent pages. Nav and Source check remain available.</figcaption>
       </figure>
       <figure>
-        <img src="screenshots/06-inspector-naming.png" alt="The Inspector panel showing a release-name check against the chosen tracker's rules." loading="lazy" width="940" height="828">
-        <figcaption>The Inspector reads the MediaInfo already on the page and checks the name against what the report says.</figcaption>
+        <img src="screenshots/06-inspector-naming.png?v=1.43.6" alt="The Inspector panel showing a release-name check against the chosen tracker's rules." loading="lazy" width="940" height="828">
+        <figcaption>The full Inspector remains under Findings → More tools → Open Inspector for advanced tools, including pasted reports.</figcaption>
       </figure>
       <figure>
-        <img src="screenshots/10-cross-check.png" alt="The request cross-check panel, with a search link for each tracker that can carry that kind of request." loading="lazy" width="940" height="428">
+        <img src="screenshots/10-cross-check.png?v=1.43.6" alt="The request cross-check panel, with a search link for each tracker that can carry that kind of request." loading="lazy" width="940" height="404">
         <figcaption>A request gets a search link per tracker that can carry it. One that cannot is left out, with the reason.</figcaption>
       </figure>
       <figure>
-        <img src="screenshots/12-nav.png" alt="The torrent navigation panel, with page and ID modes, a step size, a jump box and the current page named." loading="lazy" width="330" height="248">
+        <img src="screenshots/12-nav.png?v=1.43.6" alt="The torrent navigation panel, with page and ID modes, a step size, a jump box and the current page named." loading="lazy" width="330" height="260">
         <figcaption>Nav: step by listing page or by torrent ID, or jump straight to one.</figcaption>
       </figure>
     </div>
   </div>
 </section>
+
+
 
 <section id="badges">
   <div class="wrap">
@@ -270,7 +294,7 @@
       </div>
       <div class="card">
         <h3>Audit a whole sweep</h3>
-        <p><b>Audit loaded titles</b> lists every name on the page with its faults as copyable text, and remembers what you checked while browsing so one audit can cover many pages.</p>
+        <p><b>Audit loaded titles</b>, under Settings &amp; tools, lists every name on the page with its faults as copyable text, and remembers what you checked while browsing so one audit can cover many pages.</p>
       </div>
     </div>
   </div>
@@ -286,12 +310,12 @@
         <p>When you open a torrent page, the script remembers what makes that upload what it is: the report's Unique ID, the file name, the folder, the file list and the sizes. Kept for three days, in your browser.</p>
       </div>
       <div class="card">
-        <h3>What the banner says</h3>
-        <p>Open the same release on any other tracker the script runs on — the lookup row searches them — and a banner says whether it is the same thing, item by item: <em>Unique ID ✓ · file name ✓ · size ✓ (18.40 GiB, 19,756,777,472 bytes)</em>, with the file name written out so spaces and dots show, and a link back. A different Unique ID is a red finding on the first page too.</p>
+        <h3>Read all current comparisons</h3>
+        <p>Open the same release on another tracker, then choose <b>Source check</b>. Current torrent details appear first; comparison rows start expanded with filenames, exact ID evidence and return links. Counts distinguish ID matches, name/size-only matches and ID mismatches. <b>Last saved check on another page</b> labels the older answer separately.</p>
       </div>
       <div class="card">
         <h3>The Source check button</h3>
-        <p>In the tools bar beside <b>Nav</b> and <b>Inspect torrent</b>. It brings the banner back after you close it, and on a page where none appeared it says what the page was looked over for. Tick <b>Only show this when I press Source check</b> at the bottom of the banner and it stops appearing on its own.</p>
+        <p>In the tools bar beside <b>Nav</b> and <b>Inspect torrent</b>. It opens the unified Source check tab with every current comparison in an expandable tracker row. The current fingerprint and last saved check from another page are labelled separately. Tick <b>Only show this when I press Source check</b> in the panel or notice to hide automatic notices.</p>
       </div>
       <div class="card">
         <h3>TorrentLeech and FileList too</h3>
@@ -308,7 +332,7 @@
 <section id="inspector">
   <div class="wrap">
     <h2>The MediaInfo already on the page, read properly</h2>
-    <p class="sub"><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd> on a torrent page, or <b>Inspect torrent</b> in the tools bar — or paste a report of your own.</p>
+    <p class="sub"><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd> in the standalone edition, or <b>Inspect torrent</b> in the tools bar. For pasted reports, open <b>More tools → Open Inspector for advanced tools</b>.</p>
     <div class="scroll">
       <table>
         <thead><tr><th>The title claims</th><th>Checked against the report</th></tr></thead>
@@ -325,7 +349,7 @@
     </div>
     <div class="grid" style="margin-top:18px">
       <div class="card">
-        <h3>Compare two releases — <b>vs</b></h3>
+        <h3>Compare two releases</h3>
         <p>Capture this release, open the other and capture that. The file lists and sizes compared to the byte, the two reports field by field, the tags and encode settings each file carries, and both releases in the block layout <b>WinMerge or meld</b> reads. It does not pick a winner: source and provenance are not in a report, and it says so.</p>
       </div>
       <div class="card">
@@ -364,7 +388,7 @@
       </div>
       <div class="card">
         <h3>Adding one</h3>
-        <p>Click a tag with no home and the menu offers <em>Add … to a tracker</em>. The whole list is under <b>Internal groups…</b> in the listing bar, as text you can paste a directory page into, one tracker per line: <code>Tracker|group group|https://address</code>.</p>
+        <p>Click a tag with no home and the menu offers <em>Add … to a tracker</em>. The whole list is under <b>Settings &amp; tools → Internal groups…</b> in the listing bar, as text you can paste a directory page into, one tracker per line: <code>Tracker|group group|https://address</code>.</p>
         <p>A tracker's line is a link only when the script has its address; private tracker domains move, so it will not invent one.</p>
       </div>
     </div>
@@ -404,7 +428,7 @@
     <h2>Installing it</h2>
     <ol class="steps">
       <li>Install <a href="https://www.tampermonkey.net/" rel="noreferrer noopener">Tampermonkey</a> if you do not have it.</li>
-      <li>Click <a href="https://raw.githubusercontent.com/khamere/torrent_inspector/main/Torrent-inspector.user.js" rel="noreferrer noopener"><b>Install the script</b></a>. Tampermonkey opens its own install page; read what it asks for, then press <b>Install</b>.</li>
+      <li>Click <a href="Torrent-inspector.user.js" rel="noreferrer noopener"><b>Install the script</b></a>. Tampermonkey opens its own install page; read what it asks for, then press <b>Install</b>.</li>
       <li>Reload the tracker. The bar appears above the listing and the tools bar at the bottom right.</li>
     </ol>
     <h3 style="margin-top:22px">Which trackers it runs on</h3>
@@ -414,7 +438,7 @@
       Every tracker is a <code>// @match</code> line at the top of the file — delete one to stop it running there, copy one to add your own.
       The list is generated from the catalogue when the script is built, so the two cannot drift apart.</p>
     <p class="note">
-      On the seven trackers with a shipped rule set the badges appear straight away. Anywhere else <b>nothing is badged</b> until you choose a rule set from the <b>Rules</b> picker or add that tracker under <b>Tracker rules…</b>; everything that needs no rulebook — the Inspector, <b>vs</b>, the group tags, the cross-check, the source check — works there straight away.
+      On the seven trackers with a shipped rule set the badges appear straight away. Anywhere else <b>nothing is badged</b> until you choose a rule set from the <b>Rules</b> picker or add that tracker under <b>Tracker rules…</b>; everything that needs no rulebook — the Inspector, <b>Compare releases</b>, the group tags, the cross-check, the source check — works there straight away.
     </p>
     <p style="margin-top:16px; color:var(--dim)">
       Updates come to you: the script carries the address it is published at, so Tampermonkey checks on its own schedule and offers the new version.
@@ -435,7 +459,7 @@
       <ol class="steps">
         <li><b>Install and reload.</b> On DarkPeers, Zenith, LUME, OnlyEncodes+, HomieHelpDesk, MidnightScene and InfinityHD the badges appear straight away. Anywhere else nothing is judged yet — that is deliberate.</li>
         <li><b>Choose whose rules apply here.</b> The listing bar has a <b>Rules</b> dropdown with all seven sets. Pick the tracker you are on if it is there, otherwise the closest one. The choice is remembered per tracker.</li>
-        <li><b>Tick the trackers you are on.</b> Open <em>Is this already on your trackers?</em> and tick them once; the list follows you to every tracker the script runs on.</li>
+        <li><b>Tick the trackers you are on.</b> Open <b>Settings &amp; tools → Choose trackers…</b> and tick them once; the list follows you to every tracker the script runs on.</li>
         <li><b>Hover a badge.</b> One line tells you why. Click it for the corrections and a copyable report.</li>
       </ol>
     </div>
@@ -444,11 +468,11 @@
       <h3>2 · Is it the same file the source tracker has?</h3>
       <p class="goal">A release you are checking against where it was first published.</p>
       <ol class="steps">
-        <li><b>Open the torrent page</b> you are checking. The script remembers its Unique ID, file name, folder, files and sizes; the badge's dialog lists them under <b>Source check</b>.</li>
-        <li><b>Open the same release on the source tracker.</b> The lookup row's <em>On your trackers</em> and <em>This exact name</em> buttons search it for you; the link opens only when you click.</li>
-        <li><b>Read the banner.</b> <em>Same release</em> with every item ticked, or <em>Not the same file</em> where the Unique ID differs — and the sizes to the byte, so a megabyte's difference shows.</li>
-        <li><b>Go back.</b> <em>Back to that torrent</em> returns you; the first page's dialog now carries the answer, and a different Unique ID is a red finding there.</li>
-        <li><b>Closed it too soon?</b> Press <b>Source check</b> in the tools bar. Would rather it never popped up by itself? Tick the box at the bottom of the banner.</li>
+        <li><b>Open the torrent page</b> you are checking. The script remembers its Unique ID, file name, folder, files and sizes; choose <b>Inspect torrent → Source check</b> to see them immediately.</li>
+        <li><b>Open the same release on the source tracker.</b> <b>Find releases</b> searches by <em>Title</em> or <em>Exact release</em>; the link opens only when you click.</li>
+        <li><b>Read Source check.</b> Its expanded rows show the filename, ID and size evidence. A name/size-only match is labelled separately from an ID match. Automatic notices are optional.</li>
+        <li><b>Go back.</b> <em>Back to that torrent</em> returns you; the first page keeps that answer under <b>Last saved check on another page</b>, and a different Unique ID is a red finding there.</li>
+        <li><b>Closed it too soon?</b> Press <b>Source check</b> in the tools bar to open all comparisons in the unified panel. To hide automatic notices, tick the quiet checkbox in that tab.</li>
       </ol>
       <p class="note">A page that is a different encode of the same title is not about your upload and stays quiet on purpose; the <b>Source check</b> button says what the page was looked over for.</p>
     </div>
@@ -458,19 +482,19 @@
       <p class="goal">For moderators, on <code>/torrents/pending</code>.</p>
       <ol class="steps">
         <li><b>Read the bar first.</b> It counts the errors, passes and reviews on the page.</li>
-        <li><b>Work the ✕ rows.</b> Click the badge: the corrections in the guide's own words, with the fixed title written out where the fault is mechanical.</li>
-        <li><b>Use the draft reply.</b> Built from the findings, one outcome suggested — a banned group suggests a rejection, not a rename. Edit it, then copy it. Nothing is sent.</li>
-        <li><b>Tick what you decided,</b> so the next sweep does not repeat itself.</li>
-        <li><b>Audit the sweep.</b> <b>Audit loaded titles</b> gives every name with its faults as copyable text, across the pages you have been through.</li>
+        <li><b>Choose Review loaded titles.</b> The queue saves actual links from the loaded listing. Open a torrent from Review to continue with its own MediaInfo.</li>
+        <li><b>Inspect the five tabs.</b> Findings, MediaInfo, Find releases, Source check and My notes keep the work together. Copy report text stays in the footer.</li>
+        <li><b>Tick Reviewed by me, then Next unchecked.</b> Notes save as typed. This local progress mark never changes a verdict or approves a torrent; the separate decision log records moderation outcomes.</li>
+        <li><b>Audit the sweep.</b> <b>Audit loaded titles</b> under Settings &amp; tools gives every name with its faults as copyable text, across the pages you have been through.</li>
       </ol>
       <p class="note">The amber <b>?</b> rows are not failures — they are the checks a title alone cannot settle.</p>
     </div>
 
     <div class="tut">
-      <h3>4 · Settling a trump with <b>vs</b></h3>
+      <h3>4 · Settling a trump with <b>Compare releases</b></h3>
       <p class="goal">Two releases of the same film, and a decision to justify.</p>
       <ol class="steps">
-        <li><b>Open the first torrent,</b> press <b>vs</b> in the lookup row, <em>Capture this page as A</em>.</li>
+        <li><b>Open the first torrent,</b> press <b>Compare releases</b> under the release name, <em>Capture this page as A</em>.</li>
         <li><b>Open the other</b> — on any tracker the script runs on — and capture it as <b>B</b>.</li>
         <li><b>Read the three tables:</b> files and sizes with the gap in bytes, the two reports field by field, the tags and encode settings each container carries.</li>
         <li><b>Copy what you need.</b> <em>Copy the differences</em> for a report; <em>Copy both blocks</em> for WinMerge or meld.</li>
@@ -494,7 +518,7 @@
       <h3>6 · Checking a title before you upload</h3>
       <p class="goal">Catch it in the box rather than in a postponed queue.</p>
       <ol class="steps">
-        <li><b>Open the naming box</b> — <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd> or <b>Inspect torrent</b> — and paste the title you intend to use.</li>
+        <li><b>Open the naming box</b> — <b>Inspect torrent → Findings → More tools → Open Inspector for advanced tools</b> — and paste the title you intend to use.</li>
         <li><b>Pick the category and the tracker.</b> The same title can be clean on one and rejected on another.</li>
         <li><b>Fill the reference fields</b> — official title, original-language title, service — and several <em>“cannot be decided from the title”</em> reviews become answers.</li>
         <li><b>Paste your MediaInfo.</b> The report is compared with what the title claims.</li>
@@ -509,13 +533,16 @@
     <h2>Questions people actually ask</h2>
     <dl class="qa">
       <dt>Is it 45 trackers or 63?</dt>
-      <dd>Both, counting different things. <b>45</b> is how many UNIT3D trackers the script <em>runs on</em> — where badges, the Inspector, <b>vs</b> and the source check appear. <b>63</b> is how many it can <em>search</em> for the cross-check, which adds the Gazelle-family and other sites — PassThePopcorn, HDBits, BroadcasTheNet and the rest — where it builds a link you click and never runs. TorrentLeech and FileList are the exception: it runs on their torrent pages for the lookups and the source check only, with nothing judged. That is 48 <code>@match</code> lines, DarkPeers taking two.</dd>
+      <dd>Both, counting different things. <b>45</b> is how many UNIT3D trackers the script <em>runs on</em> — where badges, the Inspector, <b>Compare releases</b> and the source check appear. <b>63</b> is how many it can <em>search</em> for the cross-check, which adds the Gazelle-family and other sites — PassThePopcorn, HDBits, BroadcasTheNet and the rest — where it builds a link you click and never runs. TorrentLeech and FileList are the exception: it runs on their torrent pages for the lookups and the source check only, with nothing judged. That is 48 <code>@match</code> lines, DarkPeers taking two.</dd>
 
       <dt>Sixty-three trackers — how do I find the ones I'm on?</dt>
       <dd>The chooser puts the trackers you have ticked first, open. The rest are folded by what they carry, and the search box filters by name, language or software — type <em>italian</em> and you get the Italian ones. Each tracker's search address sits behind its own <b>Address</b> button.</dd>
 
+      <dt>Why does my installed version differ from this page?</dt>
+      <dd>This page and its download are built together as 1.43.6. Installing the download updates the browser script; uploading the website files updates the public pages. Both must be deployed when publishing a release. An already-open demo tab needs a reload.</dd>
+
       <dt>Do I have to set it up again on every tracker?</dt>
-      <dd>No. The trackers you are on, the rules you have added, your internal-groups list, your templates, the source-check setting and which rules apply where all live in Tampermonkey's per-script store, which every site the script runs on can see. The audit, the decision log and private notes stay per tracker on purpose: they are a record of work on that tracker, not a setting. <b>Backup…</b> in the listing bar saves and restores the lot as one file.</dd>
+      <dd>No. The trackers you are on, the rules you have added, your internal-groups list, your templates, the source-check setting and which rules apply where all live in Tampermonkey's per-script store, which every site the script runs on can see. The audit, the decision log and private notes stay per tracker on purpose: they are a record of work on that tracker, not a setting. <b>Settings &amp; tools → Backup…</b> saves and restores the lot as one file.</dd>
 
       <dt>Do the shipped rule sets apply automatically?</dt>
       <dd>Yes, on their own trackers: each names its tracker's address, so on <code>darkpeers.org</code>, <code>znth.cx</code>, <code>luminarr.me</code>, <code>onlyencodes.cc</code>, <code>homiehelpdesk.net</code>, <code>midnightscene.cc</code> and <code>infinityhd.net</code> it selects itself. If you have picked a different rule set for that site, your pick wins. On the other thirty-eight you choose a rule set, or add that tracker's rules yourself; the group tags are marked everywhere regardless.</dd>
@@ -524,10 +551,10 @@
       <dd>From each tracker's own published guide and banned list, and the script says which parts it does not have. Every worked example in a guide passes that guide's rules — that is a test in the suite, and if a rule ever corrects one of the guide's own examples the suite fails. A tracker's rule numbers are cited only where its page prints them; HomieHelpDesk's page numbers its sections, so its rules are cited by section. Where a guide and its site disagree — MidnightScene's codec list has no AV1 while its listing is full of AV1 — the finding is a question, not a verdict. No banned list is invented for a tracker that has not published one.</dd>
 
       <dt>Two torrents both say 5.70 GiB. Are they the same file?</dt>
-      <dd>Not necessarily, which is why every comparison here reads the <em>byte count</em> the page carries rather than the rounded figure — the <b>vs</b> tables, the file marker and the source-check banner all show it. Where a page carries none, none is worked back out of the rounded figure and presented as exact.</dd>
+      <dd>Not necessarily, which is why every comparison here reads the <em>byte count</em> the page carries rather than the rounded figure — the <b>Compare releases</b> tables, the file marker and the source-check banner all show it. Where a page carries none, none is worked back out of the rounded figure and presented as exact.</dd>
 
       <dt>Two torrents have the same release name — which is the real one?</dt>
-      <dd>The source check answers that where the Unique IDs can be compared: the same ID is the same file, a different one is not. <b>vs</b> shows what they differ in. What neither can tell you is which of two different files is the genuine release — no page carries that.</dd>
+      <dd>The source check answers that where the Unique IDs can be compared: the same ID is the same file, a different one is not. <b>Compare releases</b> shows what they differ in. What neither can tell you is which of two different files is the genuine release — no page carries that.</dd>
 
       <dt>Why is “Listed as internal at …” not a link for my tracker?</dt>
       <dd>The script does not have that tracker's address and will not guess one. Tick the tracker in your cross-check list and the link appears, or put the address on its line in <b>Internal groups…</b>.</dd>
@@ -573,7 +600,7 @@
 
 <footer>
   <div class="wrap">
-    <p><b>Torrent Inspector 1.42.5</b> — a personal fork, offered as-is. <a href="torrents/101/">Try the demo</a> · <a href="rules.html">Rules builder</a> · <a href="https://github.com/khamere/torrent_inspector" rel="noreferrer noopener">GitHub</a></p>
+    <p><b>Torrent Inspector 1.43.6</b> — a personal fork, offered as-is. <a href="torrents/101/">Try the demo</a> · <a href="rules.html">Rules builder</a> · <a href="https://github.com/khamere/torrent_inspector" rel="noreferrer noopener">GitHub</a></p>
     <p>Found something wrong? A screenshot with the badge's tooltip visible is the fastest fix — several bugs were found exactly that way, and each one now has a test built from the row that showed it up.</p>
   </div>
 </footer>

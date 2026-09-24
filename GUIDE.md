@@ -1,4 +1,27 @@
+<!-- Source check workflow updated in 1.43.4. -->
 # Torrent Inspector — using it
+
+The website’s install link downloads the script from that same site release. Check its
+version against this release’s README, install it in your userscript manager and reload
+the tracker. Updating the local preview does not publish changes to the public site.
+
+
+Language checks accept the page’s **Primary Language** label and known ISO codes:
+`es` and `spa` match Spanish audio. A missing-original warning should remain only
+when the reported original language does not match the listed audio.
+
+
+**Source check:** the tools-bar button opens the unified panel's Source check tab.
+Current torrent details appear expanded at the top. Every related remembered upload
+appears in a row that starts expanded, showing its filename, ID evidence and return link. The counts
+distinguish ID matches from name/size-only matches; a missing ID is not a verified ID
+match. Read each row's exact evidence and use its link to open the tracker yourself.
+**Current torrent fingerprint** starts open above the comparisons. **Last saved check
+on another page** stays in a separate disclosure. Refresh page evidence reruns the comparison against what is loaded now.
+The optional automatic notice uses the same compact rows; the existing quiet checkbox
+keeps it hidden until requested. On pages without unified Review, the button opens a
+matching source dialog. No lookup or tracker request runs in the background.
+
 
 Everything here is reading. The script looks at the page in front of you and tells you what it
 sees. It makes no request of any kind, uses no account, posts nothing and submits nothing.
@@ -35,10 +58,59 @@ Green is not approval. It means the checks this script can make on a **display t
 — not that the media is what it says, not that the source is what it claims, and not that any
 tracker has accepted it.
 
-Click a badge and it tells you what it found, quotes the rule it is applying, and offers
-**Copy report text** — a paste-ready summary for a comment or a report.
+Click a badge to open **Review**. **Findings** shows the naming errors and manual
+checks; **MediaInfo**, **Find releases**, **Source check** and **My notes** keep the other work in this panel.
+**Copy report text** stays in the footer. Open **More tools & naming template** for the
+template, the separate conforming action and the full Inspector.
 
-Above the results is a bar with:
+Above the results, **Rules**, **Review loaded titles** and counts stay visible.
+**Settings & tools** contains the occasional controls, including **Audit loaded titles**.
+**Choose trackers…** there opens your saved search-tracker choices.
+
+### Working through a queue
+
+1. Choose **Review loaded titles** on a listing with naming checks enabled. It saves up to
+   200 linked titles from this loaded page, in their listed order, and starts with the first
+   unchecked one. Unlinked pending rows still have their existing findings, but cannot be
+   queue destinations. Loading another list does not silently replace your queue; choosing
+   Review there does.
+2. Read **Findings**. Tick the checks you have made. On a listing, **Open torrent and continue
+   review** opens the real torrent link to read its MediaInfo and source evidence.
+3. Use **My notes** as you work. Changes save locally as typed. Existing Inspector notes are
+   read first unless a newer Review note exists; the full Inspector also reads and updates
+   these notes. Clearing a note stays cleared.
+4. Tick **Reviewed by me** when you have looked. This is a local progress marker, independent
+   of the red/amber/green naming verdict. It approves nothing and never invokes **Mark as
+   conforming**.
+5. Choose **Next unchecked** or **Previous**. Only saved same-origin torrent links are used;
+   no torrent IDs are guessed. The next page continues the panel once, if opened within two
+   minutes. Next unchecked wraps through remaining queue items and is disabled when none
+   remain except the current item. Refreshing normally keeps the panel closed until you
+   open it again, with your saved tab and notes restored.
+
+On a supported torrent page, **Inspect torrent** opens this same panel directly (also
+Alt+Shift+I in the standalone edition). The extra Review torrent button is no longer
+needed. No rule set is required to inspect MediaInfo, source evidence or notes. Without
+rules, Findings and copied reports explicitly say naming checks were not run; no badge
+is manufactured. Review progress made without rules is separate from progress made
+under a selected rule set. Notes remain the same across those contexts.
+
+The MediaInfo tab shows summary cards, video details and audio/subtitle track tables.
+Missing fields say Not reported. The Technical report disclosure keeps the full parsed
+summary available. Use
+**Refresh page evidence** if the tracker loads or changes a report while the panel is open.
+MediaInfo on a listing is never attributed to a selected torrent. Source checks remain
+unavailable for release types the existing source reader does not support.
+
+Progress and tabs belong to the tracker origin, torrent ID, rule set and release name. A
+changed name needs a new review. Notes belong to the tracker origin and torrent ID.
+Storage keeps eight queues, 500 progress records and up to 200 notes, with 20,000 characters
+per note and 200,000 note characters total; the oldest records are removed at those limits.
+Use **Backup…** before switching installations. **Leave my private notes out** also excludes
+the new notes. Browser storage failures are shown in the panel; copy unsaved notes before
+leaving if that happens.
+
+The controls are:
 
 - **Automatic naming checks** — the on/off switch for the badges. The group tag in each
   name is not a check and stays marked with the box cleared.
@@ -72,29 +144,29 @@ Most of what a moderator wants to know about an upload comes down to one questio
 the same file the source tracker has? The torrent page now remembers what makes the upload
 what it is — the report's Unique ID, the file name, the folder, the file names and the
 sizes — for three days. Open the same release on any other tracker the script runs on, by
-the lookup row or on your own, and a banner at the top of that page says whether it is the
+Find releases or on your own, and a banner at the top of that page says whether it is the
 same thing, item by item, with a link back. On the first page the badge's dialog then
 carries the answer under **Source check**, and a Unique ID that turned out different is a
 red finding. Nothing is fetched or opened for you; the script reads the page you went to.
 
-The section starts by listing what it remembered — the Unique ID, the file name, the folder
-and the size — so you can compare them with the other page by eye; the banner there shows
-the ID it found beside the one it was looking for. The Unique ID itself is on the page's
+The section starts with **Current torrent fingerprint**, open with this torrent's
+remembered evidence. The tracker rows below also start open, showing filenames and the
+IDs compared. Collapse rows when finished. **Last saved check on another page** holds the older answer
+from a tracker you visited. The Unique ID itself is on the page's
 own MediaInfo, under General, and the hex in brackets is the form the script matches.
 The other page is read whole, including a MediaInfo tab you have not opened; if it truly
 has no Unique ID in it, the banner says *Unique ID – (none on this page)* and only the
-file name and size are compared. The file name sits under the title in the banner, as the
+file name and size are compared. Expand a tracker row to see its file name, as the
 file is named, so spaces and dots show. The summary line prints the size it compared —
 *size ✓ (20.40 GiB, 21,904,512,000 bytes)* — so a tick can be checked against the page,
 to the byte where the page prints bytes, and a cross says which size it was looking for.
 
 A **Source check** button sits in the tools bar beside *Nav* and *Inspect torrent*: it
-brings the banner back after you close it, and where none appeared it says what the page
-was looked over for. If you would rather the banner never appeared on its own, tick **Only
-show this when I press Source check** at the bottom of the banner (press the button to see
-it); the page is still read and remembered, and the button shows the answer when you want
-it. Untick the box to have the banner appear by itself again. The setting holds across
-every tracker and goes with **Backup…**. When no banner appears, the dialog's Source check section says why: how many uploads from
+opens the unified panel's Source check tab with every current comparison. On pages without
+Review, it opens a matching source dialog. To hide automatic notices, tick **Only show this
+when I press Source check** in the panel or notice; the page is still read and remembered.
+Untick the box to have the notice appear by itself again. The setting holds across
+every tracker and goes with **Backup…**. The Source check tab also reports how many uploads from
 other trackers it looked for on this page and whether any was about it. A page that is a
 different encode of the same title — H.264 where you remembered the H.265 — is not about
 them, and stays quiet on purpose.
@@ -166,13 +238,19 @@ Under the release name:
   wording is copied rather than a number nobody printed. Read on the DarkPeers-shaped dialog, on
   upload.cx's and on OnlyEncodes+'s (each laid out differently); a tracker whose Files
   dialog is another shape again shows no marker, and its markup is what is needed to add it.
-- **A lookup row** — this tracker's own search for the title, **Exact name** (this tracker's
-  search for the release name as it stands), then the other trackers you are a member of,
-  then **Search all**, which opens one tab per tracker when you press it. Under the
-  cross-check, **This exact name:** searches the whole release name on those same trackers,
-  with a **Search all** of its own. The **srrDB** link searches the title words and the
-  release group, which is how a scene record is found.
-- **vs** — capture this release, capture another on a second page, and compare the two side by
+- **Find other releases** — opens **Find releases** in the unified panel. Start with the
+  title, year or episode already filled in, or choose **Exact release** for the full name.
+  Edit the search if needed. In Title mode, a quality button adds 2160p, 1080p, REMUX,
+  BluRay or WEB-DL to the search. Each tracker runs its own text matching; these buttons
+  do not guarantee results or apply a tracker-specific quality filter.
+  The current tracker has its own search button; your other enabled trackers share one
+  grid. **Search all** opens those displayed trackers only when clicked. If the browser
+  blocks tabs, use the individual links. **Choose your trackers** reuses your saved choices.
+  **More lookup sites** holds srrDB and other category-appropriate reference sites and
+  **Copy title**. Metadata lookups refer to the original torrent, even if you edit the
+  tracker-search query. On TorrentLeech and FileList, Find other releases opens these same
+  controls in a lookup dialog beside their existing source-check panel.
+- **Compare releases** — capture this release, capture another on a second page, and compare the two side by
   side: the names, the sizes to the byte, the file counts, the MediaInfo. If one page never
   rendered its file list, it says so rather than reporting nothing as zero.
 - **From this page** — what the page itself says about the release, and where it disagrees
@@ -234,7 +312,10 @@ editor instead.
 
 ## The Inspector
 
-**Inspect torrent**, or `Alt+Shift+I`. Paste a MediaInfo report — text or JSON — and it reads
+On a supported torrent page, choose **Inspect torrent**, then open
+**Findings → More tools & naming template → Open Inspector for advanced tools**.
+On other pages the inspection button opens these advanced tools directly.
+Paste a MediaInfo report — text or JSON — and it reads
 it back to you in plain language, checks the release name against what the report actually
 says, and names the streaming service it recognises.
 
@@ -295,7 +376,7 @@ left out with the reason, rather than given a link that finds nothing.
 
 ## Taking it with you
 
-**Backup…** in the listing bar saves everything this script has kept — the trackers you are on,
+**Backup…** under **Settings & tools** in the listing bar saves everything this script has kept — the trackers you are on,
 the trackers you added and their rules, which rule set applies on which tracker, whether the
 automatic checks are on, your internal-groups changes, your templates, your private notes, the
 nav settings, and the records of what you have looked at — as one file, copied or saved by your
