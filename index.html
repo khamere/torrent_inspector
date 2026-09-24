@@ -126,7 +126,7 @@
       one you came from. Nothing is fetched, posted or changed.
     </p>
     <ul class="pills">
-      <li class="pill"><b>1.42.7</b></li>
+      <li class="pill"><b>1.42.5</b></li>
       <li class="pill"><b>45</b> UNIT3D trackers it runs on · <b>63</b> it can search · TorrentLeech and FileList too</li>
       <li class="pill">No requests, no posting</li>
       <li class="pill">Nothing judged without that tracker’s rules</li>
@@ -188,7 +188,7 @@
     </p>
     <div class="shots">
       <figure class="wide">
-        <img src="screenshots/01-listing-badges.png" alt="A torrent listing where each loaded title carries a green tick, a red cross or an amber question mark, above a bar with the rules chooser and the audit button." loading="lazy" width="1180" height="613">
+        <img src="screenshots/01-listing-badges.png" alt="A torrent listing where each loaded title carries a green tick, a red cross or an amber question mark, above a bar with the rules chooser and the audit button." loading="lazy" width="1180" height="657">
         <figcaption>A badge on every loaded title, and the bar that switches them on. The count is of the titles on screen — nothing else is read.</figcaption>
       </figure>
       <figure>
@@ -200,11 +200,11 @@
         <figcaption>A banned or low-quality group is named with the list it is on and the reason that list gives — never an accusation of its own.</figcaption>
       </figure>
       <figure class="wide">
-        <img src="screenshots/05-torrent-page.png" alt="A torrent page showing the badge beside the release name, the lookup rows, the Compare releases button and the MediaInfo." loading="lazy" width="1180" height="785">
-        <figcaption>A torrent page: the badge, the lookup rows, the <b>Compare releases</b> capture button, and the MediaInfo the checks read.</figcaption>
+        <img src="screenshots/05-torrent-page.png" alt="A torrent page showing the badge beside the release name, the lookup rows, the vs capture button and the MediaInfo." loading="lazy" width="1180" height="770">
+        <figcaption>A torrent page: the badge, the lookup rows, the <b>vs</b> capture button, and the MediaInfo the checks read.</figcaption>
       </figure>
       <figure>
-        <img src="screenshots/14-source-banner.png" alt="The source-check banner: same release as the other tracker's upload, with the Unique ID, file name and size ticked, the exact byte count, and a link back." loading="lazy" width="590" height="241">
+        <img src="screenshots/14-source-banner.png" alt="The source-check banner: same release as the other tracker's upload, with the Unique ID, file name and size ticked, the exact byte count, and a link back." loading="lazy" width="590" height="257">
         <figcaption>The source check. Open a release on a second tracker and the banner says whether it is the same file — Unique ID, file name, size to the byte — with a link back to the first.</figcaption>
       </figure>
       <figure>
@@ -212,7 +212,7 @@
         <figcaption>Back on the first page, the badge's dialog says what was remembered and what the other tracker answered.</figcaption>
       </figure>
       <figure>
-        <img src="screenshots/13-tools-bar.png" alt="The tools bar with three buttons: Nav, Inspect torrent and Source check." loading="lazy" width="309" height="39">
+        <img src="screenshots/13-tools-bar.png" alt="The tools bar with three buttons: Nav, Inspect torrent and Source check." loading="lazy" width="361" height="39">
         <figcaption>The tools bar, bottom right of every page: Nav, the Inspector, and Source check.</figcaption>
       </figure>
       <figure>
@@ -220,11 +220,11 @@
         <figcaption>The Inspector reads the MediaInfo already on the page and checks the name against what the report says.</figcaption>
       </figure>
       <figure>
-        <img src="screenshots/10-cross-check.png" alt="The request cross-check panel, with a search link for each tracker that can carry that kind of request." loading="lazy" width="940" height="404">
+        <img src="screenshots/10-cross-check.png" alt="The request cross-check panel, with a search link for each tracker that can carry that kind of request." loading="lazy" width="940" height="428">
         <figcaption>A request gets a search link per tracker that can carry it. One that cannot is left out, with the reason.</figcaption>
       </figure>
       <figure>
-        <img src="screenshots/12-nav.png" alt="The torrent navigation panel, with page and ID modes, a step size, a jump box and the current page named." loading="lazy" width="330" height="260">
+        <img src="screenshots/12-nav.png" alt="The torrent navigation panel, with page and ID modes, a step size, a jump box and the current page named." loading="lazy" width="330" height="248">
         <figcaption>Nav: step by listing page or by torrent ID, or jump straight to one.</figcaption>
       </figure>
     </div>
@@ -325,7 +325,7 @@
     </div>
     <div class="grid" style="margin-top:18px">
       <div class="card">
-        <h3>Compare two releases</h3>
+        <h3>Compare two releases — <b>vs</b></h3>
         <p>Capture this release, open the other and capture that. The file lists and sizes compared to the byte, the two reports field by field, the tags and encode settings each file carries, and both releases in the block layout <b>WinMerge or meld</b> reads. It does not pick a winner: source and provenance are not in a report, and it says so.</p>
       </div>
       <div class="card">
@@ -364,7 +364,7 @@
       </div>
       <div class="card">
         <h3>Adding one</h3>
-        <p>Click a tag with no home and the menu offers <em>Add … to a tracker</em>. The whole list is under <b>Settings &amp; tools → Internal groups…</b> in the listing bar, as text you can paste a directory page into, one tracker per line: <code>Tracker|group group|https://address</code>.</p>
+        <p>Click a tag with no home and the menu offers <em>Add … to a tracker</em>. The whole list is under <b>Internal groups…</b> in the listing bar, as text you can paste a directory page into, one tracker per line: <code>Tracker|group group|https://address</code>.</p>
         <p>A tracker's line is a link only when the script has its address; private tracker domains move, so it will not invent one.</p>
       </div>
     </div>
@@ -414,7 +414,7 @@
       Every tracker is a <code>// @match</code> line at the top of the file — delete one to stop it running there, copy one to add your own.
       The list is generated from the catalogue when the script is built, so the two cannot drift apart.</p>
     <p class="note">
-      On the seven trackers with a shipped rule set the badges appear straight away. Anywhere else <b>nothing is badged</b> until you choose a rule set from the <b>Rules</b> picker or add that tracker under <b>Tracker rules…</b>; everything that needs no rulebook — the Inspector, <b>Compare releases</b>, the group tags, the cross-check, the source check — works there straight away.
+      On the seven trackers with a shipped rule set the badges appear straight away. Anywhere else <b>nothing is badged</b> until you choose a rule set from the <b>Rules</b> picker or add that tracker under <b>Tracker rules…</b>; everything that needs no rulebook — the Inspector, <b>vs</b>, the group tags, the cross-check, the source check — works there straight away.
     </p>
     <p style="margin-top:16px; color:var(--dim)">
       Updates come to you: the script carries the address it is published at, so Tampermonkey checks on its own schedule and offers the new version.
@@ -467,10 +467,10 @@
     </div>
 
     <div class="tut">
-      <h3>4 · Settling a trump with <b>Compare releases</b></h3>
+      <h3>4 · Settling a trump with <b>vs</b></h3>
       <p class="goal">Two releases of the same film, and a decision to justify.</p>
       <ol class="steps">
-        <li><b>Open the first torrent,</b> press <b>Compare releases</b> in the lookup row, <em>Capture this page as A</em>.</li>
+        <li><b>Open the first torrent,</b> press <b>vs</b> in the lookup row, <em>Capture this page as A</em>.</li>
         <li><b>Open the other</b> — on any tracker the script runs on — and capture it as <b>B</b>.</li>
         <li><b>Read the three tables:</b> files and sizes with the gap in bytes, the two reports field by field, the tags and encode settings each container carries.</li>
         <li><b>Copy what you need.</b> <em>Copy the differences</em> for a report; <em>Copy both blocks</em> for WinMerge or meld.</li>
@@ -509,7 +509,7 @@
     <h2>Questions people actually ask</h2>
     <dl class="qa">
       <dt>Is it 45 trackers or 63?</dt>
-      <dd>Both, counting different things. <b>45</b> is how many UNIT3D trackers the script <em>runs on</em> — where badges, the Inspector, <b>Compare releases</b> and the source check appear. <b>63</b> is how many it can <em>search</em> for the cross-check, which adds the Gazelle-family and other sites — PassThePopcorn, HDBits, BroadcasTheNet and the rest — where it builds a link you click and never runs. TorrentLeech and FileList are the exception: it runs on their torrent pages for the lookups and the source check only, with nothing judged. That is 48 <code>@match</code> lines, DarkPeers taking two.</dd>
+      <dd>Both, counting different things. <b>45</b> is how many UNIT3D trackers the script <em>runs on</em> — where badges, the Inspector, <b>vs</b> and the source check appear. <b>63</b> is how many it can <em>search</em> for the cross-check, which adds the Gazelle-family and other sites — PassThePopcorn, HDBits, BroadcasTheNet and the rest — where it builds a link you click and never runs. TorrentLeech and FileList are the exception: it runs on their torrent pages for the lookups and the source check only, with nothing judged. That is 48 <code>@match</code> lines, DarkPeers taking two.</dd>
 
       <dt>Sixty-three trackers — how do I find the ones I'm on?</dt>
       <dd>The chooser puts the trackers you have ticked first, open. The rest are folded by what they carry, and the search box filters by name, language or software — type <em>italian</em> and you get the Italian ones. Each tracker's search address sits behind its own <b>Address</b> button.</dd>
@@ -524,10 +524,10 @@
       <dd>From each tracker's own published guide and banned list, and the script says which parts it does not have. Every worked example in a guide passes that guide's rules — that is a test in the suite, and if a rule ever corrects one of the guide's own examples the suite fails. A tracker's rule numbers are cited only where its page prints them; HomieHelpDesk's page numbers its sections, so its rules are cited by section. Where a guide and its site disagree — MidnightScene's codec list has no AV1 while its listing is full of AV1 — the finding is a question, not a verdict. No banned list is invented for a tracker that has not published one.</dd>
 
       <dt>Two torrents both say 5.70 GiB. Are they the same file?</dt>
-      <dd>Not necessarily, which is why every comparison here reads the <em>byte count</em> the page carries rather than the rounded figure — the <b>Compare releases</b> tables, the file marker and the source-check banner all show it. Where a page carries none, none is worked back out of the rounded figure and presented as exact.</dd>
+      <dd>Not necessarily, which is why every comparison here reads the <em>byte count</em> the page carries rather than the rounded figure — the <b>vs</b> tables, the file marker and the source-check banner all show it. Where a page carries none, none is worked back out of the rounded figure and presented as exact.</dd>
 
       <dt>Two torrents have the same release name — which is the real one?</dt>
-      <dd>The source check answers that where the Unique IDs can be compared: the same ID is the same file, a different one is not. <b>Compare releases</b> shows what they differ in. What neither can tell you is which of two different files is the genuine release — no page carries that.</dd>
+      <dd>The source check answers that where the Unique IDs can be compared: the same ID is the same file, a different one is not. <b>vs</b> shows what they differ in. What neither can tell you is which of two different files is the genuine release — no page carries that.</dd>
 
       <dt>Why is “Listed as internal at …” not a link for my tracker?</dt>
       <dd>The script does not have that tracker's address and will not guess one. Tick the tracker in your cross-check list and the link appears, or put the address on its line in <b>Internal groups…</b>.</dd>
@@ -573,7 +573,7 @@
 
 <footer>
   <div class="wrap">
-    <p><b>Torrent Inspector 1.42.7</b> — a personal fork, offered as-is. <a href="torrents/101/">Try the demo</a> · <a href="rules.html">Rules builder</a> · <a href="https://github.com/khamere/torrent_inspector" rel="noreferrer noopener">GitHub</a></p>
+    <p><b>Torrent Inspector 1.42.5</b> — a personal fork, offered as-is. <a href="torrents/101/">Try the demo</a> · <a href="rules.html">Rules builder</a> · <a href="https://github.com/khamere/torrent_inspector" rel="noreferrer noopener">GitHub</a></p>
     <p>Found something wrong? A screenshot with the badge's tooltip visible is the fastest fix — several bugs were found exactly that way, and each one now has a test built from the row that showed it up.</p>
   </div>
 </footer>
