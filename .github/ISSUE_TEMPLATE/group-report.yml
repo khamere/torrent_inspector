@@ -1,0 +1,49 @@
+name: Report a release group
+description: Tell the project where a release group belongs — scene, or internal at a tracker — for the next update's directory.
+title: "Group report: "
+labels: ["group-report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks. Reports are read by a person and go into the next update's internal-groups
+        directory as "reported to this project, <date> (#issue)", which every user's popup
+        then shows under the line. Nothing is added automatically, so please give something
+        that can be checked.
+  - type: input
+    id: group
+    attributes:
+      label: Release group tag
+      description: Exactly as it appears at the end of release names.
+      placeholder: Arid
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What is it?
+      options:
+        - Scene group
+        - Internal at a tracker
+        - Not internal anywhere (correcting a listing)
+    validations:
+      required: true
+  - type: input
+    id: tracker
+    attributes:
+      label: Tracker (if internal)
+      description: The tracker's usual name, as the Choose your trackers list spells it. Leave empty for a scene group.
+      placeholder: OnlyEncodes+
+  - type: input
+    id: evidence
+    attributes:
+      label: Where this can be checked
+      description: An srrDB search or release page for a scene group; the tracker's own internal-groups page or an announcement for an internal one.
+      placeholder: https://www.srrdb.com/browse/Arid/1
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Inactive or disbanded, a second home, a spelling the tag also appears under.
