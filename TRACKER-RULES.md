@@ -27,7 +27,7 @@ your copy to the built-in**) and the built-in is back in force.
 | **OnlyEncodes+** (onlyencodes.cc) | its Upload Guide + Rules (`wikis/2`), its naming standard (`wikis/18`) and its banned list (`wikis/1`) — 16 rules, 136 groups | — |
 | **HomieHelpDesk** (homiehelpdesk.net) | its Upload rules (`pages/7`), its banned list (`wikis/8`), its naming standard (`wikis/30`), its E-book and its Comic, Manga and Magazine naming standards, and its Trumping & Quality Tiers page, all supplied 20 Sep 2026 — 38 rules, 48 groups, `books: own` | its Audiobook Naming and Folder Standard was supplied 22 Sep 2026 (`audiobooks: folder-standard`, 3 more rules); its rules page numbers only its sections, so rules are cited by section (§4, §5, §6), not by bullet |
 | **MidnightScene** (midnightscene.cc) | its Upload Naming Guide (video and music) and its Banned Release Groups list, supplied 21 Sep 2026 — 26 rules, 62 groups, `music: own` | its upload rules (content, descriptions, trumping) were not supplied; the banned list gives no reasons; AV1 is allowed, confirmed 24 Sep 2026; VP9 remains unconfirmed |
-| **InfinityHD** (infinityhd.net) | its Banned Release Groups page and its Naming Guide (both title templates and every element's vocabulary), supplied 23 Sep 2026 — 19 rules, 126 groups | its upload rules, description and trumping rules were not supplied; the banned page gives no reason per name; no page of the site has been seen, so the search address is UNIT3D's usual one until told otherwise |
+| **InfinityHD** (infinityhd.net) | its Banned Release Groups page and its Naming Guide (both title templates and every element's vocabulary), supplied 23 Sep 2026 — 19 rules, 126 groups | its upload rules, description and trumping rules were not supplied; the banned page gives no reason per name; its search address was confirmed on 26 Sep 2026, but no torrent page of the site has been seen |
 
 Where a page was not supplied, the profile says so in its own standing notes rather than
 filling the gap with a guess. Paste it in and the checks can quote it instead.
@@ -140,3 +140,24 @@ Inside the script, *Tracker rules… → Build one* does the same job.
 
 Either way, a tracker's rules page and banned list, as text, are all a profile needs to be
 written from — that is how DarkPeers' and Zenith's were built.
+
+## Extra-file and subfolder checks (1.44.0)
+
+The new section applies only to TV shows and movies, separately from title naming.
+Supported payload evidence:
+
+- HomieHelpDesk §2 (supplied 20 Sep 2026): movie/TV NFOs and separate subtitles;
+  possible screenshots, samples and other extraneous files need manual review.
+- OnlyEncodes+ rules 3/4 (supplied 10 Sep 2026): movie/TV NFOs, images and possible
+  stray files. Other trackers’ subtitle bans are not imported.
+- Zenith 2.1 (supplied 9 Sep 2026): archives; comic CBR/CBZ formats are excluded.
+
+For all trackers, including DarkPeers, subfolders are listed for review beyond one
+shared outer torrent folder. Multiple root folders are listed too. This is a layout
+observation, not a universal ban. No new DarkPeers payload restriction was added.
+
+Disc structures, renamed files and files inside containers need manual review.
+Unknown rules and unloaded or flattened file lists are explicitly unverified.
+A naming profile’s base does not confer another tracker’s payload restrictions.
+These are supplied rule snapshots, not a live tracker-rule check. Existing book,
+audiobook, music, game and software checks are unchanged.

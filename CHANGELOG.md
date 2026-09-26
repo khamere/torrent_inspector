@@ -9,6 +9,174 @@ was named until 1.25.0.
 
 ---
 
+## 1.44.5 — a TorrentLeech pack is compared by its file list, and its NFO's report is read
+
+- Reported 26 Sep 2026: on a Breaking Bad S01 page the Source check compared the
+  seedpool and yu-scene uploads but not TorrentLeech's, although torrentleech.org was in
+  the remembered hosts and Season check listed it. The TorrentLeech entry had no Unique
+  ID, no main file (a pack) and no folder (a flat list), and its title was not on the
+  page, so source-core.js `compare()` set `mentioned` false and `check()` skipped it —
+  with all 7 file names on the page.
+- source-core.js `compare()`: `mentioned` is also true when the entry has two or more
+  file names and every one of them is on the page.
+- elsewhere-core.js TorrentLeech `report()`: the NFO (`#nfo_text`, `pre.nfo`) is read as
+  the MediaInfo report when it carries a General block with a Unique ID or Complete
+  name, as the saved Breaking Bad S01 page's does; `read()` then has the Unique ID and
+  the main file from it. The comment that said TorrentLeech has no MediaInfo now says
+  what is there.
+- source-check.cjs +3 assertions: all file names on the page is a mention, most of them
+  is not, one file alone is not. elsewhere-fixture.js +1: a TorrentLeech page whose NFO
+  carries a report gives its Unique ID and Complete name (elsewhere fixture 37 → 38).
+  Red before the change, green after.
+- Shared with personal Scene Edition 1.50.5.
+
+## 1.44.4 — Season check reads a rounded size against an exact one
+
+- TorrentLeech prints only rounded sizes ("2.97 GB"; its own NFO's MediaInfo puts the
+  same file at 2.97 GiB, so its GB is a binary unit — saved page for torrent Breaking Bad
+  S01, 26 Sep 2026), so every Season check row against it said "size unknown".
+- capture-core.js `episodes()`: with an exact byte count on one side and a rounded figure
+  on the other, the row says "consistent with 2.97 GB" when the count rounds to that
+  figure at the figure's own precision, or "not consistent with …" when it does not
+  (`consistent()`); GB, MB, TB are read as binary units. "same size" still needs exact
+  bytes on both sides; two rounded figures are still "size unknown". The remembered and
+  current columns show the rounded text where there are no bytes.
+- elsewhere-core.js `read()` keeps each file's size text (`size`, ≤24 chars) beside its
+  bytes; source.js `cleanEntry()` stores it per episode file; season-ui.js reads it from
+  the page and its footer says how rounded sizes are read.
+- season-check.cjs +1: 2.97 GB and 2.97 GiB consistent with 3,192,667,327 bytes; 1.96 GB
+  and 2.9 GB not; two rounded figures unknown; the rounded text shown in the column. Red
+  before the change, green after.
+- InfinityHD's search address (`/torrents?name=…`) was confirmed by a live link on 26 Sep
+  2026; TRACKER-ADDRESSES.txt, TRACKER-RULES.md and CLAUDE.md say so. No code change.
+- Comments in the modules touched this week were cut to what and why; the incident
+  stories moved out of the code and stay in this file and the VALIDATION records.
+  CLAUDE.md carries that as a standing rule.
+- Shared with personal Scene Edition 1.50.4.
+
+## 1.44.3 — the source check names a folder that differs
+
+- Reported 26 Sep 2026 with a saved YU-Scene page: the same Breaking Bad S01 upload
+  (Unique ID, file name, 7/7 files and size all ✓) showed "folder ✗" against
+  yu-scene.net with nothing to say why. The page shows why: that upload's top folder is
+  "Breaking Bad (2008) S01 1080p BluRay 10bit EAC3 5 1 x265-iVy" — renamed to the display
+  title — where seedpool's and this page's is "Breaking.Bad.2008.S01.1080p.BluRay.10bit.
+  EAC3.5.1.x265-iVy". The mark was right; the line did not say what was looked for.
+- source.js `summary()`: when `folderMatch` is false and the remembered entry has a
+  folder, the line reads "folder ✗ (<host> has <folder>)". A matching or unknown folder
+  reads as before.
+- source-check.cjs +2 assertions in the summary check: the renamed folder is named with
+  its host; a matching folder is still "folder ✓". Red before the change, green after.
+- Shared with personal Scene Edition 1.50.3.
+
+## 1.44.2 — Season check matches a show with or without its year
+
+- Reported 26 Sep 2026, on 1.50.1: "Breaking Bad (2008) S04 (1080p DS4K AMZN WEB-DL
+  x265 SDR DDP 5.1 English - Yogi HONE)" found no candidate although the same season
+  had been visited elsewhere. season-core.js `identity()` took everything before the
+  season marker as the show name, year included, so "breaking bad 2008" and "breaking
+  bad" were two shows.
+- `identity()` now keeps a year at the end of the show name apart (`year`, 0 when there
+  is none), and `matches()` requires the years to agree only when both titles carry
+  one. "Example Show 2020 S01" and "Example Show 2021 S01" are still two shows.
+- auto-season-check.cjs +1: a title without a year matches the same show with one, and
+  two different years do not. GUIDE and README say so.
+- Shared with personal Scene Edition 1.50.2.
+
+## 1.44.1 — the shared source memory survives several open tabs
+
+- Reported 26 Sep 2026: with several tracker tabs open, Season check showed
+  "No episode file list was saved for this torrent" for every remembered tracker but
+  the one visited last, although each of those pages had shown its list. The record
+  behind it (`dkokto_source_v1`) is one value shared by every tab; `detail.js` called
+  `DKOKTO_SOURCE.remember()` on every redraw, and `remember()` wrote the whole record
+  back from the copy that tab had read, so a tab whose copy predated another tab's
+  file list wrote that list away. Only the last writer's list survived.
+- source.js `remember()` returns without writing when the merged entry says the same
+  things as the stored one (`sameEvidence()`, the visit time aside) and the stored one
+  is under an hour old (`REFRESH`), so a redraw that found nothing new is no longer a
+  write.
+- source.js `write(data, own)` reads the store again just before writing and merges:
+  the entry the tab is writing about (`own`) is taken as the tab has it; every other
+  upload is kept as the fuller of the two copies (`fuller()`, by `evidence()`: an
+  episode list, then file names, then a Unique ID, then sizes; the fields the fuller
+  copy lacks are filled from the other); an upload or an answer another tab stored
+  since this tab read is kept; answers keep the newer of two.
+- Bounds: PENDING 25 → 60, DAYS 3 → 14, and a new BUDGET of 1,500,000 characters for
+  the whole stored record — the oldest uploads, then the oldest answers, go until it
+  fits. `pending()` is still newest first. Wording in source-ui.js, season-ui.js,
+  the README, GUIDE, dk/README and the site says two weeks.
+- source-check.cjs +3: a tab does not rewrite the record on every redraw (six
+  identical visits, one write; a redraw before the file list loads is not a write and
+  loses nothing; an arriving Unique ID is); a write keeps what another tab stored since
+  this one last read (the other tab's upload and answer appear only on the pre-write
+  read and survive; of two copies of one upload the one with the episode list wins
+  and takes the other's Unique ID); the record holds two weeks and stays within its
+  budget (ten days fresh, fifteen not; sixty 200-episode packs stay under BUDGET with
+  the newest kept). The FileList expiry check now uses DAYS + 1 rather than four days.
+  detail-fixture.js expects "remembered for two weeks".
+- Also reported 26 Sep 2026: the Season check tab kept redrawing and its trackers changed
+  order. season-core.js `matches()` handed the candidates out in the memory's order —
+  last visit first — and any open tab could refresh a visit, so the order moved and the
+  tab redrew with it. The ten most recent candidates are still the ones taken, but they
+  are listed by tracker and torrent number, which does not move; season-ui.js already
+  left the visit time out of what it compares before redrawing. auto-season-check.cjs
+  +1: the same candidates in two memory orders list the same way.
+- tools/review-browser.mjs waits 300 ms after the viewport resize before reading the
+  panel's position: the resize event reaches the page a moment later in headless
+  Chromium 1194 (the check failed there against the untouched 1.44.0 build; Chrome on
+  Windows did not need the wait).
+- Not changed: what is remembered, the comparison, the banner, the Season check tab's
+  wording beyond "two weeks". Shared with personal Scene Edition 1.50.1.
+
+## 1.44.0 — automatic season and extra-file checks
+
+- Promote the new automatic Season check workflow to the next minor release.
+- Add an automatic Extra files section under Review → Findings, refreshed through
+  existing Source check events. Use loaded UNIT3D and external-adapter file readers;
+  no requests, new selectors, tracker actions or storage keys.
+- Apply only explicitly supplied payload rules for the selected tracker/category.
+  Show each filename, reason and rule source. Do not inherit payload bans from a
+  shared naming template. Unknown rule sets remain unchecked.
+- Scope the new section to movies/TV only. Review subfolders on every tracker,
+  including DP, allowing a shared outer folder and listing nested or multiple root
+  directories without inventing a ban. Flat lists cannot establish folder structure.
+- Avoid treating disc structures as loose extras. Samples and ambiguous files need
+  manual judgement. No additional DP payload ban was supplied or added.
+  Comic CBR/CBZ containers are not classified as forbidden Zenith archives.
+- Inspect at most 2,000 loaded entries; show the first 100 flagged filenames, with
+  total count and limits. Missing lists and unchecked container contents are explicit.
+- Naming badges and personal Reviewed marks retain their existing meaning.
+- Verify the supplied DarkPeers and upload.cx closed file dialogs read and remember all 12
+  episode paths with exact byte counts without clicking Files. Retain only sanitized
+  file-tree markup as an offline fixture; no account fields or tracker scripts.
+- Shared with personal Scene Edition 1.50.0.
+
+## 1.43.17 — automatic Season check tab
+
+- Move the episode table out of manual Compare releases into its own Review tab,
+  Season check, next to Source check. Existing manual file/report comparison remains.
+- Automatically retain up to 200 video-file paths and exact byte counts per source
+  fingerprint, using the existing 25-entry, three-day shared source store. No new key.
+- Compare up to ten other visited torrents with the same normalized show title,
+  year when included and season number. Multi-season ranges and unrelated titles
+  are excluded. Title matches remain candidates, not content-identity claims.
+- Refresh the open tab through existing source observers, focus and storage events.
+  Keep disclosure state, the selected tab and notes. Unloaded files, unnumbered
+  videos, truncated lists and missing exact sizes remain explicit.
+- Shared with personal Scene Edition 1.49.17.
+
+## 1.43.16 — Retro Movies Club
+
+- Add retro-movies.club to the UNIT3D catalogue and both userscripts' generated
+  host matches, enabling existing review, MediaInfo, comparison and source tools.
+- Add Retro Movies Club to the tracker chooser with the standard UNIT3D title
+  search: https://retro-movies.club/torrents?name={q}.
+- Public login identifies UNIT3D v9.2.0 (checked 25 September 2026). Authenticated
+  torrent/search pages remain unverified; no local naming rules were invented.
+- Coverage is now 46 UNIT3D hosts and 65 searchable trackers. Shared with personal
+  Scene Edition 1.49.16.
+
 ## 1.43.15 — screenshot hosts and exact source sizes
 
 - Show the loaded image hostname and linked-image hostname separately, alongside

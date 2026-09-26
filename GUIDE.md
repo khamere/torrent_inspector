@@ -1,12 +1,54 @@
 <!-- Source check workflow updated in 1.43.8. -->
 
-**Compare seasons:** open each torrent's file list normally, then use Compare releases
-to capture A and B. The Season episodes table lines up SxxEyy or 1x02 filenames,
-including combined episodes and ranges. It shows episodes only on one side, duplicate
-matches, filenames and exact sizes where supplied. Rounded sizes are shown as text.
-A capture holds up to 500 files; recapture after more files load. This compares the
-listed episodes, not a season's official episode count or the actual media contents.
-Posted report comparison still compares the captured report, not every episode.
+**Retro Movies Club:** install this update and reload retro-movies.club to enable
+the standard UNIT3D review tools. Add Retro Movies Club in Find releases → Choose
+your trackers for cross-tracker searches. Its public login identifies UNIT3D 9.2.0;
+the standard search URL and authenticated page layouts have not been verified
+against a logged-in page. No Retro Movies naming rules are bundled.
+
+
+**Extra files and subfolders (TV and movies only):** open **Inspect torrent →
+Findings**. The section reads the loaded Files list and shows filenames that match
+the selected tracker’s supplied extra-file rules, with the source of each rule.
+Open Files normally if it has not loaded yet. Results update as the list changes.
+
+Every tracker, including DarkPeers, gets a subfolder review: one shared outer
+torrent folder is set aside, then folders beneath it are listed. Multiple top-level
+folders are also shown. Disc structures and season folders can be legitimate;
+nesting alone is not a rule violation. Flat file lists can hide directory paths.
+
+The file rules currently cover HHD movie/TV extras, OnlyEncodes+ NFOs/images/stray
+files, and Zenith archives. No new DarkPeers ban was added. An unavailable rule
+means “not checked,” not approval. Possible samples and ambiguous files need human
+judgement, as do disc structures and files inside containers. At most 2,000 loaded
+entries are checked, with the first 100 flagged files and 100 folder paths shown.
+Naming badges and Reviewed marks are separate. Books, audiobooks, music, games
+and software do not get this new section; their existing checks are unchanged.
+
+**Automatic season comparison:** open **Inspect torrent → Season check**. Visit
+another torrent of the same show and season. File lists already present in the
+page are read automatically, even inside closed dialogs. On the supplied DarkPeers
+and upload.cx pages, all 12 episodes and exact byte counts were read without
+opening Files. If
+a tracker only loads its list after a click, open Files normally on that tracker.
+Return to Season check: the loaded file lists are remembered and compared without
+pressing Capture A or B. It refreshes when file lists load and when you return from
+another tracker tab, like Source check. Visits made before 1.44.0 need to be revisited
+to save episode rows. Use the same userscript edition on both trackers for shared memory.
+Since 1.44.1 the memory lasts two weeks and holds sixty uploads, and keeping several
+tracker tabs open no longer loses the lists the other tabs saved.
+
+Candidates share a normalized show title and season number (S01, S01E01 or 1x01).
+A year in the title separates two shows that both carry one, but a title without a year
+("Breaking.Bad.S04") is the same show as one with it ("Breaking Bad (2008) S04");
+aliases and multi-season ranges are not guessed.
+Rows show episode filenames, exact sizes where supplied and entries only on one
+side. Unloaded file lists and missing exact sizes stay unknown. Samples and subtitles
+are excluded. Up to 200 video files per torrent and ten matching torrents are shown,
+within Source check's 25-torrent, three-day memory. Limits are labelled. This does
+not establish identical content or an official season episode count. Manual Compare
+releases still compares two captured file/report summaries; its episode table has
+moved to Season check.
 
 **Source sizes:** Source check prints torrent and individual-file byte counts.
 Only explicit byte values or complete sums of exact file sizes are shown. Rounded
@@ -111,7 +153,7 @@ Green is not approval. It means the checks this script can make on a **display t
 tracker has accepted it.
 
 Click a badge to open **Review**. **Findings** shows the naming errors and manual
-checks; **MediaInfo**, **Find releases**, **Source check** and **My notes** keep the other work in this panel.
+checks; **MediaInfo**, **Find releases**, **Source check**, **Season check** and **My notes** keep the other work in this panel.
 **Copy report text** stays in the footer. Open **More tools & naming template** for the
 template, the separate conforming action and the full Inspector.
 
@@ -195,7 +237,7 @@ nothing on the tracker; it records that you looked.
 Most of what a moderator wants to know about an upload comes down to one question: is this
 the same file the source tracker has? The torrent page now remembers what makes the upload
 what it is — the report's Unique ID, the file name, the folder, the file names and the
-sizes — for three days. Open the same release on any other tracker the script runs on, by
+sizes — for two weeks. Open the same release on any other tracker the script runs on, by
 Find releases or on your own, then open Source check for the item-by-item evidence
 and a link back. On the first page the badge's dialog then
 carries the answer under **Source check**, and a Unique ID that turned out different is a
@@ -233,8 +275,8 @@ of the file in the page's own list (the report is from another file).
 These two are not UNIT3D, so there are no badges and nothing is judged there. What you get
 on their torrent pages is a compact set of actions under the name. Inspect torrent,
 Find other releases and Source check open the same Review panel. The old inline source
-listing and automatic popup are gone. TorrentLeech has no MediaInfo on the page, so only the name, files and size can
-be compared; it prints file names in lower case, and the check says so rather than failing
+listing and automatic popup are gone. TorrentLeech has no MediaInfo section, so the name, files and size are compared, plus
+the Unique ID when the uploader pasted a report into the NFO (many do); it prints file names in lower case, and the check says so rather than failing
 them. On FileList the MediaInfo is on its own page — the panel links to it — and opening it
 fills in the Unique ID for that torrent. **Choose trackers…** in the panel opens the same
 "Trackers you are on" dialog as the Details button does elsewhere.
@@ -470,6 +512,6 @@ JSON and taken with you.
 On FileList, open the torrent’s **Media Info** page once to remember its ID and full
 filename. Return to details: Source check compares that saved ID with other trackers
 and labels it as remembered evidence. FileList and TorrentLeech panels also update
-when you return from another tracker tab. Evidence is kept for three days in the same
+when you return from another tracker tab. Evidence is kept for two weeks in the same
 userscript’s shared Tampermonkey storage. Each tracker retains its own filename, ID
 and size; missing fields are not filled with another tracker’s values.

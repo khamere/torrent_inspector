@@ -100,7 +100,7 @@
 <header class="top">
   <div class="wrap">
     <nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/torrents/">Review demo</a><a href="/torrents/101/">Torrent demo</a><a href="/requests/">Request demo</a><a href="/rules.html">Rules builder</a><a href="/GUIDE.md">Guide</a><a href="/CHANGELOG.md">Release notes</a></nav>
-    <p class="eyebrow">Torrent Inspector 1.43.15</p>
+    <p class="eyebrow">Torrent Inspector 1.44.5</p>
     <h1>Tracker rules</h1>
     <p class="lede">
       Build a rules profile for a tracker, check one you already have, and run a release name
@@ -225,7 +225,7 @@
 <footer>
   <div class="wrap">
     <p><a href="index.html">← Torrent Inspector</a> · profile format documented in
-      <code>TRACKER-RULES.md</code> · built from the modules of 1.43.15</p>
+      <code>TRACKER-RULES.md</code> · built from the modules of 1.44.5</p>
   </div>
 </footer>
 
@@ -1589,7 +1589,8 @@ const DKOKTO_SOURCE_CORE = (() => {
 
     // An upload's fingerprint against another page's text. Each answer is true, false or
     // null (nothing to compare). `mentioned` says whether the page is about this upload at
-    // all — by ID, file name, folder or title — so that unrelated pages get no banner.
+    // all — by ID, file name, folder, the whole file list or title — so that unrelated
+    // pages get no banner.
     function compare(pageText, entry) {
         const text = String(pageText || '');
         const ids = idsIn(text);
@@ -1629,7 +1630,10 @@ const DKOKTO_SOURCE_CORE = (() => {
             if (wanted.some(w => Math.abs(b - w) / w < 0.005)) sizeMatch = true;
         }
 
-        const mentioned = !!(idMatch || nameMatch || folderMatch || (entry.title && text.includes(entry.title)));
+        // A pack with no main file, ID or folder is still this page's when every one of its
+        // file names is on it.
+        const allFiles = files.length >= 2 && filesFound === files.length;
+        const mentioned = !!(idMatch || nameMatch || folderMatch || allFiles || (entry.title && text.includes(entry.title)));
         return { ids, idsOnPage: ids.size, idMatch, nameMatch, folderMatch, filesFound, filesTotal: files.length, sizeMatch, sizesOnPage, mentioned, caseOnly };
     }
 
