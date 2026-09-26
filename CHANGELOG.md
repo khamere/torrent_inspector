@@ -9,6 +9,23 @@ was named until 1.25.0.
 
 ---
 
+## 1.45.2 — the origin note leaves the header
+
+- Asked 26 Sep 2026: remove the header comment saying the script began life inside a fork
+  of another edition. Torrent Inspector shares no code with that script, so the note
+  described history, not the file. build.mjs: the five comment lines under `@author` are
+  gone; the userscript metadata is otherwise unchanged. The personal Scene edition, which
+  does carry the upstream code, keeps its credits and its MIT notice and is not rebuilt
+  and is not affected by the header change.
+- Also asked 26 Sep 2026: unneeded comments out. Every module's comments were cut to what
+  the code does and why, keeping only the citations the code depends on (which saved page
+  a selector came from, which supplied rule a check applies, with their dates); bug
+  stories, quoted requests and incident dates went. The header's own notes were cut to
+  one line each. No code line changed in any module (checked line by line against the
+  previous build); the built script's comment lines went from 1,813 to 1,353.
+- inspector-check.cjs: the header is asserted to name no other script or author.
+- Shared with personal Scene Edition 1.51.2 (comments only).
+
 ## 1.45.1 — Season check matches a show named both ways
 
 - 26 Sep 2026: on Zenith, "My Sad Dead AKA Mis muertos tristes S01 …" listed only the

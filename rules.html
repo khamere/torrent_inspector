@@ -100,7 +100,7 @@
 <header class="top">
   <div class="wrap">
     <nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/torrents/">Review demo</a><a href="/torrents/101/">Torrent demo</a><a href="/requests/">Request demo</a><a href="/rules.html">Rules builder</a><a href="/GUIDE.md">Guide</a><a href="/CHANGELOG.md">Release notes</a></nav>
-    <p class="eyebrow">Torrent Inspector 1.45.1</p>
+    <p class="eyebrow">Torrent Inspector 1.45.2</p>
     <h1>Tracker rules</h1>
     <p class="lede">
       Build a rules profile for a tracker, check one you already have, and run a release name
@@ -225,27 +225,18 @@
 <footer>
   <div class="wrap">
     <p><a href="index.html">← Torrent Inspector</a> · profile format documented in
-      <code>TRACKER-RULES.md</code> · built from the modules of 1.45.1</p>
+      <code>TRACKER-RULES.md</code> · built from the modules of 1.45.2</p>
   </div>
 </footer>
 
 <script>
 /* ── store.js ─────────────────────────────────────────── */
 // Where the settings live, so that they are the same settings on every tracker.
-//
-// A browser keeps localStorage strictly per domain, so what you set up on DarkPeers is not
-// there on LST — a different list of trackers you are on, a different set of added rules, a
-// different internal-groups list, on each of the forty-odd sites this runs on. Tampermonkey
-// keeps a store of its own per SCRIPT, shared by every site the script runs on, and that is
-// the one this uses where it exists.
-//
-// It is storage on this machine, not a request. Nothing is sent anywhere either way, and
-// where Tampermonkey's store is not available — another manager, or the offline fixtures —
-// this falls back to localStorage and everything still works, one tracker at a time.
-//
-// Anything already saved in localStorage is carried up the first time a key is read, so a
-// setup made before this existed is not lost. Writes go to both, so turning the script back
-// to an older copy of itself does not lose what you did with the newer one.
+// localStorage is per domain; Tampermonkey's per-script store is shared by every site the
+// script runs on, and is used where it exists. Otherwise (another manager, the offline
+// fixtures) this falls back to localStorage, one tracker at a time. Nothing is sent anywhere.
+// Anything already in localStorage is carried up the first time a key is read, and writes
+// go to both, so an older copy of the script still sees what a newer one saved.
 const DKOKTO_STORE = (() => {
     // Read each time rather than once, so the checks can exercise both paths.
     function shared() {
@@ -677,14 +668,11 @@ ZEE5|ZEE5`;
     // Abbreviations list (luminarr.me/wikis/7), supplied 10 Sep 2026. Every one of the 195
     // general abbreviations on that page was already on the list above; these were not.
     //
-    // Three of its abbreviations collide with one already in use, and are deliberately NOT
-    // added: MX (Tokyo MX there, MONOMAX here), TBS (TBS Television there, TBS here) and
-    // ABC (Asahi Broadcasting Corporation there, American Broadcasting Company here). The
-    // first spelling wins, and quietly changing what MX means in every existing title check
-    // would be worse than leaving one broadcaster unlisted.
-    //
-    // Two more are on the page but not here: "CS-Fuji ONE" and "M-ON!" cannot appear as a
-    // token in a title, and inventing a token-safe spelling for them would be inventing.
+    // Three of its abbreviations collide with one already in use and are NOT added: MX
+    // (Tokyo MX there, MONOMAX here), TBS (TBS Television there, TBS here) and ABC (Asahi
+    // Broadcasting Corporation there, American Broadcasting Company here); the first
+    // spelling wins. "CS-Fuji ONE" and "M-ON!" cannot appear as a token in a title and are
+    // left out rather than given an invented spelling.
     const JAPAN = `ABMA|Abema
 ANIMAX|Animax
 AO|Anime Onegai
@@ -748,10 +736,9 @@ const DKOKTO_PROFILES = (() => {
     const SEVERITIES=['error','review'];
     const CATEGORIES=['movie','tv','disc','music','ebook','audiobook','software','any'];
     let backing=null;
-    // Kept in Tampermonkey's own per-script store where there is one, so this is the same
-    // set of added trackers and their rules on every tracker the script runs on rather than a fresh one per domain.
-    // See store.js; localStorage is the fallback, and an existing setup is carried up.
-    // store.js in the bundle, or required directly when a check runs this on its own.
+    // Kept in Tampermonkey's per-script store where there is one (store.js; localStorage
+    // is the fallback, an existing setup is carried up), so the same added trackers and
+    // rules apply on every tracker. store.js is in the bundle, or required for a check.
     const SHARED=()=>{try{
         const shared=typeof DKOKTO_STORE!=='undefined'?DKOKTO_STORE
             :(typeof require==='function'?require('./store.js'):null);
@@ -882,10 +869,9 @@ const DKOKTO_PROFILES = (() => {
     const all=()=>cache||(cache=read());
     // The rule sets that ship with the script (tracker-guides.js), validated once and kept as
     // the same objects, so groups.js's per-profile cache holds. They are in force on their
-    // own trackers without being added (asked 20 Sep 2026: "if we have rules for the site,
-    // those rules are the default"); one you add under the same key is yours and wins, and
-    // removing yours falls back to the shipped one. all() stays what you added; available()
-    // is what the Rules list offers.
+    // own trackers without being added; one you add under the same key wins, and removing
+    // yours falls back to the shipped one. all() is what you added; available() is what
+    // the Rules list offers.
     let shippedCache=null;
     function shipped() {
         if(shippedCache)return shippedCache;
@@ -984,10 +970,9 @@ const DKOKTO_PROFILES = (() => {
             message:'This tracker takes no archived uploads.'}}
     ];
     // A profile assembled from the form, ready to validate like any other. The three "own
-    // way" boxes and the resolutions list were added 23 Sep 2026: a tracker that names its
-    // books or music its own way (HomieHelpDesk, MidnightScene), one with a folder standard
-    // for audiobook payloads, or one whose guide lists the resolutions it takes, could not
-    // be built from the form before — only pasted as JSON.
+    // way" boxes and the resolutions list cover a tracker that names its books or music its
+    // own way (HomieHelpDesk, MidnightScene), one with an audiobook folder standard, or one
+    // whose guide lists the resolutions it takes.
     function build({key,label,hosts,base,groupList,recipes=[],notes=[],ownBooks=false,ownMusic=false,audiobookFolders=false,resolutions=''}={}) {
         const listed=(Array.isArray(resolutions)?resolutions:String(resolutions||'').split(/[\s,]+/))
             .map(value=>String(value).trim()).filter(value=>/^\d{3,4}[pi]$/i.test(value));
@@ -1025,11 +1010,9 @@ const DKOKTO_PROFILES = (() => {
 
 
 /* ── groups.js ─────────────────────────────────────────── */
-// Each tracker's list of low-quality and banned release groups, as supplied.
-// A title is matched against the list of whichever site's rules you are checking
-// under: this says what that list says, not whether a release is actually good,
-// and it verifies nothing. The two lists overlap but are not the same, so a group
-// banned on one site can be perfectly acceptable on the other.
+// Each tracker's list of low-quality and banned release groups, as supplied. A title is
+// matched against the chosen site's list only; this says what that list says and
+// verifies nothing.
 const DKOKTO_GROUPS = ((profiles) => {
     const BANNED=['ARCADE','aXXo','BANDOLEROS','BONE','CM8','CrEwSaDe','CTFOH','dAV1nci','DNL','eranger2',
         'FaNGDiNG0','FGT','FiSTER','flower','GalaxyTV','Goki','H4XO','HD2DVD','HDTime','HorribleSubs','iHYTECH',
@@ -1044,9 +1027,8 @@ const DKOKTO_GROUPS = ((profiles) => {
     ];
     // BRrip is on the list as a source, not a group, so it is matched anywhere in the title.
     const SOURCES=[{name:'BRrip',pattern:/(?:^|[ ._])BR-?rip(?=$|[ ._-])/i}];
-    // Zenith's own list, as supplied, with the reason it gives for each. It grants no
-    // exceptions: EVO is banned outright there, and several groups DarkPeers bans
-    // (Goki, ARCADE, PSA…) are not on it at all.
+    // Zenith's own list, as supplied, with the reason it gives for each. No exceptions:
+    // EVO is banned outright there.
     const ZENITH=[['4K4U','Quality'],['Alcaide_Kira','Retagging'],['AROMA','Retagging'],['aXXo','Quality'],
         ['BiTOR','Faking DV/Atmos, Falsifying Mediainfo','03-06-2026'],['BRrip','Quality'],['CM8','Quality'],
         ['CrEwSaDe','Quality'],['d3g','Quality'],['DNL','Quality'],['EVO','Quality'],['FaNGDiNG0','Quality'],
@@ -1074,7 +1056,7 @@ const DKOKTO_GROUPS = ((profiles) => {
             refused:entry=>entry.name+' is allowed only for '+entry.allowed+', and '+entry.otherwise+'.'}
     };
     const key=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,'');
-    // A tracker you added brings its own list, phrased in its own name.
+    // An added tracker brings its own list, phrased in its own name.
     function fromProfile(profile) {
         const reasons=new Map(profile.banned.filter(entry=>entry[1]).map(([name,reason,since])=>[name,reason+(since?', added '+since:'')]));
         const said=name=>reasons.has(name)?' ('+profile.label+'’s reason: '+reasons.get(name)+')':'';
@@ -1090,11 +1072,7 @@ const DKOKTO_GROUPS = ((profiles) => {
         const profile=profiles.get(site);
         if(!profile)return LISTS.dp;
         // Rebuilt when the stored profile changes, so an edit takes effect without a reload.
-        // Keyed on the profile object itself: saving replaces it, and profiles.all() hands
-        // back the same object until then. Keying on the LENGTHS of its lists meant that
-        // renaming a banned group — the same count, the same label — left the old list in
-        // force, so the group you had just removed was still refused and its replacement
-        // was not, until the page was reloaded.
+        // Keyed on the profile object itself: saving replaces it.
         if(made.get(site)?.from!==profile)made.set(site,{from:profile,list:fromProfile(profile)});
         return made.get(site).list;
     }
@@ -1106,60 +1084,41 @@ const DKOKTO_GROUPS = ((profiles) => {
             conditional:new Map(chosen.conditional.map(entry=>[key(entry.name),entry]))});
         return keysOf.get(chosen);
     };
-    // Where a group name can appear: the trailing tag, or a bracketed tag anywhere
-    // (anime releases and YTS put theirs in brackets).
-    // A site decoration inside the title element (a flame, a star, an icon-font glyph) is
-    // not part of the tag, and a trailing one hid the group entirely.
+    // A site decoration at either end of the title (a flame, a star, an icon-font glyph)
+    // is not part of the tag.
     const DECORATION=/^[\s\p{Cf}\p{Co}\p{So}\p{Sk}]+|[\s\p{Cf}\p{Co}\p{So}\p{Sk}]+$/gu;
-    // A group name can contain spaces — "…x265-Goki TAoE" is one tag, not a tag and a stray
-    // word — so everything after the closing hyphen is taken, up to four words. What tells
-    // that from "…WEB-DL AAC 2.0 H.264", which has no tag at all, is that a technical token
-    // is never part of a group name.
+    // Tokens that are never part of a group name, which is what tells "…WEB-DL AAC 2.0
+    // H.264" (no tag) from "…x265-Goki TAoE" (one tag with a space).
     const TECHNICAL=/^(?:\d{3,4}[pi]|(?:18|19|20)\d{2}|S\d{2}(?:E\d{2})?|E\d{2}|\d+\.\d+|BluRay|BDRip|BRRip|BDMV|ISO|WEB|WEBRip|WEBDL|DL|HDTV|UHDTV|SDTV|DVD|DVDRip|UHD|HD|SD|Rip|Disc|REMUX|Hybrid|x26[45]|H\.?26[45]|AVC|HEVC|AV1|XviD|DivX|VC-?1|MPEG-?\d?|DD|DDP|DD\+|AC3|EAC3|AAC|FLAC|DTS|DTS-HD|DTS-X|MA|TrueHD|Atmos|Opus|LPCM|PCM|MP3|Audio|\d*bits?|\d+(?:\.\d+)?kHz|HDR|HDR10|HDR10\+|DV|SDR|HLG|Hi10P|IMAX|REPACK|PROPER|EXTENDED|UNCUT|Remastered|Criterion|MULTi|SUBBED|DUBBED|Subs?|Dubs?|Complete|Season|Part|AKA|Edition|Cut|NTSC|PAL)$/i;
+    // The release group tag: everything after the closing hyphen, up to four words.
     function trailingTag(title) {
         const value=String(title||'').replace(DECORATION,'').trim();
-        // Zenith's music shape, "Artist - Album (Year) - [Format] - Group" (two rows on its
-        // moderation queue, 23 Sep 2026): the group follows the bracketed format after a
-        // spaced hyphen, which the loop below rightly refuses to open a tag on. One word
-        // straight after "] - " is that group; two or more is a subtitle and is not.
+        // Zenith's music shape, "Artist - Album (Year) - [Format] - Group" (its moderation
+        // queue, 23 Sep 2026): one word straight after "] - " is the group.
         const afterFormat=value.match(/\]\s-\s([A-Za-z0-9][A-Za-z0-9._+]{0,29})\s*$/);
         if(afterFormat)return afterFormat[1];
-        // Each hyphen in turn, earliest first, because a group name can hold hyphens of its
-        // own (R-A-R-B-G) and the tag is whatever runs unbroken to the end from the first
-        // hyphen that opens one. A tail carrying a technical token is not a tag: that is
-        // what tells "…WEB-DL AAC 2.0 H.264" (no tag) from "…x265-Goki TAoE" (one tag).
+        // Each hyphen in turn, earliest first: a group name can hold hyphens of its own
+        // (R-A-R-B-G), and the tag runs unbroken to the end from the first hyphen that
+        // opens one.
         for(let at=value.indexOf('-');at>0;at=value.indexOf('-',at+1)) {
-            // A real tag's hyphen has no space before it: " - The Beginning" is part of a
-            // name, "x265-GRP" is a tag.
+            // A real tag's hyphen has no space before it: " - The Beginning" is part of a name.
             if(/\s$/.test(value.slice(0,at)))continue;
             const tail=value.slice(at+1).trim();
             if(!tail||tail.length>40)continue;
-            // A spaced " - " is a name separator, never the inside of a tag: in Zenith's
-            // "[CD FLAC 16bit-44kHz] - craftwork" the hyphen in the sample rate must not
-            // open a tag that runs on through the bracket (seen 23 Sep 2026).
+            // A spaced " - " is a name separator, never the inside of a tag.
             if(/\s-\s/.test(tail))continue;
             const words=tail.split(/\s+/);
             if(words.length>4||!/^[A-Za-z0-9]/.test(words[0]))continue;
-            // A release name separates its tokens with spaces, dots or hyphens, depending
-            // on whose convention it follows, and all three have to be looked at:
-            //   spaced    "… WEB-DL DD+ 5.1 H.264-DKOKTO"
-            //   dotted    "… DTS-HD.MA.5.1.DV.HDR10.REMUX-seedpool"
-            //   hyphened  "Terrestrial_Hospice-Universal_Hate_Speech-EP-WEB-2018-BLEEDiNG"
-            // A hyphen can also sit INSIDE a technical token — "FLAC 16-bit 44.1kHz" — where
-            // everything technical is on the left of it and the tail reads clean. The audio
-            // words are what tell that apart, so bit depth and sample rate are technical
-            // tokens here like any other.
-            // Splitting on spaces alone read a dotted run as one word with nothing technical
-            // in it and called that the group. Adding dots fixed the video names and left the
-            // music ones, where WEB and the year are joined by hyphens instead. Splitting a
-            // tail on its hyphens costs nothing: a group whose own name carries them
-            // (R-A-R-B-G) has no technical token among the pieces.
+            // A tail carrying a technical token is not a tag. Tokens may be separated by
+            // spaces, dots or hyphens ("…H.264-DKOKTO", "…REMUX-seedpool",
+            // "…-EP-WEB-2018-BLEEDiNG"), so the tail is split on all three.
             const parts=tail.split(/[\s.-]+/).filter(Boolean);
             if(parts.some(word=>TECHNICAL.test(word.replace(/[.,;:\])]+$/,''))))continue;
             return tail;
         }
         return '';
     }
+    // Where a group name can appear: the trailing tag, or a bracketed tag anywhere.
     function tags(title) {
         const value=String(title||'').replace(DECORATION,'').trim(),found=[];
         const trailing=trailingTag(value);
@@ -1187,9 +1146,8 @@ const DKOKTO_GROUPS = ((profiles) => {
                 reason:conditional.allow.test(String(title||''))
                     ?chosen.allowed(conditional):chosen.refused(conditional)};
         }
-        // "Goki TAoE" is not the banned "Goki" — a different name is a different group, and
-        // saying otherwise on a moderation tool would be an accusation, not a finding. But
-        // the resemblance is worth a look, so it is raised as a question and named as one.
+        // A multi-word tag that begins with a banned name ("Goki TAoE" vs "Goki") is a
+        // different group; the resemblance is raised as a question, not a finding.
         const tag=trailingTag(title);
         if(tag&&/\s/.test(tag)) {
             const first=key(tag.split(/\s+/)[0]);
@@ -1205,8 +1163,7 @@ const DKOKTO_GROUPS = ((profiles) => {
     }
     return {find,tags,trailingTag,
         list:(site='dp')=>[...listFor(site).banned],
-        // allowIf is the pattern itself, so a profile copied from this list carries the rule
-        // it says it carries: HDT is allowed for Remuxes, and the exported pattern says REMUX.
+        // allowIf is the pattern itself, so a profile copied from this list carries the rule.
         conditional:(site='dp')=>listFor(site).conditional.map(entry=>
             ({name:entry.name,allowed:entry.allowed,allowIf:entry.allow.source,otherwise:entry.otherwise})),
         sources:(site='dp')=>listFor(site).sources.map(entry=>entry.name),
@@ -1222,11 +1179,9 @@ const DKOKTO_GROUPS = ((profiles) => {
 // Nothing here is fetched: these are the rules as supplied.
 const DKOKTO_RULES = ((profiles) => {
     const KEY='dkokto_rules_v1';
-    // `guideDate` is when the rule set was supplied to this project. It is shown at the point
-    // of use so a moderator knows how old what they are reading against may be. Empty means
-    // no date was recorded when it was supplied — which is said, not hidden, and never
-    // guessed at. The two built-in guides carried no date until 12 Sep 2026, when both were
-    // given as supplied on 9 Sep 2026.
+    // `guideDate` is when the rule set was supplied to this project; empty means no date
+    // was recorded, which is said rather than guessed. Both built-in guides: supplied
+    // 9 Sep 2026 (given 12 Sep 2026).
     const SITES=[
         {key:'dp',label:'DarkPeers',hosts:['darkpeers.org','www.darkpeers.org'],guideDate:'9 Sep 2026'},
         {key:'zenith',label:'Zenith',hosts:['znth.cx','www.znth.cx'],guideDate:'9 Sep 2026'}
@@ -1238,10 +1193,8 @@ const DKOKTO_RULES = ((profiles) => {
     const BANNED_WORKS=['Four Against Darkness Expanded Edition','Four Against Darkness'];
     const loose=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,'');
     let backing=null;
-    // Kept in Tampermonkey's own per-script store where there is one, so this is the same
-    // choice of whose rules apply, per tracker on every tracker the script runs on rather than a fresh one per domain.
-    // See store.js; localStorage is the fallback, and an existing setup is carried up.
-    // store.js in the bundle, or required directly when a check runs this on its own.
+    // Tampermonkey's own per-script store where there is one (store.js), so the choice is
+    // the same on every tracker; localStorage is the fallback.
     const SHARED=()=>{try{
         const shared=typeof DKOKTO_STORE!=='undefined'?DKOKTO_STORE
             :(typeof require==='function'?require('./store.js'):null);
@@ -1250,9 +1203,8 @@ const DKOKTO_RULES = ((profiles) => {
     const storage=()=>backing||SHARED();
     const host=()=>{try{return typeof location!=='undefined'?location.hostname.toLowerCase().replace(/^www\./,''):'';}catch{return '';}};
     const siteFor=name=>sites().find(site=>site.hosts.some(h=>h.replace(/^www\./,'')===String(name||'').toLowerCase().replace(/^www\./,'')))||null;
-    // The two built-in sites, the rule sets that ship with the script (in force on their own
-    // trackers as they ship), and any tracker profile you have added.
-    // A profile's date is whatever its source line carries: "as supplied 10 Sep 2026".
+    // The two built-in sites, the shipped rule sets and any added tracker profile. A
+    // profile's date is whatever its source line carries: "as supplied 10 Sep 2026".
     const dateIn=text=>(String(text||'').match(/\b(\d{1,2} [A-Z][a-z]{2} 20\d{2})\b/)||[])[1]||'';
     const added=()=>profiles.available().map(profile=>({key:profile.key,label:profile.label,hosts:profile.hosts,base:profile.base,guideDate:dateIn(profile.source)}));
     const sites=()=>[...SITES,...added()];
@@ -1265,12 +1217,10 @@ const DKOKTO_RULES = ((profiles) => {
     const audiobooksOf=key=>profiles.get(key)?.audiobooks==='folder-standard'?'folder-standard':'base';
     const labelOf=key=>sites().find(site=>site.key===key)?.label||'DarkPeers';
     const hostsOf=key=>(sites().find(site=>site.key===key)?.hosts||[]).filter(host=>!/^www\./.test(host));
-    // In words, for the panel: "in hand 10 Sep 2026", or the honest absence of a date.
+    // In words, for the panel: "in hand 10 Sep 2026", or that no date was recorded.
     const guideDate=key=>sites().find(site=>site.key===key)?.guideDate||'';
     const guideSince=key=>{const date=guideDate(key);return date?'in hand '+date:'as supplied; the date it was supplied was not recorded';};
-    // Which rule set you chose, per tracker. It has to be per tracker now that the script
-    // runs on more than two: choosing DarkPeers' rules while looking at LST must not also
-    // change what is applied on Zenith.
+    // The chosen rule set, per tracker.
     const HOSTS='dkokto_rules_host_v1';
     function hostChoices() {
         try{
@@ -1279,10 +1229,8 @@ const DKOKTO_RULES = ((profiles) => {
             return parsed&&typeof parsed==='object'&&!Array.isArray(parsed)?parsed:{};
         }catch{return {};}
     }
-    // The single choice this script kept before it was per tracker. It is honoured, but by
-    // being moved to the tracker you were on when it was made — left where it was, it would
-    // quietly become the rule set for every new tracker the script now runs on, which is
-    // the opposite of what a per-tracker choice is for.
+    // The single (pre-per-tracker) choice, moved to the current tracker on first use so it
+    // does not become the rule set for every tracker.
     const before=()=>{try{const saved=storage()?.getItem(KEY);
         return saved&&sites().some(site=>site.key===saved)?saved:'';}catch{return '';}};
     let migrated=false;
@@ -1297,10 +1245,8 @@ const DKOKTO_RULES = ((profiles) => {
             storage()?.removeItem(KEY);
         }catch{}
     }
-    // The rule set that actually applies here: the one you chose on this tracker, the
-    // tracker's own, or the one you chose before. Empty on a tracker whose rules this
-    // script does not have — where nothing is judged until you pick one, because judging
-    // an LST release by DarkPeers' banned list would be citing a rule LST never wrote.
+    // The rule set that applies here: the one chosen on this tracker, else the tracker's
+    // own. Empty on a tracker whose rules are not in hand, where nothing is judged.
     function settled() {
         migrate();
         const where=host();
@@ -1343,11 +1289,10 @@ const DKOKTO_RULES = ((profiles) => {
     const CONTAINERS={matroska:'MKV','mpeg-4':'MP4',avi:'AVI',bdav:'disc',mpeg:'MPEG'};
 
     // What this site's rules can be checked for, from a title and (where present) the
-    // MediaInfo report already on the page. Everything else in the rules is about the
-    // upload itself and stays a human job.
+    // MediaInfo report on the page.
     function check(title='',{site=current(),profile='auto',file=null,officialTitle=''}={}) {
         const issues=[],add=(severity,code,message)=>{if(!issues.some(i=>i.code===code))issues.push({severity,code,message});};
-        // A tracker you added is checked against the rules its profile carries.
+        // An added tracker is checked against the rules its profile carries.
         const added=profiles.get(site);
         if(added)return profiles.evaluate(added,title,profile);
         if(site!=='zenith')return issues;
@@ -1397,11 +1342,10 @@ const DKOKTO_RULES = ((profiles) => {
             add('review','zenith-standing','Zenith rules this cannot check: whether it already exists there (rule 1), another tracker’s exclusivity (1.2), keeping the original group tag (1.4), no archives (2.1), and the description requirements — three source screenshots and MediaInfo for video (3.2, 3.4).');
         return issues;
     }
-    // Zenith's own naming for books and music, which is nothing like DarkPeers'. Its
-    // audiobook template is:
+    // Zenith's own naming for books and music. Audiobook:
     //   Author - Title (Year) Language Edition {Narrator} [Source] Container Codec Bitrate
-    // its ebook titles are Author - Series # - Title Year Language Edition Format Retail
-    // with no brackets, and its music is a suggested shape rather than a required one.
+    // Ebook: Author - Series # - Title Year Language Edition Format Retail, no brackets.
+    // Music is a suggested shape rather than a required one.
     const AB_YEAR=/\((?:18|19|20)\d{2}\)/;
     const AB_NARRATOR=/\{([^{}]*)\}/;
     const AB_BRACKET=/\[([^\]]*)\]/;
@@ -1416,10 +1360,9 @@ const DKOKTO_RULES = ((profiles) => {
         if(!/^\S.+?\s-\s\S/.test(value))
             add('error','zenith-name-author',profile==='music'?'Start with Artist - Album.':'Start with Author - Title, separated by " - ".');
         if(profile==='music') {
-            // "Suggested format", in their words, with only the artist and album required.
-            // A group tag after the format ("… - [CD FLAC 16bit-44kHz] - craftwork", seen on
-            // a Zenith listing 22 Sep 2026) still follows that shape: rule 1.4 keeps the
-            // original group tag, and the suggested form does not say where it goes.
+            // "Suggested format", with only the artist and album required. A group tag after
+            // the format (seen on a Zenith listing 22 Sep 2026) still fits: rule 1.4 keeps
+            // the original group tag.
             if(!/^.+?\s-\s.+?\s\((?:18|19|20)\d{2}\)\s-\s\[.+\](?:\s-\s\S+)?\s*$/.test(value))
                 add('review','zenith-mu-form','Zenith suggests Artist - Album (Year) - [Format], with the format in square brackets; only the artist and album are required. Format can carry source, codec, bit depth and sample rate, e.g. - [CD FLAC 16bit-44kHz].');
             if(/\w+\.\w+\.\w+/.test(value)&&!value.includes(' - '))
@@ -1478,13 +1421,11 @@ const DKOKTO_RULES = ((profiles) => {
         add('review','zenith-eb-check','Zenith rules this cannot check: the official series name and numbering against Goodreads, the edition year for this specific edition, Retail only for an unmodified store copy, and the ISBN in the filenames (not in this title).');
         return issues;
     }
-    // These are standing notes, not findings against this title: a badge stays green.
-    // book-own and music-own are naming.js saying whose book / music naming applies on a
-    // tracker whose profile names them its own way: information, never a finding.
+    // Standing notes, not findings against this title: a badge stays green. book-own and
+    // music-own (naming.js) say whose naming applies on a tracker with its own.
     const BUILTIN_BASELINE=['zenith-standing','zenith-episode','zenith-ab-check','zenith-eb-check','zenith-mu-files','book-own','music-own'];
     const BASELINE=BUILTIN_BASELINE;
-    // Everything that is a standing note rather than a finding: the built-ins, plus the
-    // notes each added profile carries.
+    // Every standing note: the built-ins plus the notes each added profile carries.
     const baseline=()=>[...BUILTIN_BASELINE,...profiles.baseline()];
     // A profile may list the resolutions its tracker accepts; otherwise its base decides.
     const resolutions=site=>profiles.get(site)?.resolutions?.length?profiles.get(site).resolutions:null;
@@ -1495,23 +1436,13 @@ const DKOKTO_RULES = ((profiles) => {
 
 /* ── source-core.js ─────────────────────────────────────────── */
 // Does the report belong to this file, and is this the release the source tracker has?
-//
-// This is the part of the source check with no page in it: text in, findings out, so the
-// Node checks can exercise every line. It answers two kinds of question.
-//
-// On the torrent page itself: does the MediaInfo report belong to the file? A Matroska
-// report writes its Unique ID twice, as a decimal and as the same number in hex, and
-// MediaInfo never gets the two to disagree — so halves that differ were typed by hand.
-// The report's File size and Complete name are held against the page's own file list.
-// (The page's Type field against the name is page-core.js's job already.)
-//
-// Across trackers: a fingerprint of an upload (Unique ID, file names, folder, sizes) is
-// compared with the plain text of another tracker's torrent page, so that opening the
-// same release where it was first published says whether it is the same file. source.js
-// does the remembering and the page work.
-//
-// The shape of these checks follows the "MidnightScene Mod Helper" userscript that was
-// supplied on 22 Sep 2026; the code is this project's own.
+// Text in, findings out (no page), so the Node checks can exercise every line. On the
+// page: a Matroska report writes its Unique ID as decimal and hex and MediaInfo never
+// lets them disagree; File size and Complete name are held against the file list.
+// Across trackers: an upload's fingerprint (Unique ID, file names, folder, sizes) is
+// compared with another tracker's page text. source.js does the remembering and the
+// page work. The shape of these checks follows the "MidnightScene Mod Helper"
+// userscript supplied on 22 Sep 2026; the code is this project's own.
 const DKOKTO_SOURCE_CORE = (() => {
     const key = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
     // A MediaInfo field by any of its names, as inspector.js keys them.
@@ -1686,9 +1617,8 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         ebook:'Author - Name Year [Edition] Format ISBN [Retail / Scan / OCR]',
         software:'The supplied guide specifies no title template for games/software; install and usage instructions must be in the description.'
     };
-    // A title read from a page — or pasted out of one — can carry a site decoration at
-    // either end: a personal-release flame, a staff star, an icon-font glyph. It is not
-    // part of the release name, and a trailing one broke every check anchored to the end.
+    // Site decorations at either end of a title (a personal-release flame, a staff star, an
+    // icon-font glyph) are not part of the release name.
     const DECORATION=/^[\s\p{Cf}\p{Co}\p{So}\p{Sk}]+|[\s\p{Cf}\p{Co}\p{So}\p{Sk}]+$/gu;
     // Stripped before normalising as well as after: NFKC turns a trailing ™ into "TM".
     const norm=s=>String(s||'').replace(DECORATION,'').normalize('NFKC').replace(DECORATION,'').trim();
@@ -1738,10 +1668,8 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         return {artist,album,year:year[1],parenthesized,dashedFormat,format,tag,suggestion};
     }
 
-    // "English Title AKA Original Title" — the guide's form, checked where it can be:
-    // how it is written and where it sits. Whether a title needs one at all depends on
-    // the film's original name, which is not on this page, so that stays a manual check
-    // unless you supply the original title yourself.
+    // "English Title AKA Original Title": how it is written and where it sits. Whether a
+    // title needs one depends on the original name, so that is checked only when supplied.
     const AKA_SPACED=/(?:^|\s)AKA(?=\s)/;                       // the correct form
     const AKA_LOOSE=/(?:^|[\s.(\[-])(a\.?k\.?a\.?)(?=$|[\s.:)\]-])/i; // any way of writing it
     const TECHNICAL=/(?:^|[ .])(?:(?:18|19|20)\d{2}|S\d{2}(?:E\d{2})?|\d{3,4}[pi]|REMUX|WEB-?DL|WEBRip|Blu-?Ray|HDTV|DVD(?:Rip|5|9)?)(?=$|[ .])/i;
@@ -1783,14 +1711,10 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
     }
     // --- Episodes, read from the file list ----------------------------------------------
     // After ZenGuard 1.9.1's _tvEpisodes and _isSeasonPack (notes/zenguard-1.9.1-excerpts.js,
-    // as pasted 12 Sep 2026; not verified against any live page): an S##E## in a name is an
-    // episode the torrent holds, and a torrent is a season pack when its files hold more than
-    // one episode of the season, or its name says S## with no E## after it. Two things go a
-    // step past ZenGuard's pattern, and are the only things that do: the guide's own double
-    // and range forms (S01E02E03, S01E02-04, and E02-E04 as it is sometimes written) are read
-    // as every episode they span, and a token glued to a letter or digit is not read at all.
-    // A range that runs backwards, or that leads into something that is not an episode
-    // number (S02E05-1080p), is its first episode only.
+    // as pasted 12 Sep 2026; not verified against any live page). Beyond ZenGuard's pattern:
+    // double and range forms (S01E02E03, S01E02-04, E02-E04) are read as every episode they
+    // span; a token glued to a letter or digit is not read; a backwards range, or one that
+    // leads into a non-episode number (S02E05-1080p), is its first episode only.
     const EPISODE=/(?<![A-Za-z0-9])S(\d{1,3})E(\d{1,4})((?:E\d{1,4}|-E?\d{1,4})*)(?![A-Za-z0-9])/gi;
     const VIDEO_FILE=/\.(?:mkv|mp4|m4v|avi|wmv|ts|m2ts|vob|mpg|mpeg|mov|flv|webm)$/i;
     const pathOf=entry=>typeof entry==='string'?entry:entry&&typeof entry.path==='string'?entry.path:'';
@@ -1827,14 +1751,10 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         }
         return out.join(', ');
     }
-    // What the file list says about the episodes, against what the name says. Only called
-    // when a list is in hand: without one the reminder stands, and this is never reached.
-    // An audiobook's file list against a tracker's folder standard (HomieHelpDesk's Audiobook
-    // Naming and Folder Standard, notes/homiehelpdesk-rules-2026-09-20.md, supplied 22 Sep
-    // 2026): a multi-track book sits in one root folder; a single M4B may be loose; every
-    // audio file starts with a zero-padded track number — two digits under a hundred tracks,
-    // three from a hundred — so that an alphabetical sort is story order; .nfo, .txt and
-    // .url files are stripped. Tags cannot be read from a page and stay a reminder.
+    // An audiobook's file list against HomieHelpDesk's Audiobook Naming and Folder Standard
+    // (notes/homiehelpdesk-rules-2026-09-20.md, supplied 22 Sep 2026): one root folder for a
+    // multi-track book (a single M4B may be loose), zero-padded track numbers (two digits
+    // under a hundred tracks, three from a hundred), no .nfo, .txt or .url files.
     const AUDIO=/\.(?:mp3|m4a|m4b|flac|ogg|opus|aac|wma)$/i;
     function audiobookPayload(files,add) {
         if(!files.length)return;
@@ -1858,6 +1778,8 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         if(junk.length)
             add('error','ab-junk','The Audiobook Naming and Folder Standard: .nfo files, stray .txt notes and .url links are stripped before the torrent is made — the upload form has an NFO field. In this payload: '+junk.slice(0,6).join(', ')+(junk.length>6?' and '+(junk.length-6)+' more':'')+'.');
     }
+    // What the file list says about the episodes, against what the name says. Only called
+    // when a list is in hand.
     function episodeFindings(title,token,files,add) {
         const season=Number(String(token).match(/^S(\d+)/i)[1]);
         const videos=files.map(pathOf).filter(path=>VIDEO_FILE.test(path));
@@ -1918,20 +1840,14 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         if((options.profile||'auto')==='auto')add('review','inferred','Category inferred as '+profile+'. Confirm it in the category selector, especially for TV missing episode numbers.');
         if(name!==String(name).trim())add('error','spaces','Remove leading or trailing spaces from the display title.');
         if(/\.(?:mkv|mp4|m4v|torrent)$/i.test(s))add('error','extension','Remove the file extension from the tracker display title.');
-        // A scene name separates every word with a dot. The guide's templates and every one
-        // of its examples use spaces, and a dotted string is not the "internationally
-        // recognised title" the Name element asks for.
+        // A scene name separates every word with a dot; the guide's templates use spaces.
         if(!/\s/.test(s)&&/\w\.\w/.test(s)&&s.length>20)
             add('error','scene-dots','This is a scene-style name, separated by dots throughout. The guide writes display titles with spaces: “'+
                 spaced(s)+'”.');
         if(profile==='software'){add('review','instructions','Check that install and usage instructions are included in the description.');return result();}
-        // Zenith's books and music follow templates of their own — an audiobook there is
-        // Author - Title (Year) Language Edition {Narrator} [Source] Container Codec Bitrate —
-        // so they are checked against those rather than against DarkPeers' templates.
+        // A profile with books:"own" (profiles.js) names books its own way: no shared book
+        // template is held against them, only the profile's rules, applied in result().
         if(ownBooks&&(profile==='ebook'||profile==='audiobook')){
-            // This tracker's profile says its book names are its own (profiles.js
-            // books:"own"), so neither DarkPeers' nor Zenith's book template is held against
-            // them; the profile's rules, applied in result(), are what is checked.
             add('review','book-own',(rules.labelOf?rules.labelOf(site):site)+' names books its own way, so no shared book template is applied here: what is checked is its own rule set, below.');
             if(profile==='audiobook'&&rules.audiobooksOf&&rules.audiobooksOf(site)==='folder-standard')
                 audiobookPayload(Array.isArray(options.files)?options.files.slice(0,2000).map(pathOf).filter(Boolean):[],add);
@@ -1941,14 +1857,15 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
             add('review','music-own',(rules.labelOf?rules.labelOf(site):site)+' names music its own way, so no shared music template is applied here: what is checked is its own rule set, below.');
             return result('own-music');
         }
+        // Zenith's books and music follow templates of their own (rules.js).
         if(base==='zenith'&&(profile==='music'||profile==='ebook'||profile==='audiobook')){
             for(const issue of rules.books(s,profile))add(issue.severity,issue.code,issue.message);
             return result();
         }
         if(profile==='music'){
             if(!/^.+?\s-\s.+?\s\((?:18|19|20)\d{2}\)\s-\s\S.+$/.test(s)) {
-                // Name the parts that differ from Artist - Album (Year) - Format, and offer the
-                // same title rewritten. Nothing is renamed: this is text for you to apply.
+                // Name the parts that differ from Artist - Album (Year) - Format and offer the
+                // title rewritten; nothing is renamed.
                 const parts=music(s),faults=[];
                 if(!parts.artist)faults.push('separate the artist and album with " - "');
                 if(!parts.year)faults.push('include the release year');
@@ -1965,10 +1882,9 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         if(profile==='ebook'||profile==='audiobook'){
             const fmt=profile==='ebook'?bookfmt:hit(s,'M4B|FLAC|ALAC|PCM|MP3|Opus|Vorbis|AAC');
             if(!/^\S.+?\s-\s\S/.test(s))add('error','author','Start with Author - Name.');
-            // A year in brackets is a year: say what is actually wrong with it rather than
-            // claiming it is missing. The bare form is DarkPeers' template; Zenith's book
-            // titles are written differently and its own book template is not in hand, so
-            // nothing is claimed about the form there.
+            // A year in brackets is present, just in the wrong form. The bare form is
+            // DarkPeers' template; Zenith's book template is not in hand, so nothing is
+            // claimed about the form there.
             const bareYear=/(?:^|\s)(?:18|19|20)\d{2}(?=\s|$)/.test(s);
             const bracketYear=s.match(/[([{]((?:18|19|20)\d{2})[)\]}]/);
             if(!bareYear&&!bracketYear)add('error','book-year','Include the release year of this book/audiobook edition.');
@@ -1993,9 +1909,8 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
             const general=file.general?.[0];
             const rawId=general?.fields?.uniqueid||'';
             const id=source.uniqueId(rawId);
-            // A report with no Unique ID is not asked about here: many pages trim the General
-            // section, and the badge would be amber on every one of them. The Source check
-            // section of the dialog says when there is none to compare.
+            // A report with no Unique ID is not flagged: many pages trim the General section.
+            // The Source check section of the dialog says when there is none to compare.
             if(id&&id.bad)add('error','unique-id-bad','The report’s Unique ID reads “'+String(rawId).slice(0,80)+'”: its decimal and hex halves are different numbers, which MediaInfo never writes. The report was edited by hand — ask for the complete, unedited report from the file.');
             if(Array.isArray(options.fileRows)&&options.fileRows.length) {
                 const against=source.reportAgainstFiles(file,options.fileRows);
@@ -2026,18 +1941,16 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
             if(rawEpisode&&!/^S\d{2}(?:E\d{2}(?:E\d{2}|-\d{2})?)?$/i.test(rawEpisode))add('error','episode-syntax','Episode token does not follow the guide. Use S01, S01E02, S01E02E03 or S01E02-04.');
             const range=s.match(/S(\d{2})E(\d{2})(?:E|-)(\d{2})(?!\d)/i);
             if(range&&Number(range[3])<=Number(range[2]))add('error','episode-order','The final episode must be after the first episode.');
-            // A special carries its name after the number. Only a bare S00E## / S##E00 —
-            // nothing but a year or the technical elements after it — is asked for one; a
-            // named special (seen 22 Sep 2026: "S00E01 After Woodside: A Look Back …") is not.
+            // A special carries its name after the number. Only a bare S00E## / S##E00 (nothing
+            // but a year or technical elements after it) is asked for one.
             {const special=s.match(/(?:^|\s)(S00E\d{2}|S\d{2}E00)(?=\s|$)(.*)$/i);
              if(special){const after=special[2];
                 const stop=after.search(/(?:^|\s)(?:\d{3,4}[pi]|REPACK\d?|PROPER\d?|RERip\d?|Hybrid|NTSC|PAL|DVD\S*|(?:UHD\s)?Blu-?Ray|WEB-?DL|WEBRip|HDTV|UHDTV|REMUX)(?=\s|$)/i);
                 const name=(stop<0?after:after.slice(0,stop)).replace(/(?:^|\s)(?:18|19|20)\d{2}(?=\s|$)/g,' ').trim();
                 if(!/[A-Za-z]/.test(name))add('review','special',special[1]+' carries no special name. Specials require the special name after the number — verify S00E## against TVDB, or use S##E00 for a special not on TVDB.');}}
             if(date){const parts=date[1].split('-').map(Number);if(parts[1]<1||parts[1]>12||parts.length===3&&(parts[2]<1||parts[2]>new Date(Date.UTC(parts[0],parts[1],0)).getUTCDate()))add('error','date','Daily-show date is not a valid calendar date.');}
-            // Which episodes the files hold is read from the file list where a page hands one
-            // in (a torrent page does; the listing and the Inspector do not). Without one, or
-            // for a daily show numbered by date, it stays a reminder.
+            // Episodes are read from the file list where a page hands one in (a torrent page
+            // does). Without one, or for a daily show numbered by date, it stays a reminder.
             const files=Array.isArray(options.files)?options.files.slice(0,2000).filter(entry=>pathOf(entry)):[];
             if(ep&&!date&&files.length)episodeFindings(s,ep[1],files,add);
             else add('review','episode-verify','Verify episode mapping and pack completeness against the intended listing; numbers in a title do not establish which episodes the files contain.');
@@ -2064,9 +1977,8 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         const audio=has('DTS[ ._-]HD[ ._]MA|DTS[ ._-]HD[ ._]HRA|DTS[ ._]Headphone:X|DTS:X|DTS-ES|DD[+][ ._]EX|DD[ ._]EX|DD[+]|DDP|DD|TrueHD|DTS|LPCM|FLAC|ALAC|AAC|Opus|MP3|MP2|Vorbis');
         const compactAudio=tail.match(/(?:^|[ ._])(DDP|DD\+|DD|AAC|TrueHD|FLAC)(\d{1,2}\.\d)(?=$|[ ._-])/i);
         const channels=has('[0-9]{1,2}[.][0-9]'),audioIndex=audio?pos(audio):compactAudio?compactAudio.index:-1;
-        // A layout written with a space (DTS 3 1) is present but malformed. Report the
-        // separator instead of claiming the layout is missing. Discrete layouts such as
-        // 1.0, 2.1, 3.1, 4.1, 6.1 and 9.1 are accepted the same way as 2.0 / 5.1 / 7.1.
+        // A layout written with a space (DTS 3 1) is present but malformed: report the
+        // separator, not a missing layout.
         const spacedChannels=!channels&&audio?tail.slice(pos(audio)+audio[1].length).match(/^[ ]([0-9]{1,2})[ ]([0-9])(?=$|[ ._-])/):null;
         const channelLabel=channels?.[1]||compactAudio?.[2]||'';
         const audioLabel=audio?.[1]||compactAudio?.[1]||'';
@@ -2082,12 +1994,9 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
             if(dvd&&discFamily)add('error','dvd-video','Omit the video codec for DVD full discs/remuxes.');
             if(audioIndex>=0&&(discFamily?pos(video)>audioIndex:pos(video)<audioIndex))add('error','core-order',discFamily?'Full disc/REMUX order is HDR, video codec, audio codec, channels, object tag.':'Encode/WEB/HDTV order is audio codec, channels, object tag, Hi10P/HDR, video codec.');
         }
-        // The tag closes the title. The guide allows it to be omitted only when the release
-        // has none, which cannot be read from a title, so this is a question rather than an
-        // error. The last hyphen inside a token such as WEB-DL or DTS-HD is not a tag: a tag
-        // runs unbroken to the end.
-        // A group name may contain spaces (…x265-Goki TAoE), so the same reader decides here
-        // as decides which group a title carries.
+        // A missing tag is a question, not an error: the guide allows omitting it when the
+        // release has none. The same reader decides here as decides which group a title
+        // carries (a group name may contain spaces).
         if(!groups.trailingTag(tail))
             add('review','tag','No release group tag closes the title. The guide allows it to be omitted only where the release has none, so confirm this is genuinely untagged rather than the tag having been dropped.');
         if(audioIndex>=0&&channels&&pos(channels)<audioIndex)add('error','channel-order','Channels follow the audio codec.');
@@ -2097,8 +2006,7 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
             if(!service||/^(?:DS4K|HDR|REMUX|MULTI)$/i.test(service))add('review','web-service','Include and verify the streaming-service abbreviation immediately before WEB-DL / WEBRip. The service cannot be inferred from media tracks.');
             else if(/^PMT$/i.test(service))add('error','paramount','Use PMTP for Paramount (your configured convention).');
             else {
-                // The supplied list records accepted spellings only. It cannot confirm that a
-                // release actually came from that service.
+                // The supplied list records accepted spellings only, not provenance.
                 const listed=services.find(service);
                 if(!listed)add('review','service-unknown','“'+service+'” is not in the supplied streaming-service list ('+services.count+' services). Check the abbreviation; a service missing from the list still needs its documented spelling.');
                 else {
@@ -2122,11 +2030,9 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         if(vtrack){if(hi&&Number.isFinite(depth)&&depth!==10)add('error','hi-depth','Hi10P conflicts with the reported '+depth+'-bit video.');
             if(/AVC/i.test(vfmt)&&depth===10&&/709/.test(transfer)&&!hi)add('error','hi-required','Reported 10-bit SDR AVC requires Hi10P.');}
         const tracks=file?.audio||[];let defaults=tracks.filter(t=>/^(yes|true|1)$/i.test(field(t,'default')));
-        // A Dual-Audio release often flags both languages as default (a HomieHelpDesk anime
-        // pack, 20 Sep 2026: Japanese and English, both Default: Yes). Where they share a
-        // format and channel count the title's ACodec and Channels describe either, so
-        // there is nothing to confirm and the first stands for both. Different shapes are
-        // still a question, and so are two defaults on a title that does not say so.
+        // A Dual-Audio release often flags both languages as default. Where they share a
+        // format and channel count the first stands for both; different shapes, or two
+        // defaults on a title that does not say Dual-Audio, are still a question.
         if(defaults.length>1&&has('Dual[ .-]?Audio')
             &&defaults.every(t=>field(t,'format')===field(defaults[0],'format')&&field(t,'channels')===field(defaults[0],'channels')))
             defaults=[defaults[0]];
@@ -2164,30 +2070,20 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
 
 
 /* ── tracker-guides.js ─────────────────────────────────────────── */
-// Rule sets for trackers whose guides are in hand, in the same profile format you would
-// paste in yourself — data, not code. Nothing here is fetched: each one is the guide as it
-// was given to this project, and the module says plainly which parts it does NOT have.
-//
-// Sources, cited rather than inferred:
-//   · LUME (luminarr.me) — "Naming Guide": the two title templates and the explanation of
-//     every title element, in hand 10 Sep 2026. Its provider list (wikis/7) is in hand as
-//     well and went into services.js. No LUME banned-group list has been provided, so this
-//     carries none and says so rather than pretending otherwise.
+// Shipped rule sets for trackers whose guides are in hand, in the pasted-profile format —
+// data, not code. Nothing is fetched; each section cites what was supplied and when, and
+// says what is not in hand.
+//   · LUME (luminarr.me) — "Naming Guide", in hand 10 Sep 2026. Its provider list (wikis/7)
+//     went into services.js. No LUME banned-group list has been provided; none is carried.
 //   · OnlyEncodes+ (onlyencodes.cc) — "Upload Guide + Rules" (wikis/2), the naming standard
-//     (wikis/18) and the banned release groups (wikis/1), all in hand 10 Sep 2026. Two
-//     groups that page marks as removed are deliberately absent; see below.
-//
-// Adding one of these is your choice, not this script's: it changes which rules a badge
-// cites, so nothing is added until you press Add. A profile added from here is an ordinary
-// added tracker afterwards — editable, exportable and removable like any other.
+//     (wikis/18) and the banned release groups (wikis/1), all in hand 10 Sep 2026.
+// A profile added from here is an ordinary added tracker afterwards.
 const DKOKTO_TRACKER_GUIDES = (() => {
     const FORMAT='dkokto-tracker-rules';
 
     // --- LUME ---------------------------------------------------------------------------
-    // Both of LUME's templates are the scene-style order the shared templates already check
-    // (Name … Resolution SOURCE TYPE … ACodec Channels … VCodec-Tag), which is why base is
-    // "dp": all seven of the guide's own examples pass those checks unchanged, and the rules
-    // below are only where LUME's vocabulary differs from what a title commonly carries.
+    // LUME's templates are the element order the shared "dp" templates check, so the rules
+    // below are only where LUME's vocabulary differs.
     const LUME={
         format:FORMAT,version:1,key:'lume',label:'LUME',base:'dp',hosts:['luminarr.me'],
         source:'luminarr.me — Naming Guide, as supplied 10 Sep 2026.',
@@ -2248,19 +2144,14 @@ const DKOKTO_TRACKER_GUIDES = (() => {
     };
 
     // --- OnlyEncodes+ -------------------------------------------------------------------
-    // Three pages, all supplied: the Upload Guide + Rules (wikis/2), the naming standard
-    // (wikis/18) and the banned release groups (wikis/1). Both of its templates are the
-    // element order the shared templates already check — Resolution … SOURCE TYPE … Acodec
-    // Channels … Vcodec-Tag — which is why base is "dp"; the rules below are where its
-    // vocabulary and its element rules are its own.
+    // Upload Guide + Rules (wikis/2), naming standard (wikis/18), banned release groups
+    // (wikis/1), as supplied 10 Sep 2026. Templates match the shared "dp" order; the rules
+    // below are where its vocabulary and element rules are its own.
     //
-    // The banned list as the page publishes it: the name, the reason where it gives one,
-    // and the date where it gives one. Two groups the page marks as removed are NOT here —
-    // BHDStudio (removed 1-20-24) and Trix (removed 4-30-24) — because they are no longer
-    // banned there, and a list that keeps refusing a group the tracker has un-banned is
-    // worse than no list. EVO is not here either: the page allows its WEB-DLs, which is a
-    // conditional group and is written as one. BRrip is a source marker rather than a tag,
-    // so it goes in groups.sources where it can be matched anywhere in a title.
+    // The banned list as the page publishes it: name, reason and date where given. Not here:
+    // BHDStudio (removed 1-20-24) and Trix (removed 4-30-24), which the page marks as
+    // removed; EVO, whose WEB-DLs the page allows (a conditional group below). BRrip is a
+    // source marker, so it goes in groups.sources.
     const OE_BANNED=`0neshot
 3LT0N
 4K4U|Quality
@@ -2471,34 +2362,22 @@ ZMNT|Quality`.split('\n').map(line=>line.split('|').map(cell=>cell.trim()));
     };
 
     // --- HomieHelpDesk ------------------------------------------------------------------
-    // Three pieces, supplied as text on 20 Sep 2026 and kept verbatim in
-    // notes/homiehelpdesk-rules-2026-09-20.md: the Upload rules (pages/7, eleven numbered
-    // sections), the Banned Release Groups list (which pages/7 links as wikis/8) and the
-    // naming standard (which pages/7 §8 links as wikis/30). The rules page numbers only its
-    // sections, so a rule is cited by section: "§5 Encodes", not a bullet number the page
-    // does not carry. Both templates are the element order the shared templates already
-    // check — the encode template audio-then-VCodec, the remux template VCodec-then-audio,
-    // exactly as OnlyEncodes+ and LUME write them — which is why base is "dp"; every one of
-    // the five worked examples passes the shared checks unchanged (guides-check.cjs).
+    // Upload rules (pages/7, eleven numbered sections), Banned Release Groups (wikis/8) and
+    // naming standard (wikis/30), supplied 20 Sep 2026 and kept verbatim in
+    // notes/homiehelpdesk-rules-2026-09-20.md; the E-book, Comic/Manga/Magazine and
+    // Trumping & Quality Tiers pages the same day, the Audiobook Naming and Folder Standard
+    // on 22 Sep 2026. The rules page numbers only its sections, so rules cite "§5", never a
+    // bullet number. Templates match the shared "dp" order.
     //
-    // The banned list as the page publishes it: one table headed Low-Quality Releases, which
-    // is the only reason the page gives, so every name carries it. Three names sit under the
-    // table with a qualification of their own and are written as the page states them: EVO
-    // "WEB-DLs are allowed" (conditional), HDT "(Remuxes) or similar automated remuxes"
-    // (conditional: refused where the title says REMUX, nothing else of HDT's claimed), and
-    // FGT "(unless no other encode is available)" — kept on the banned list with that
-    // condition as its reason, because whether another encode exists is not in the title.
-    // BRrip is a source marker rather than a tag, so it goes in groups.sources.
+    // The banned list as the page publishes it: one table headed Low-Quality Releases (the
+    // only reason given, carried on every name). Under the table, as the page states them:
+    // EVO "WEB-DLs are allowed" (conditional), HDT "(Remuxes) or similar automated remuxes"
+    // (conditional on REMUX in the title), FGT "(unless no other encode is available)"
+    // (banned, with that condition as its reason). BRrip is a source marker (groups.sources).
     //
-    // Supplied later the same day: the E-book Naming Standard, the Comic, Manga and Magazine
-    // Naming Standard, and the Trumping & Quality Tiers page (all in the same notes file).
-    // HomieHelpDesk's book names are Author Name - Title.epub, with no year, format word or
-    // ISBN, so DarkPeers' book template would mark every conforming name wrong: books is
-    // "own" (profiles.js), the shared book checks stand aside for ebooks and audiobooks, and
-    // the rules below are what is checked. Comics, manga and magazines have no category of
-    // their own here and are told by their CBZ/CBR/PDF, so they land in ebook too, and the
-    // form rule accepts each of the four layouts those two pages give. The Audiobook Naming
-    // and Folder Standard both pages point to was not supplied, so nothing is claimed for it.
+    // Book names are Author Name - Title.epub, so books is "own" (profiles.js) and only the
+    // rules below apply; comics, manga and magazines have no category here and are checked
+    // as ebooks, told by CBZ/CBR/PDF.
     const HHD_TABLE=`aXXo BONE BRrip CM8 CrEwSaDe CTFOH dAV1nci d3g DNL FaNGDiNG0 GalaxyTV HD2DVD
 HDTime iHYTECH ION10 iPlanet KiNGDOM LAMA MeGusta mHD mSD NaNi NhaNc3 nHD
 nikt0 nSD OFT PRODJi RARBG Rifftrax SANTi SasukeducK ShAaNiG Sicario STUTTERSHIT TGALAXY
@@ -2624,9 +2503,8 @@ TORRENTGALAXY TSP TSPxL ViSION VXT WAF WKS x0r YAWNiX YIFY YTS PSA`.split(/\s+/)
             {code:'book-series-pad',severity:'error',profiles:['ebook'],
              forbid:'\\[[^\\]]*\\s\\d\\]',
              message:'A series volume is zero-padded to two digits inside the brackets: [The Stormlight Archive 02], not [The Stormlight Archive 2].'},
-            // The Audiobook Naming and Folder Standard (supplied 22 Sep 2026): the title form,
-            // and the two payload rules a name can show. The folder, numbering and junk rules
-            // are read from the file list by naming.js (audiobooks:'folder-standard').
+            // The Audiobook Naming and Folder Standard (supplied 22 Sep 2026): what a name can
+            // show. Folder, numbering and junk rules are read from the file list by naming.js.
             {code:'ab-form',severity:'review',profiles:['audiobook'],
              require:'^\\S.+?\\s-\\s.+?\\s\\(Read by [^()]+\\)(?:\\.m4b)?$',
              message:'The Audiobook Naming and Folder Standard: the root folder, or a single M4B, is Author Name - Title (Read by Narrator) — Andy Weir - Project Hail Mary (Read by Ray Porter).'},
@@ -2659,25 +2537,16 @@ TORRENTGALAXY TSP TSPxL ViSION VXT WAF WKS x0r YAWNiX YIFY YTS PSA`.split(/\s+/)
     };
 
     // --- MidnightScene ------------------------------------------------------------------
-    // The Upload Naming Guide and the Banned Release Groups list, supplied as text on
-    // 21 Sep 2026 and kept verbatim in notes/midnightscene-naming-2026-09-21.md. No
-    // upload-rules page (content, description, trumping) was supplied, so none is claimed.
-    // The page has no section numbers: rules cite its headings. All of its video templates
-    // are the element order the shared templates check (encode: audio, Metadata, HDR,
-    // VideoCodec; remux and disc: HDR, VideoCodec, audio), so base is "dp"; the guide gives
-    // no worked video examples, so guides-check.cjs uses rows from the site's own listing
-    // (screenshot, 21 Sep 2026), which pass unchanged.
+    // Upload Naming Guide and Banned Release Groups, supplied 21 Sep 2026 and kept verbatim
+    // in notes/midnightscene-naming-2026-09-21.md. No upload-rules page was supplied, so
+    // none is claimed. The page has no section numbers: rules cite its headings. Templates
+    // match the shared "dp" order. Music is Artist - Title (Year) [Catalog and Edition]
+    // [Media - Format], so music is "own" (profiles.js) and the rules below carry the
+    // guide's music page. AV1 allowed, confirmed 24 Sep 2026
+    // (notes/midnightscene-av1-2026-09-24.md); VP9 unconfirmed.
     //
-    // Its music is Artist - Title (Year) [Catalog and Edition] [Media - Format] — brackets,
-    // not DarkPeers' " - Format" — so music is "own" (profiles.js) and the rules below carry
-    // the guide's music page; every one of its twelve examples passes them.
-    //
-    // AV1 is allowed, as confirmed 24 Sep 2026 in notes/midnightscene-av1-2026-09-24.md.
-    // This resolves its omission from the original guide. VP9 remains unconfirmed.
-    //
-    // The banned list has an empty Reason column on every row, so no reason is carried.
-    // BRrip is a source marker and goes in groups.sources; "msd" and "mSD" are one name and
-    // are kept once; EVO is a flat ban here — the page gives it no exception.
+    // The banned list has an empty Reason column, so no reason is carried. BRrip is a source
+    // marker (groups.sources); "msd" and "mSD" are one name, kept once; EVO is a flat ban.
     const MNS_BANNED=`4K4U AROMA aXXo BONE CK4 CM8 core CrEwSaDe d3g DNL EMBER EVO FaNGDiNG0 FGT FooKaS
 FRDS FROZEN GalaxyRG Grym GrymLegacy HD2DVD HDTime ION10 Judas LAMA Leffe LycanHD MeGusta MezRips
 mHD mSD NeXus NhaNc3 nHD nikt0 nSD OFT OsC PRODJi ProRes PYC QxR RARBG RCDiVX RDN SAMPA SANTi
@@ -2781,24 +2650,19 @@ Sicario Silence SM737 STUTTERSHIT Tigole TSP TSPxL UTR ViSION WAF Will1869 x0r Y
     };
 
     // --- InfinityHD -----------------------------------------------------------------------
-    // Two pieces, supplied as text on 23 Sep 2026 and kept verbatim in
-    // notes/infinityhd-rules-2026-09-23.md: the Banned Release Groups page and the Naming
-    // Guide. The guide's two templates are the element order the shared checks already know —
-    // audio before VCodec on encodes, VCodec before audio on discs and remuxes, as
-    // OnlyEncodes+, LUME and HomieHelpDesk write them — so base is "dp". No other page of the
-    // site has been seen: the search page, the upload rules, the trumping and description
-    // rules are not in hand, and nothing is claimed about them.
+    // Banned Release Groups page and Naming Guide, supplied 23 Sep 2026 and kept verbatim in
+    // notes/infinityhd-rules-2026-09-23.md. Templates match the shared "dp" order. No other
+    // page of the site has been seen (search, upload rules, trumping, description), so
+    // nothing is claimed about them.
     //
-    // The banned page gives two reasons for the list as a whole (low quality or dishonest;
-    // naming that breaks automation) and none per name, so no name carries one. BRrip is a
-    // source marker and goes in groups.sources; "NhaNc3" and "nhanc3" are one name, kept
-    // once. Every other name is carried as printed, "in", "Scene" and "1000" included — the
-    // matcher only ever compares a tag that closes a title.
+    // The banned page gives reasons for the list as a whole and none per name, so no name
+    // carries one. BRrip is a source marker (groups.sources); "NhaNc3" and "nhanc3" are one
+    // name, kept once; every other name is carried as printed, "in", "Scene" and "1000"
+    // included, since the matcher only compares a tag that closes a title.
     //
-    // The guide lists resolutions as "One of: 1080i, 1080p, 2160p, 4320p", so a 720p title
-    // is told it is not on the list; whether the site takes 720p in practice is not known
-    // here. Its HDR list is HDR, HDR10+, DV, DV HDR10+, HLG, PQ10 — no "DV HDR" — and that is
-    // checked as written. The Tag is omitted where there is no group, so nothing asks for one.
+    // Resolutions are listed as "One of: 1080i, 1080p, 2160p, 4320p" and the HDR list is
+    // HDR, HDR10+, DV, DV HDR10+, HLG, PQ10 (no "DV HDR"); both are checked as written.
+    // The Tag is omitted where there is no group, so nothing asks for one.
     const IHD_BANNED=`1000 24xHD 41RGB 4K4U AG AOC AROMA aXXo AZAZE BARC0DE BAUCKLEY BdC beAst BONE BRiNK BTM C1NEM4
 C4K CDDHD CHAOS CHD CHX CiNE COLLECTiVE CREATiVE24 CrEwSaDe CTFOH d3g DDR DepraveD DNL DRX EDITH
 EPiC EuReKA EVO FaNGDiNG0 Feranki1980 FGT FiSTER FMD FRDS FZHD GalaxyRG GalaxyTV GHD GHOSTS

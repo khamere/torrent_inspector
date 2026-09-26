@@ -47,7 +47,7 @@ aliases and multi-season ranges are not guessed.
 Rows show episode filenames, exact sizes where supplied and entries only on one
 side. Unloaded file lists and missing exact sizes stay unknown. Samples and subtitles
 are excluded. Up to 200 video files per torrent and ten matching torrents are shown,
-within Source check's 25-torrent, three-day memory. Limits are labelled. This does
+within Source check's two-week, sixty-upload memory. Limits are labelled. This does
 not establish identical content or an official season episode count. Manual Compare
 releases still compares two captured file/report summaries; its episode table has
 moved to Season check.
