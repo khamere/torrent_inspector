@@ -1,5 +1,32 @@
 <!-- Source check workflow updated in 1.43.8. -->
 
+**Compare seasons:** open each torrent's file list normally, then use Compare releases
+to capture A and B. The Season episodes table lines up SxxEyy or 1x02 filenames,
+including combined episodes and ranges. It shows episodes only on one side, duplicate
+matches, filenames and exact sizes where supplied. Rounded sizes are shown as text.
+A capture holds up to 500 files; recapture after more files load. This compares the
+listed episodes, not a season's official episode count or the actual media contents.
+Posted report comparison still compares the captured report, not every episode.
+
+**Source sizes:** Source check prints torrent and individual-file byte counts.
+Only explicit byte values or complete sums of exact file sizes are shown. Rounded
+GB/GiB values stay unavailable as byte counts. On the supplied CinemaZ page, the
+File Size row and file tree show 25.60 GB and MediaInfo shows 25.6 GiB; none supplies
+an exact count. Old stored sizes are discarded; revisit sources to refresh them.
+
+**Screenshot dimensions:** in Review → MediaInfo, expand Screenshot dimensions.
+Each result names the loaded image host and, separately, any linked-image host.
+Only the hostname is shown; the linked original remains unchecked.
+It compares up to four visible candidates from recognized description sections with
+the posted video dimensions. Posters and known decorative images are filtered, but
+description art may remain. Only already-loaded natural dimensions are read. Linked
+full-size images are not opened or fetched, and unloaded images stay unknown. After
+opening a collapsed or lazy-loaded screenshot section normally, refresh page evidence.
+Dimension agreement alone does not establish image provenance or screenshot quality.
+Description selectors come from supplied UNIT3D pages and the ZenGuard excerpt;
+unrecognized layouts show no candidates instead of scanning unrelated page images.
+
+
 **Move Review:** drag its title bar. Double-click the title bar to centre it.
 Reopening or resizing also restores the centred position.
 

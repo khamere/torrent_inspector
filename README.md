@@ -1,4 +1,4 @@
-# Torrent Inspector 1.43.13
+# Torrent Inspector 1.43.15
 
 ![Torrent Inspector](images/banner.png)
 
@@ -65,6 +65,8 @@ navigation, templates, and the advanced Inspector are covered in the [guide](GUI
 
 ## Latest release
 
-**1.43.13:** drag the Review title bar to move the panel. Double-click the title
-bar to centre it again. The panel stays on-screen and recentres when reopened
-or the window is resized. No extra setting or saved position is needed.
+**1.43.15:** Screenshot results now identify the loaded image host and any linked
+image host alongside their dimensions. Source check shows exact byte counts only;
+rounded GB/GiB values no longer become invented byte counts. Revisit earlier source
+pages to refresh their size evidence. CinemaZ pages without explicit byte counts
+show “exact bytes unavailable.”

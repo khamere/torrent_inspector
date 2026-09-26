@@ -9,6 +9,36 @@ was named until 1.25.0.
 
 ---
 
+## 1.43.15 — screenshot hosts and exact source sizes
+
+- Show the loaded image hostname and linked-image hostname separately, alongside
+  natural dimensions. Paths, query strings and credentials are not displayed.
+- Stop converting rounded tracker sizes into byte counts in source fingerprints
+  and external Compare captures. Explicit byte values or complete file-row sums
+  are required. Partial lists never produce a torrent total.
+- CinemaZ's supplied page shows 25.60 GB in the size row/file tree and 25.6 GiB
+  in MediaInfo. These are not exact counts; Source check now says unavailable.
+- Discard legacy stored size counts/results without precision provenance while
+  retaining IDs, names and notes. Revisit source pages for fresh exact evidence.
+- Shared with personal Scene Edition 1.49.15.
+
+## 1.43.14 — stable comparison, season episodes and screenshot dimensions
+
+- Stop UNIT3D cleanup from removing the external adapters' Compare releases panel.
+  FileList and CinemaZ/AvistaZ/PrivateHD/AnimeZ keep it through page changes and focus.
+- Capture adapter filenames, displayed sizes, canonical URLs and posted reports with
+  the existing saved-page CSS selectors. Rounded sizes remain text in compare slots.
+- Compare season episodes by SxxEyy or 1x02 filename tokens, including bounded ranges
+  and combined episodes. Show one-sided entries, duplicate matches, unnumbered videos
+  and known byte differences; exclude samples and subtitles. No season length guessed.
+- Source check displays source torrent and individual file byte counts, with a reminder
+  that sizes converted from rounded tracker values are approximate.
+- Add a collapsible Screenshot dimensions section under MediaInfo, using the supplied
+  ZenGuard reference's description selectors and natural image dimensions. Inspect up
+  to four loaded image candidates; keep unloaded images, missing reports and linked
+  originals unknown. No image loads, external requests or invented tracker rules.
+- Shared with personal Scene Edition 1.49.14.
+
 ## 1.43.13 — draggable Review panel
 
 - Drag the header with mouse, pen or touch; keep the dialog within the viewport.
