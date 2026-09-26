@@ -27,18 +27,18 @@ h2{font-size:16px;margin:18px 0 6px;color:#c3b2d3}.dialog__form table{width:auto
 <script>
 // Demo shell: the rule set for this host, a few trackers ticked, and on one page the
 // remembered upload. All of it is this site's own localStorage; nothing is fetched.
-window.GM_info={script:{version:"1.44.11"}};
+window.GM_info={script:{version:"1.45.1"}};
 window.GM_registerMenuCommand=()=>0;window.GM_unregisterMenuCommand=()=>{};
 window.GM_addStyle=css=>{const s=document.createElement("style");s.textContent=css;document.head.append(s);return s;};
-try{localStorage.setItem("dp_dkokto_last_seen_version","1.44.11");
+try{localStorage.setItem("dp_dkokto_last_seen_version","1.45.1");
 // DarkPeers rules unless the address says otherwise (?rules=hhd shows a page under another shipped rule set).
 localStorage.setItem("dkokto_rules_host_v1",JSON.stringify({[location.hostname]:/^[a-z]{2,8}$/.test(new URLSearchParams(location.search).get("rules")||"")?new URLSearchParams(location.search).get("rules"):"dp"}));
 if(!localStorage.getItem("dkokto_trackers_v1"))localStorage.setItem("dkokto_trackers_v1",JSON.stringify({enabled:["aither","blu","ptp","hdb"],search:{},custom:[],popups:{}}));
 
 }catch{}
 </script></head><body>
-<div class="demo-strip"><nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/torrents/">Review demo</a><a href="/torrents/101/">Torrent demo</a><a href="/requests/">Request demo</a><a href="/rules.html">Rules builder</a><a href="/GUIDE.md">Guide</a><a href="/CHANGELOG.md">Release notes</a></nav><p><b>Torrent Inspector 1.44.11 · Demo</b></p>
-<p><b>A torrent page</b> — a music torrent. Music names do not look like releases, so the page’s own heading is what gets the badge, and the rule set’s music template — Artist - Album (Year) - Format — is what it is held to. The file list is a numbered set of tracks. Made-up releases, the real 1.44.11 script; nothing here is a tracker, and nothing is fetched or sent.</p></div>
+<div class="demo-strip"><nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/torrents/">Review demo</a><a href="/torrents/101/">Torrent demo</a><a href="/requests/">Request demo</a><a href="/rules.html">Rules builder</a><a href="/GUIDE.md">Guide</a><a href="/CHANGELOG.md">Release notes</a></nav><p><b>Torrent Inspector 1.45.1 · Demo</b></p>
+<p><b>A torrent page</b> — a music torrent. Music names do not look like releases, so the page’s own heading is what gets the badge, and the rule set’s music template — Artist - Album (Year) - Format — is what it is held to. The file list is a numbered set of tracks. Made-up releases, the real 1.45.1 script; nothing here is a tracker, and nothing is fetched or sent.</p></div>
 <nav class="top-nav">TRACKER / JULIEN BAKER — SUGAR IN THE TANK</nav>
 <main>
 <h1 class="torrent__name">Julien Baker — Sugar in the Tank</h1>
@@ -55,7 +55,7 @@ if(!localStorage.getItem("dkokto_trackers_v1"))localStorage.setItem("dkokto_trac
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.44.11
+// @version      1.45.1
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       DKOKTO
 // This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,
@@ -803,20 +803,25 @@ const DKOKTO_SEASONS = (() => {
         const hit = /(?:^|[\s._-])(?:S(\d{1,2})(?:E\d{1,3})*|(\d{1,2})x\d{1,3})(?=$|[\s._-])/i.exec(text);
         if (!hit) return null;
         let show = text.slice(0,hit.index).normalize('NFKD').replace(/\p{M}/gu,'').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
-        // A year at the end of the show name is kept apart from it, so a title without one is
-        // the same show, while two titles with different years are not.
+        // A year at the end of a show name is kept apart from it, so a title without one is
+        // the same show, while two titles with different years are not. A title naming the
+        // show both ways ("My Sad Dead AKA Mis muertos tristes") keeps each name.
         let year = 0;
-        const dated = /^(.+?) ((?:19|20)\d{2})$/.exec(show);
-        if (dated) { show = dated[1]; year = Number(dated[2]); }
-        return show ? {show,year,season:Number(hit[1] || hit[2])} : null;
+        const names = show.split(/\baka\b/).map(part => {
+            const dated = /^(.+?) ((?:19|20)\d{2})$/.exec(part.trim());
+            if (dated) year = Number(dated[2]);
+            return (dated ? dated[1] : part).trim();
+        }).filter(Boolean);
+        return names.length ? {show:names[0],names,year,season:Number(hit[1] || hit[2])} : null;
     }
+    const sameShow = (a, b) => a.names.some(name => b.names.includes(name));
     function matches(current, entries) {
         const here = identity(current?.title);
         if (!here) return [];
         const found = (Array.isArray(entries) ? entries : []).filter(entry => {
             if (entry.host === current.host && entry.id === current.id) return false;
             const other = identity(entry.title);
-            return other && other.show === here.show && other.season === here.season && (!other.year || !here.year || other.year === here.year);
+            return other && sameShow(other, here) && other.season === here.season && (!other.year || !here.year || other.year === here.year);
         }).slice(0,10);
         // The ten most recent, listed by tracker and torrent number so the order does not
         // move whenever a tab refreshes a visit.
@@ -2430,7 +2435,33 @@ const DKOKTO_SOURCE_CORE = (() => {
         return { ids, idsOnPage: ids.size, idMatch, nameMatch, folderMatch, filesFound, filesTotal: files.length, sizeMatch, sizesOnPage, mentioned, caseOnly };
     }
 
-    return { uniqueId, bytesOf, exactBytes, reportAgainstFiles, idsIn, compare, base, stem };
+    // An upload date as a tracker prints it, as a UTC millisecond count, or 0 when it is
+    // not one. UNIT3D's <time datetime="2026-09-26 04:11:51"> is the site's own clock with
+    // no zone (Zenith 77262, YU-Scene Breaking Bad S01, 26 Sep 2026); TorrentLeech's Torrent
+    // Info table says "Monday 16th December 2024 04:36:44 AM". Both are read as if UTC, so
+    // two trackers' dates compare to within their clocks' difference — hours, not days.
+    const MONTHS = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+    function when(value) {
+        const text = String(value || '').trim();
+        let m = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+        if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0));
+        m = text.match(/(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)\s+(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?)?/i);
+        if (!m) return 0;
+        const month = MONTHS.indexOf(m[2].toLowerCase());
+        if (month < 0) return 0;
+        let hour = +(m[4] || 0);
+        if (m[7] && /pm/i.test(m[7]) && hour < 12) hour += 12;
+        if (m[7] && /am/i.test(m[7]) && hour === 12) hour = 0;
+        return Date.UTC(+m[3], month, +m[1], hour, +(m[5] || 0), +(m[6] || 0));
+    }
+    // Whole days between two printed dates (a minus b), or null when either is not a date.
+    function daysApart(a, b) {
+        const x = when(a), y = when(b);
+        if (!x || !y) return null;
+        return Math.round((x - y) / 86400000);
+    }
+
+    return { uniqueId, bytesOf, exactBytes, reportAgainstFiles, idsIn, compare, base, stem, when, daysApart };
 })();
 
 // Torrent pages on trackers that are not UNIT3D: which torrent an address is about, and
@@ -2488,6 +2519,11 @@ const DKOKTO_ELSEWHERE_CORE = (() => {
             total(doc) {
                 const label = [...doc.querySelectorAll('.torrent_info_details td.description')].find(td => text(td) === 'Size');
                 return (label && core) ? core.exactBytes(text(label.nextElementSibling)) : 0;
+            },
+            // The Torrent Info table's "Added" row: "Monday 16th December 2024 04:36:44 AM".
+            uploaded(doc) {
+                const label = [...doc.querySelectorAll('.torrent_info_details td.description')].find(td => text(td) === 'Added');
+                return label ? text(label.nextElementSibling).slice(0, 40) : '';
             },
             report(doc) {
                 // Raw text: the report's lines matter to the parser.
@@ -2642,6 +2678,7 @@ const DKOKTO_ELSEWHERE_CORE = (() => {
             totalBytes: s.total(doc) || (files.length && files.length < 2000 && files.every(row => row.bytes > 0) ? files.reduce((n, row) => n + row.bytes, 0) : 0),
             reportLink: s.reportLink(doc),
             hasReport: !!reportText,
+            uploaded: s.uploaded ? s.uploaded(doc) : '',
             replaceSizes: files.length > 0,
         };
     }
@@ -7518,6 +7555,7 @@ const DKOKTO_SOURCE = (() => {
             bytes: Number.isSafeInteger(Number(e.bytes)) && Number(e.bytes) > 0 ? Number(e.bytes) : 0,
             totalBytes: Number.isSafeInteger(Number(e.totalBytes)) && Number(e.totalBytes) > 0 ? Number(e.totalBytes) : 0,
             sizeEvidence: e.sizeEvidence === 1 ? 1 : 0,
+            uploaded: text(e.uploaded, 40),
             t: Number(e.t) || 0,
         };
     };
@@ -7538,6 +7576,7 @@ const DKOKTO_SOURCE = (() => {
             caseOnly: r.caseOnly === true,
             rememberedId: r.rememberedId === true,
             idMatch: tri(r.idMatch),
+            idOtherFile: text(r.idOtherFile, 300),
             idFound: HEX.test(idFound) ? idFound : '',
             idsOnPage: Number(r.idsOnPage) || 0,
             nameMatch: tri(r.nameMatch),
@@ -7713,9 +7752,20 @@ const DKOKTO_SOURCE = (() => {
             hasId: /Unique ID\s*:/i.test(String(pageText || '')),
             rememberedId,
         };
+        // The file this page's report describes, when the caller knows it: the adapter's
+        // evidence, or the page's own fingerprint passed as `here`.
+        const pageReport = (current?.fileName || current?.fileBase || here?.fileName || here?.fileBase || '').toLowerCase();
         for (const entry of others) {
             const v = core.compare(comparedText, entry);
             if (!v.mentioned) continue;
+            // In a pack each upload's report may describe a different episode; two IDs are
+            // comparable only when both reports are for the same file.
+            let idOtherFile = '';
+            const theirReport = (entry.fileName || entry.fileBase || '').toLowerCase();
+            if (v.idMatch === false && entry.files.length > 1 && pageReport && theirReport && core.stem(pageReport) !== core.stem(theirReport)) {
+                v.idMatch = null;
+                idOtherFile = entry.fileName || entry.fileBase;
+            }
             // A remembered ID can establish a comparison even when FileList has not
             // exposed a filename or folder. Missing evidence is not a filename mismatch.
             if (ownEvidence && !current.fileBase && !current.fileName && !current.files.length) v.nameMatch = null;
@@ -7727,6 +7777,7 @@ const DKOKTO_SOURCE = (() => {
                 on: today(),
                 t: Date.now(),
                 idMatch: v.idMatch,
+                idOtherFile,
                 // When the IDs differ, the first one this page shows is kept so the
                 // upload's own page can say what the source had instead.
                 idFound: (v.idMatch === false && ids.length) ? ids[0] : '',
@@ -7787,7 +7838,8 @@ const DKOKTO_SOURCE = (() => {
     // none; `page` names that page.
     function summary(r, entry, page) {
         const mark = v => v === true ? '✓' : v === false ? '✗' : '–';
-        const noId = (entry && !entry.uidHex) ? '– (none here)' : '– (none on ' + (page || 'this page') + ')';
+        const noId = r.idOtherFile ? '– (the report there is for ' + r.idOtherFile + ', this one for another file)'
+            : (entry && !entry.uidHex) ? '– (none here)' : '– (none on ' + (page || 'this page') + ')';
         const bits = [
             'Unique ID ' + (r.idMatch === null ? noId : mark(r.idMatch)),
             'file name ' + mark(r.nameMatch) + ((r.nameMatch && r.caseOnly) ? ' (case differs there)' : ''),
@@ -7935,8 +7987,33 @@ const DKOKTO_SOURCE_UI = (() => {
         row('Folder', entry.folder);
         row('File size', byteText(entry.bytes));
         row('Torrent size', byteText(entry.totalBytes));
+        row('Uploaded', entry.uploaded ? entry.uploaded + ' (as the tracker prints it)' : 'not read from this page');
         row('Size evidence', 'Only explicit byte counts or sums of fully sized file lists are shown. Rounded GB/GiB values are not converted. Revisit older sources to refresh their size evidence.');
         return list;
+    }
+
+    // "Uploaded there 2025-08-20 18:34:28 — 402 days before this page's upload." Dates are
+    // each tracker's own clock, so a difference of hours means nothing; days do.
+    let pageEntry = null;
+    function ageLine(entry) {
+        const core = DKOKTO_SOURCE_CORE;
+        const days = pageEntry?.uploaded ? core.daysApart(pageEntry.uploaded, entry.uploaded) : null;
+        let tail = '';
+        if (days === null) tail = pageEntry?.uploaded ? '' : ' — this page’s upload date was not read, so the two cannot be compared';
+        else if (days === 0) tail = ' — the same day as this page’s upload';
+        else if (days > 0) tail = ' — ' + days + (days === 1 ? ' day' : ' days') + ' before this page’s upload (the older of the two)';
+        else tail = ' — ' + (-days) + (days === -1 ? ' day' : ' days') + ' after this page’s upload (this page’s is the older)';
+        return 'Uploaded there ' + entry.uploaded + tail + '.';
+    }
+    // Which of the uploads seen — this page's and the remembered ones — is the oldest.
+    function oldest(rows, entry) {
+        const core = DKOKTO_SOURCE_CORE;
+        const seen = [];
+        if (entry?.uploaded && core.when(entry.uploaded)) seen.push({host: 'this page', at: core.when(entry.uploaded), text: entry.uploaded});
+        for (const row of rows) if (row.entry.uploaded && core.when(row.entry.uploaded)) seen.push({host: row.entry.host, at: core.when(row.entry.uploaded), text: row.entry.uploaded});
+        if (seen.length < 2) return null;
+        seen.sort((a, b) => a.at - b.at);
+        return el('p', 'Oldest upload seen: ' + seen[0].host + ' (' + seen[0].text + '); newest: ' + seen[seen.length - 1].host + ' (' + seen[seen.length - 1].text + '). Dates are each tracker’s own clock.', 'dk-source-oldest');
     }
 
     function comparison({entry, result, ids}) {
@@ -7954,6 +8031,7 @@ const DKOKTO_SOURCE_UI = (() => {
             if (fileName) evidence.append(el('span', fileName, 'dk-source-file'));
             if (fileName && / /.test(fileName)) evidence.append(el('span', 'The file name has spaces in it.', 'dk-source-spaces'));
             evidence.append(el('span', 'Source torrent size: '+byteText(entry.totalBytes)+'; file size: '+byteText(entry.bytes)+'.', 'dk-source-bytes'));
+            if (entry.uploaded) evidence.append(el('span', ageLine(entry), 'dk-source-age'));
 
             summary.append(el('span', DKOKTO_SOURCE.summary(result, entry), 'dk-source-bits'));
 
@@ -7961,6 +8039,7 @@ const DKOKTO_SOURCE_UI = (() => {
             const here = Array.isArray(ids) ? ids : [];
             if (entry.uidHex) {
                 const tail = result.idMatch ? (result.rememberedId ? ' — matches the ID remembered from this torrent’s Media Info page' : ' — the same one is on this page')
+                    : result.idOtherFile ? ' — its report is for ' + result.idOtherFile + '; this page’s report is for another file of the pack, so the two IDs are not comparable'
                     : here.length ? ' — this page has ' + here.slice(0, 3).join(', ')
                     : ' — this page shows none';
                 evidence.append(el('span', 'Unique ID remembered from ' + entry.host + ': ' + entry.uidHex + tail, 'dk-source-ids'));
@@ -8163,6 +8242,7 @@ const DKOKTO_SOURCE_UI = (() => {
         const wrap = el('div', undefined, 'dk-source dk-source-unified');
         wrap.append(el('h3', 'Source comparisons'));
         const here = entry || {host: location.hostname, url: location.href};
+        pageEntry = entry || null;
         const rows = checkPage(here)
             .sort((a, b) => a.entry.host.localeCompare(b.entry.host) || a.entry.id.localeCompare(b.entry.id));
         lastRows = rows;
@@ -8176,6 +8256,8 @@ const DKOKTO_SOURCE_UI = (() => {
             if (toReport) wrap.append(toReport);
         }
         if (rows.length) wrap.append(comparisons(rows, true));
+        const ages = oldest(rows, entry);
+        if (ages) wrap.append(ages);
         if (entry) {
             if (DKOKTO_SOURCE.resultFor(entry)) {
                 const history = el('details', undefined, 'dk-source-history');
@@ -8441,7 +8523,10 @@ const DKOKTO_DETAIL = (() => {
         const main=(complete&&list.find(row=>DKOKTO_SOURCE_CORE.base(row.path)===complete))||(videos.length===1?videos[0]:null);
         const fileBase=complete?DKOKTO_SOURCE_CORE.stem(complete):main?DKOKTO_SOURCE_CORE.stem(main.path):'';
         const total=DKOKTO_FILES_UI.stated();
-        return {host:place.host,id:place.id,url:location.origin+location.pathname,title,uidHex:id?.hex||'',fileBase,
+        // UNIT3D prints the upload date as <time datetime> under the uploader (Zenith 77262,
+        // YU-Scene Breaking Bad S01; site time, no zone).
+        const uploaded=document.querySelector('li.torrent__uploaded-at time[datetime]')?.getAttribute('datetime')||'';
+        return {host:place.host,id:place.id,url:location.origin+location.pathname,title,uidHex:id?.hex||'',fileBase,uploaded,
             folder:(()=>{try{return DKOKTO_FILES_CORE.topFolder(list.map(row=>row.path));}catch{return '';}})(),
             files:list.map(row=>DKOKTO_SOURCE_CORE.base(row.path)),episodeFiles:list,replaceSizes:list.length>0,bytes:main?Number(main.bytes)||0:0,
             totalBytes:total.bytes || (list.length && list.every(row=>row.bytes>0)?list.reduce((n,row)=>n+row.bytes,0):0)};
@@ -8635,7 +8720,8 @@ const DKOKTO_DETAIL = (() => {
         try{DKOKTO_SOURCE_UI.toolsButton();}catch{}
         try{const place=DKOKTO_CHECKLIST.where();if(place){// textContent, not innerText: trackers keep the MediaInfo in a panel that is not displayed
         // until clicked, and innerText leaves hidden text out.
-        DKOKTO_SOURCE_UI.banner(DKOKTO_SOURCE.check(DKOKTO_SOURCE_UI.pageText(),{host:place.host,url:location.origin+location.pathname}));}}catch{}
+        // The page's own fingerprint goes along, so the check knows which file this page's report is for.
+        DKOKTO_SOURCE_UI.banner(DKOKTO_SOURCE.check(DKOKTO_SOURCE_UI.pageText(),fingerprint(known().file,DKOKTO_FILES_UI.list())||{host:place.host,url:location.origin+location.pathname}));}}catch{}
         try{if(dialog?.open)DKOKTO_SOURCE_UI.refreshOpen(fingerprint(known().file,DKOKTO_FILES_UI.list()));}catch{}
     }
     // A page that keeps changing (chat, timers) must not starve the redraw, and must
@@ -9069,14 +9155,15 @@ const DKOKTO_LOOKUPS = (() => {
         const site = tracker?.label || at.hostname.replace(/^www\./, '');
         const parsed = DKOKTO_REQUESTS_CORE.parse(title, category);
         const titleQuery = DKOKTO_REQUESTS_CORE.term(parsed) || title;
-        let mode = 'title', filter = 'Any';
+        // A torrent page names one release, so its search starts exact; a listing starts wide.
+        let mode = identity ? 'exact' : 'title', filter = 'Any';
         const drafts = {title: titleQuery, exact: DKOKTO_LINKS_CORE.exact(title)};
         const wrap = el('div', undefined, 'dk-lookups');
         const label = el('label', 'Search for');
         const query = el('input');
         query.type = 'text';
         query.maxLength = 500;
-        query.value = titleQuery;
+        query.value = drafts[mode];
         query.setAttribute('aria-label', 'Search for');
         label.append(query);
         const modes = el('div', undefined, 'dk-lookup-modes');

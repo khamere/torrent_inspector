@@ -1,4 +1,4 @@
-# Torrent Inspector 1.44.11
+# Torrent Inspector 1.45.1
 
 ![Torrent Inspector](images/banner.png)
 
@@ -65,6 +65,14 @@ and trackers without a naming rule set are not judged. Request searches, torrent
 navigation, templates, and the advanced Inspector are covered in the [guide](GUIDE.md).
 
 ## Latest release
+
+**1.45.1:** Season check finds the same season when one tracker names the show both ways.
+A Zenith title like *My Sad Dead AKA Mis muertos tristes S01* used to match only another
+title with the same AKA, so the plain *My.Sad.Dead.S01* pack on the other tracker never
+appeared. Either name now matches. 1.45.0 added the upload date to the source check (which
+upload is older, and the oldest and newest of all seen), stopped calling a pack whose two
+uploads pasted MediaInfo for different episodes "not the same file", and made Exact title
+the starting mode of Find releases on a torrent page.
 
 **1.44.11:** a film called *The Collection* is no longer a Zenith boxset. The rule 2.2 check
 now steps aside when the page's own title carries the word, and on a listing, where there

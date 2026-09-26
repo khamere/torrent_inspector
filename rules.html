@@ -100,7 +100,7 @@
 <header class="top">
   <div class="wrap">
     <nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/torrents/">Review demo</a><a href="/torrents/101/">Torrent demo</a><a href="/requests/">Request demo</a><a href="/rules.html">Rules builder</a><a href="/GUIDE.md">Guide</a><a href="/CHANGELOG.md">Release notes</a></nav>
-    <p class="eyebrow">Torrent Inspector 1.44.11</p>
+    <p class="eyebrow">Torrent Inspector 1.45.1</p>
     <h1>Tracker rules</h1>
     <p class="lede">
       Build a rules profile for a tracker, check one you already have, and run a release name
@@ -225,7 +225,7 @@
 <footer>
   <div class="wrap">
     <p><a href="index.html">← Torrent Inspector</a> · profile format documented in
-      <code>TRACKER-RULES.md</code> · built from the modules of 1.44.11</p>
+      <code>TRACKER-RULES.md</code> · built from the modules of 1.45.1</p>
   </div>
 </footer>
 
@@ -1643,7 +1643,33 @@ const DKOKTO_SOURCE_CORE = (() => {
         return { ids, idsOnPage: ids.size, idMatch, nameMatch, folderMatch, filesFound, filesTotal: files.length, sizeMatch, sizesOnPage, mentioned, caseOnly };
     }
 
-    return { uniqueId, bytesOf, exactBytes, reportAgainstFiles, idsIn, compare, base, stem };
+    // An upload date as a tracker prints it, as a UTC millisecond count, or 0 when it is
+    // not one. UNIT3D's <time datetime="2026-09-26 04:11:51"> is the site's own clock with
+    // no zone (Zenith 77262, YU-Scene Breaking Bad S01, 26 Sep 2026); TorrentLeech's Torrent
+    // Info table says "Monday 16th December 2024 04:36:44 AM". Both are read as if UTC, so
+    // two trackers' dates compare to within their clocks' difference — hours, not days.
+    const MONTHS = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+    function when(value) {
+        const text = String(value || '').trim();
+        let m = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+        if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0));
+        m = text.match(/(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)\s+(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?)?/i);
+        if (!m) return 0;
+        const month = MONTHS.indexOf(m[2].toLowerCase());
+        if (month < 0) return 0;
+        let hour = +(m[4] || 0);
+        if (m[7] && /pm/i.test(m[7]) && hour < 12) hour += 12;
+        if (m[7] && /am/i.test(m[7]) && hour === 12) hour = 0;
+        return Date.UTC(+m[3], month, +m[1], hour, +(m[5] || 0), +(m[6] || 0));
+    }
+    // Whole days between two printed dates (a minus b), or null when either is not a date.
+    function daysApart(a, b) {
+        const x = when(a), y = when(b);
+        if (!x || !y) return null;
+        return Math.round((x - y) / 86400000);
+    }
+
+    return { uniqueId, bytesOf, exactBytes, reportAgainstFiles, idsIn, compare, base, stem, when, daysApart };
 })();
 
 

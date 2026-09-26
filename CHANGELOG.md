@@ -9,6 +9,67 @@ was named until 1.25.0.
 
 ---
 
+## 1.45.1 — Season check matches a show named both ways
+
+- 26 Sep 2026: on Zenith, "My Sad Dead AKA Mis muertos tristes S01 …" listed only the
+  darkpeers.org upload with the same AKA title under Season check; the pack named
+  "My.Sad.Dead.S01.NORDiC…" on another tracker, visited within the two weeks, was not
+  offered. season-core.js `identity()` took the whole text before S01 as the show, so the
+  two names never agreed.
+- season-core.js: `identity()` splits the show on "AKA" and keeps each name (`names`; `show`
+  is the first); a year at the end of any name is set apart as before. `matches()` treats
+  two titles as the same show when any name is shared, so the AKA title matches a title
+  with either name, and the other way round.
+- auto-season-check.cjs +1 test (the AKA title against packs with each name, the same AKA,
+  another season and a different show; the plain title against the AKA one; the year kept
+  from an AKA title). Red before the change, green after.
+- Shared with personal Scene Edition 1.51.1.
+
+## 1.45.0 — the source check remembers when each upload was made
+
+- Asked 26 Sep 2026: record the torrent's age in the source check, so the uploads of one
+  release can be compared oldest to newest. A new thing the check does, so the middle
+  number moves.
+- detail.js `fingerprint()`: `uploaded` from `li.torrent__uploaded-at time[datetime]`,
+  the `datetime` attribute as printed ("2026-09-26 04:11:51" — Zenith 77262 and the
+  YU-Scene Breaking Bad S01 page; the site's own clock, no zone). elsewhere-core.js:
+  the TorrentLeech adapter's `uploaded(doc)` reads the Torrent Info table's "Added" row
+  ("Monday 16th December 2024 04:36:44 AM"); FileList has no `uploaded` reader, since no
+  page in hand shows where it prints one; `read()` carries `uploaded`.
+- source.js `cleanEntry()`: `uploaded` kept as text, 40 characters at most, so it is
+  compared and shown as the tracker wrote it. source-core.js `when(text)` reads both
+  forms (and ISO) to a UTC count, treating each as if UTC — so two trackers' dates
+  compare to within their clocks' difference, hours not days — and `daysApart(a, b)`
+  gives whole days or null.
+- source-ui.js: an "Uploaded" row in the current fingerprint ("not read from this page"
+  when absent); in each comparison, `ageLine()` — "Uploaded there <date> — N days before
+  this page's upload (the older of the two)" / "after … (this page's is the older)" /
+  "the same day", or a note when this page's date was not read; under the comparisons,
+  `oldest()` names the oldest and newest of this page and the remembered uploads when
+  two or more carry a date.
+- source-check.cjs +1 test: `when()` on the UNIT3D, TorrentLeech (AM and PM) and ISO
+  forms, "1 year ago" and empty as 0, `daysApart`, and the field kept and capped.
+  detail-fixture.js +4 (the page's date remembered, shown in the fingerprint, the
+  comparison's line with days and which is older, the oldest/newest line; detail
+  fixture 262 → 266) with a `torrent__uploaded-at` `<time>` added to detail-preview.html
+  in both trees; elsewhere-fixture.js +1 (the TL Added row; 39 → 40). Red before the
+  change, green after.
+- Also 26 Sep 2026, a season pack on Zenith against seedpool's: "Not the same file",
+  Unique ID ✗, with files 4/4, folder ✓ and size ✓. Each upload's pasted MediaInfo was for
+  a different episode (E01 here, E02 there), so the two IDs were never the same file's.
+  source.js `check()`: when both reports name their file and the files differ, on a pack
+  of more than one file, the ID is not compared (`idMatch` null) and the answer carries
+  `idOtherFile`; the summary reads "Unique ID – (the report there is for
+  Show.S01E02.mkv, this one for another file)", the row's ID line says the two are not
+  comparable, and no red finding is raised back on the source page. Two reports for the
+  same file still mismatch. detail.js hands the page's fingerprint to the banner's check
+  so it knows which file this page's report is for. source-check.cjs +1 test.
+- Also asked 26 Sep 2026: Find releases starts in Exact title mode on a torrent page
+  (lookups.js: `mode` is exact when the search is for a torrent page's release, title on
+  a listing); Title remains one click away. tools/lookup-browser.mjs +1 (exact first,
+  then Title; 46 → 47); detail-fixture.js +1 (262 → 267 with the date checks).
+- Shared with personal Scene Edition 1.51.0.
+
 ## 1.44.11 — a film called The Collection is not a boxset
 
 - Reported 26 Sep 2026 on Zenith: "The Collection 2012 1080p BluRay DD+ 5.1 x264-playHD"

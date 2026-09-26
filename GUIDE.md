@@ -36,7 +36,9 @@ pressing Capture A or B. It refreshes when file lists load and when you return f
 another tracker tab, like Source check. Visits made before 1.44.0 need to be revisited
 to save episode rows. Use the same userscript edition on both trackers for shared memory.
 Since 1.44.1 the memory lasts two weeks and holds sixty uploads, and keeping several
-tracker tabs open no longer loses the lists the other tabs saved.
+tracker tabs open no longer loses the lists the other tabs saved. Since 1.45.1 a title
+that names the show both ways ("My Sad Dead AKA Mis muertos tristes S01") matches a
+title using either name, so the plain "My.Sad.Dead.S01" pack elsewhere is offered.
 
 Candidates share a normalized show title and season number (S01, S01E01 or 1x01).
 A year in the title separates two shows that both carry one, but a title without a year
@@ -252,6 +254,21 @@ and a link back. On the first page the badge's dialog then
 carries the answer under **Source check**, and a Unique ID that turned out different is a
 red finding. Nothing is fetched or opened for you; the script reads the page you went to.
 
+Since 1.45.0 the fingerprint also remembers when the upload was made, as the tracker
+prints it. Each tracker row then says *Uploaded there 2025-08-20 18:34:28 — 402 days
+before this page's upload (the older of the two)*, and under the rows a line names the
+oldest and newest of every upload seen, so the original among several can be picked out.
+The dates are each tracker's own clock with no time zone, so a difference of hours means
+nothing; days do. UNIT3D pages and TorrentLeech print a date the script can read; FileList
+has not shown one on any page seen, so its rows say the date was not read.
+
+A season pack has one MediaInfo report but many files, and two uploaders may paste the
+report for different episodes. Since 1.45.0 the check notices: when this page's report and
+the remembered one are for different files of a pack, the Unique IDs are not compared at
+all — the row says *Unique ID – (the report there is for …E02.mkv, this one for another
+file)* — and the verdict rests on the file names, folder and sizes. Two reports for the same
+file that differ are still a mismatch.
+
 The section starts with **Current torrent fingerprint**, open with this torrent's
 remembered evidence. The tracker rows below also start open, showing filenames and the
 IDs compared. Collapse rows when finished. **Last saved check on another page** holds the older answer
@@ -355,8 +372,10 @@ Under the release name:
   wording is copied rather than a number nobody printed. Read on the DarkPeers-shaped dialog, on
   upload.cx's and on OnlyEncodes+'s (each laid out differently); a tracker whose Files
   dialog is another shape again shows no marker, and its markup is what is needed to add it.
-- **Find other releases** — opens **Find releases** in the unified panel. Start with the
-  title, year or episode already filled in, or choose **Exact title** for title, season/episode or year, and group.
+- **Find other releases** — opens **Find releases** in the unified panel. On a torrent page
+  it starts in **Exact title** mode (title, season/episode or year, and group — since 1.45.0);
+  choose **Title** for the wider search with the title, year or episode alone. On a listing
+  it starts in Title mode.
   Edit the search if needed. In Title mode, a quality button adds 2160p, 1080p, REMUX,
   BluRay or WEB-DL to the search. Each tracker runs its own text matching; these buttons
   do not guarantee results or apply a tracker-specific quality filter.
