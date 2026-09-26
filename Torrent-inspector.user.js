@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.44.5
+// @version      1.44.9
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       DKOKTO
 // This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,
@@ -7849,6 +7849,23 @@ const DKOKTO_SOURCE_UI = (() => {
         return DKOKTO_SOURCE.check(pageText(), here, evidence);
     }
 
+    // On a tracker that keeps its MediaInfo on a page of its own (FileList), a line
+    // pointing there while the Unique ID is still unknown. Opened by a click, never fetched.
+    function reportElsewhere(entry) {
+        if (entry.uidHex || typeof DKOKTO_ELSEWHERE_CORE === 'undefined') return null;
+        let print = null;
+        try {
+            const url = typeof DKOKTO_ELSEWHERE !== 'undefined' ? DKOKTO_ELSEWHERE.address() : location.href;
+            print = DKOKTO_ELSEWHERE_CORE.where(url) ? DKOKTO_ELSEWHERE_CORE.read(document, url) : null;
+        } catch { print = null; }
+        if (!print || print.hasReport || !print.reportLink) return null;
+        const p = el('p', 'The Unique ID is not on this page. ', 'dk-source-report');
+        const a = el('a', 'Open this torrent’s Media Info page');
+        a.href = print.reportLink;
+        p.append(a, ' once; its ID is remembered for this torrent and compared when you come back here.');
+        return p;
+    }
+
     // What was remembered about this upload, spelled out so it can be compared by eye.
     function remembered(entry) {
         const list = el('dl', undefined, 'dk-source-what');
@@ -8095,6 +8112,8 @@ const DKOKTO_SOURCE_UI = (() => {
             fingerprint.open = true;
             fingerprint.append(el('summary', 'Current torrent fingerprint'), remembered(entry));
             wrap.append(fingerprint);
+            const toReport = reportElsewhere(entry);
+            if (toReport) wrap.append(toReport);
         }
         if (rows.length) wrap.append(comparisons(rows, true));
         if (entry) {
@@ -9578,6 +9597,7 @@ const DKOKTO_GROUP_TAG = ((internals,requests,trackers) => {
     }
     // Same-origin search for the group's other releases here. A link, not a request.
     const hereSearch=tag=>'/torrents?name='+encodeURIComponent(tag);
+    const SCENE=/^(?:scene|srrdb)$/i;
     // A tracker's address, taken from the cross-check list you already keep rather than
     // guessed at: a private tracker's domain moves, and a wrong one is worse than none.
     // The directory's short name is matched against both the label and the key, so BTN
@@ -9610,9 +9630,9 @@ const DKOKTO_GROUP_TAG = ((internals,requests,trackers) => {
         const id='dk-group-add-'+Math.random().toString(36).slice(2,8);
         const label=el('label','Add '+tag+' to a tracker');label.htmlFor=id;
         const input=el('input');input.id=id;input.type='text';input.autocomplete='off';
-        input.maxLength=48;input.placeholder='Tracker name';
+        input.maxLength=48;input.placeholder='Tracker name, or Scene';
         const listId=id+'-names',datalist=el('datalist');datalist.id=listId;
-        for(const name of trackerNames()){const option=el('option');option.value=name;datalist.append(option);}
+        for(const name of ['Scene',...trackerNames()]){const option=el('option');option.value=name;datalist.append(option);}
         input.setAttribute('list',listId);
         const go=el('button','Add');go.type='submit';
         const said=el('small');said.setAttribute('role','status');
@@ -9629,7 +9649,13 @@ const DKOKTO_GROUP_TAG = ((internals,requests,trackers) => {
         const rows=[],homes=internals.homes(tag);
         // A group can be internal at several trackers, and the list says so rather than
         // picking one. "Listed as", not "is": this is a community directory, not a fact.
+        const srrdb='https://www.srrdb.com/browse/'+encodeURIComponent(tag)+'/1';
         for(const home of homes) {
+            // "Scene" (or srrDB) as the home means a scene group, not a tracker of that name.
+            if(SCENE.test(home.tracker)) {
+                rows.push({label:'Listed as scene',href:srrdb,source:home.source?.text||''});
+                continue;
+            }
             const href=home.url||trackerLink(home.tracker);
             // Where that line came from is said with it. "Listed" is a community directory's
             // word and can be months stale; "reported" is a person's, on that day; "added by
@@ -9641,6 +9667,10 @@ const DKOKTO_GROUP_TAG = ((internals,requests,trackers) => {
         if(!homes.length)rows.push({note:'No home tracker recorded for '+tag+
             '. Add one in Internal groups… if you know it.'});
         rows.push({label:'Releases by '+tag+' on this tracker',href:hereSearch(tag)});
+        // srrDB's browse page searches the words in its path; a group tag is one of the words
+        // a scene name is split into. Its group: keyword is refused there ("Invalid keyword").
+        // A group internal somewhere is not scene, so the search is offered only without a home.
+        if(!homes.length)rows.push({label:'Search srrDB for '+tag,href:srrdb});
         // The trackers you have chosen for the cross-check, searched for the group name
         // itself. Built by the same module as the request links, so one address list serves
         // both and a tracker that cannot carry the search is left out with its reason.
@@ -10444,7 +10474,7 @@ const DKOKTO_ELSEWHERE = (() => {
     }
 
     const active = () => !!DKOKTO_ELSEWHERE_CORE.where(address());
-    return { mount, openReview, active };
+    return { mount, openReview, active, address };
 })();
 
 // Pure address arithmetic for torrent navigation. No DOM, requests or history writes.

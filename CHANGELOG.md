@@ -9,6 +9,66 @@ was named until 1.25.0.
 
 ---
 
+## 1.44.9 — scene groups in the popup
+
+- Asked 26 Sep 2026: could the popup say "listed as scene", and leave srrDB out when a
+  group is internal somewhere. Whether srrDB lists a group cannot be asked from the
+  script (rule 1), so "scene" is something recorded in the internal-groups directory
+  like any other home.
+- group-tag.js `entries()`: the srrDB search row is offered only when the group has no
+  home; a home whose tracker name is Scene or srrDB (`SCENE`) is rendered "Listed as
+  scene", linked to the srrDB search, with the entry's source beside it as for any home,
+  instead of "Listed as internal at Scene". The add form's placeholder says "Tracker
+  name, or Scene" and Scene heads its suggestions. internals.js is unchanged: Scene is a
+  tracker name to it, stored and backed up like the rest.
+- listing-fixture.js +2: a group with a home has no srrDB link; a group added as Scene
+  reads "Listed as scene" with the srrDB search and no "internal at Scene" (listing
+  fixture 220 → 222). Both fail with the two conditions mutated away.
+- Shared with personal Scene Edition 1.50.9.
+
+## 1.44.8 — the srrDB group link, corrected
+
+- 1.44.7's link `browse/group:<tag>/1` was wrong: clicked on a real tag the same evening,
+  srrDB's browse page answered "Invalid keyword \"group\"". The keyword is the API's, not
+  the browse path's; the 1.44.7 entry below stands as written.
+- group-tag.js: the row is now "Search srrDB for <tag>" linking to
+  `https://www.srrdb.com/browse/<tag>/1` — the tag as a search word, the form the
+  title-and-group srrDB link has used since 16 Sep 2026; srrDB splits a scene name into
+  words, and the group is one of them. TRACKER-ADDRESSES.txt records the correction.
+- listing-fixture.js: the check now expects the word form and refuses a `group:` link.
+- Shared with personal Scene Edition 1.50.8.
+
+## 1.44.7 — the group popup searches srrDB by group
+
+- Asked 26 Sep 2026: the release-group popup lists the group's releases on this tracker
+  and a search on each chosen tracker; srrDB was wanted there too, "to search if the
+  group is there".
+- group-tag.js `entries()`: a row "Scene releases by <tag> on srrDB" linking to
+  `https://www.srrdb.com/browse/group:<tag>/1`, after the on-this-tracker row. srrDB's
+  search keyword `group:` is in its API documentation (api.srrdb.com/v1/docs, read 26 Sep
+  2026); the browse-path form is the one the title-and-group srrDB link has used since
+  16 Sep 2026. TRACKER-ADDRESSES.txt records both, and that the group form was not opened
+  from here. The GUIDE's Internal groups paragraph names the rows.
+- listing-fixture.js +1: the AnoZu menu carries the srrDB group link, opened in a new tab
+  only when clicked (listing fixture 219 → 220). Red before, green after.
+- Shared with personal Scene Edition 1.50.7.
+
+## 1.44.6 — the Source check tab points at FileList's Media Info page
+
+- Reported 26 Sep 2026 on a FileList details page: the Source check tab showed the
+  Zenith upload as "to review" with "Unique ID – (none on this page)" and nothing about
+  where the ID was. elsewhere.js already put "The MediaInfo … is on the Media Info page:
+  open it" under the torrent name, but the open Review panel covers that.
+- source-ui.js `reportElsewhere(entry)`: when the current fingerprint has no Unique ID and
+  the page's adapter (`DKOKTO_ELSEWHERE_CORE.read`) reports no MediaInfo but a
+  `reportLink`, a `.dk-source-report` line follows the fingerprint with the link to the
+  Media Info page and says the ID is remembered and compared on return. The address is
+  taken through `DKOKTO_ELSEWHERE.address()` (now exported), which is what the offline
+  preview stands for; on a live page it is the page's own.
+- elsewhere-fixture.js +1: on FileList details the Source check tab itself points at
+  `/mediainfo.php?id=975915` (elsewhere fixture 38 → 39). Red before, green after.
+- Shared with personal Scene Edition 1.50.6.
+
 ## 1.44.5 — a TorrentLeech pack is compared by its file list, and its NFO's report is read
 
 - Reported 26 Sep 2026: on a Breaking Bad S01 page the Source check compared the

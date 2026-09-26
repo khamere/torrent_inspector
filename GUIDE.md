@@ -214,7 +214,13 @@ The controls are:
   in a release name is clickable; the popup says *listed as internal at* and, on the same
   line, **where that came from** — the community directories with their date, a report to
   this project with its date, or your own addition. A directory's word can be months stale
-  and is nobody's staff list, so check before acting on it.
+  and is nobody's staff list, so check before acting on it. Under that the popup offers the
+  group's releases on this tracker and a search for it on each tracker you have chosen —
+  each a link, opened only when you click it. A group with no home anywhere also gets an
+  srrDB search; a group internal somewhere is not scene, so it does not. The script cannot
+  ask srrDB whether a group is scene (it makes no requests), but you can record it: add the
+  group with **Scene** as its tracker, in the popup or under Internal groups…, and the popup
+  says *Listed as scene*, linked to its srrDB search, with your name and date beside it.
 - **Tracker rules…** — add a tracker of your own.
 - **Audit loaded titles** — everything on the page at once, as a table you can copy.
 - **Copy moderation log** — the record of what you have looked at and decided, kept locally.

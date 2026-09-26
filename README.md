@@ -1,4 +1,4 @@
-# Torrent Inspector 1.44.5
+# Torrent Inspector 1.44.9
 
 ![Torrent Inspector](images/banner.png)
 
@@ -65,6 +65,20 @@ and trackers without a naming rule set are not judged. Request searches, torrent
 navigation, templates, and the advanced Inspector are covered in the [guide](GUIDE.md).
 
 ## Latest release
+
+**1.44.9:** the group popup offers the srrDB search only for a group with no home tracker
+— a group internal somewhere is not scene — and a group you add with **Scene** as its
+tracker is shown as *Listed as scene*, linked to its srrDB search. The script still asks
+srrDB nothing; the scene mark is yours.
+
+**1.44.8:** the release-group popup (click a group tag) now also offers an srrDB search for
+the group, beside its releases on this tracker and the searches on your chosen trackers.
+A link, opened only when you click it. (1.44.7's link used a search keyword srrDB's
+browse page refuses; this one searches the tag as a word, as the title link does.)
+
+**1.44.6:** on FileList, the Source check tab now says under the current fingerprint that
+the Unique ID is on the torrent's Media Info page, with the link, instead of leaving that
+hint only on the page behind the panel. Nothing is opened for you.
 
 **1.44.5:** the source check no longer passes over a TorrentLeech pack. A remembered
 upload with no Unique ID, main file or folder — a TorrentLeech season pack is exactly that
