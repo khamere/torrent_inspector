@@ -221,6 +221,9 @@ The controls are:
   ask srrDB whether a group is scene (it makes no requests), but you can record it: add the
   group with **Scene** as its tracker, in the popup or under Internal groups…, and the popup
   says *Listed as scene*, linked to its srrDB search, with your name and date beside it.
+  The last line of the popup, *Report … to the project*, opens the project's report form on
+  GitHub with the tag filled in: reports are read by a person, and the ones that check out
+  reach everyone's directory in the next update as *reported to this project, date (#issue)*.
 - **Tracker rules…** — add a tracker of your own.
 - **Audit loaded titles** — everything on the page at once, as a table you can copy.
 - **Copy moderation log** — the record of what you have looked at and decided, kept locally.

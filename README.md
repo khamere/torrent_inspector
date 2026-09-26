@@ -1,4 +1,4 @@
-# Torrent Inspector 1.44.9
+# Torrent Inspector 1.44.11
 
 ![Torrent Inspector](images/banner.png)
 
@@ -65,6 +65,17 @@ and trackers without a naming rule set are not judged. Request searches, torrent
 navigation, templates, and the advanced Inspector are covered in the [guide](GUIDE.md).
 
 ## Latest release
+
+**1.44.11:** a film called *The Collection* is no longer a Zenith boxset. The rule 2.2 check
+now steps aside when the page's own title carries the word, and on a listing, where there
+is no page title, one year straight after "Collection" makes it a question rather than a
+red cross.
+
+**1.44.10:** a way to report a group for everyone. The group popup's last line opens the
+project's report form on GitHub with the tag filled in (scene, or internal at which
+tracker, and where it can be checked); accepted reports go into the next update's
+directory as "reported to this project, date (#issue)". Nothing reaches anyone's script
+without a release.
 
 **1.44.9:** the group popup offers the srrDB search only for a group with no home tracker
 — a group internal somewhere is not scene — and a group you add with **Scene** as its

@@ -100,7 +100,7 @@
 <header class="top">
   <div class="wrap">
     <nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/torrents/">Review demo</a><a href="/torrents/101/">Torrent demo</a><a href="/requests/">Request demo</a><a href="/rules.html">Rules builder</a><a href="/GUIDE.md">Guide</a><a href="/CHANGELOG.md">Release notes</a></nav>
-    <p class="eyebrow">Torrent Inspector 1.44.9</p>
+    <p class="eyebrow">Torrent Inspector 1.44.11</p>
     <h1>Tracker rules</h1>
     <p class="lede">
       Build a rules profile for a tracker, check one you already have, and run a release name
@@ -225,7 +225,7 @@
 <footer>
   <div class="wrap">
     <p><a href="index.html">← Torrent Inspector</a> · profile format documented in
-      <code>TRACKER-RULES.md</code> · built from the modules of 1.44.9</p>
+      <code>TRACKER-RULES.md</code> · built from the modules of 1.44.11</p>
   </div>
 </footer>
 
@@ -1345,7 +1345,7 @@ const DKOKTO_RULES = ((profiles) => {
     // What this site's rules can be checked for, from a title and (where present) the
     // MediaInfo report already on the page. Everything else in the rules is about the
     // upload itself and stays a human job.
-    function check(title='',{site=current(),profile='auto',file=null}={}) {
+    function check(title='',{site=current(),profile='auto',file=null,officialTitle=''}={}) {
         const issues=[],add=(severity,code,message)=>{if(!issues.some(i=>i.code===code))issues.push({severity,code,message});};
         // A tracker you added is checked against the rules its profile carries.
         const added=profiles.get(site);
@@ -1362,8 +1362,14 @@ const DKOKTO_RULES = ((profiles) => {
             const work=BANNED_WORKS.find(name=>flat.includes(loose(name)));
             if(work)add('error','zenith-banned-work','“'+work+'” is on Zenith’s banned works list (rule 5.7).');
         }
-        if(profile==='movie'&&BOXSET.test(value))
-            add('error','zenith-boxset','Zenith takes no movie boxsets (rule 2.2): upload each film separately.');
+        // A film may be called The Collection or Anthology. The page's own title settles it;
+        // without one, a single year straight after the word is a question, not a verdict.
+        const boxset=profile==='movie'?value.match(BOXSET):null;
+        if(boxset&&!(officialTitle&&loose(officialTitle).includes(loose(boxset[0])))) {
+            const oneYear=new RegExp(boxset[0].replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'[ .]+(?:19|20)\\d{2}(?![ .-]?(?:19|20)\\d{2})(?=$|[ .-])','i');
+            if(oneYear.test(value))add('review','zenith-boxset','“'+boxset[0].trim()+'” followed by one year: a film of that name, or a boxset? Zenith takes no movie boxsets (rule 2.2).');
+            else add('error','zenith-boxset','Zenith takes no movie boxsets (rule 2.2): upload each film separately.');
+        }
         if((profile==='tv'||profile==='disc')&&(COMPLETE.test(value)||SEASON_RANGE.test(value))&&!DISC.test(value))
             add('error','zenith-season-collection','Zenith takes no TV season collections (rule 2.3): package each season on its own. Full discs are the exception, since a disc may hold several seasons.');
         if(profile==='tv'&&EPISODE.test(value))
@@ -2117,7 +2123,7 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         return result(discFamily?'disc':profile);
         function result(templateKey=profile){
             // The tracker's own upload rules, on top of the shared naming guide.
-            for(const issue of rules.check(name,{profile,file,site:options.rules}))add(issue.severity,issue.code,issue.message);const errors=issues.filter(x=>x.severity==='error').length,reviews=issues.length-errors;return {profile,template:templates[templateKey]||'',issues,service:serviceLabel,status:errors?errors+' correction'+(errors===1?'':'s')+' needed':reviews?'No definite errors found · manual review remains':'No supported issues found'};}
+            for(const issue of rules.check(name,{profile,file,site:options.rules,officialTitle:options.officialTitle}))add(issue.severity,issue.code,issue.message);const errors=issues.filter(x=>x.severity==='error').length,reviews=issues.length-errors;return {profile,template:templates[templateKey]||'',issues,service:serviceLabel,status:errors?errors+' correction'+(errors===1?'':'s')+' needed':reviews?'No definite errors found · manual review remains':'No supported issues found'};}
     }
     function report(name,options,file){const r=check(name,options,file);
         const whose=(()=>{try{const key=options&&options.rules?options.rules:rules.current();

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torrent Inspector
 // @namespace    dkokto.torrent.inspector
-// @version      1.44.9
+// @version      1.44.11
 // @description  Release naming checks, the MediaInfo Inspector and a cross-tracker lookup on any UNIT3D tracker. Reads the page only; makes no requests.
 // @author       DKOKTO
 // This script began life inside a fork of DarkPeers - Chungus Edition 1.7.5 by 🤖T.R.A.V.I.S,
@@ -2080,7 +2080,7 @@ const DKOKTO_RULES = ((profiles) => {
     // What this site's rules can be checked for, from a title and (where present) the
     // MediaInfo report already on the page. Everything else in the rules is about the
     // upload itself and stays a human job.
-    function check(title='',{site=current(),profile='auto',file=null}={}) {
+    function check(title='',{site=current(),profile='auto',file=null,officialTitle=''}={}) {
         const issues=[],add=(severity,code,message)=>{if(!issues.some(i=>i.code===code))issues.push({severity,code,message});};
         // A tracker you added is checked against the rules its profile carries.
         const added=profiles.get(site);
@@ -2097,8 +2097,14 @@ const DKOKTO_RULES = ((profiles) => {
             const work=BANNED_WORKS.find(name=>flat.includes(loose(name)));
             if(work)add('error','zenith-banned-work','“'+work+'” is on Zenith’s banned works list (rule 5.7).');
         }
-        if(profile==='movie'&&BOXSET.test(value))
-            add('error','zenith-boxset','Zenith takes no movie boxsets (rule 2.2): upload each film separately.');
+        // A film may be called The Collection or Anthology. The page's own title settles it;
+        // without one, a single year straight after the word is a question, not a verdict.
+        const boxset=profile==='movie'?value.match(BOXSET):null;
+        if(boxset&&!(officialTitle&&loose(officialTitle).includes(loose(boxset[0])))) {
+            const oneYear=new RegExp(boxset[0].replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'[ .]+(?:19|20)\\d{2}(?![ .-]?(?:19|20)\\d{2})(?=$|[ .-])','i');
+            if(oneYear.test(value))add('review','zenith-boxset','“'+boxset[0].trim()+'” followed by one year: a film of that name, or a boxset? Zenith takes no movie boxsets (rule 2.2).');
+            else add('error','zenith-boxset','Zenith takes no movie boxsets (rule 2.2): upload each film separately.');
+        }
         if((profile==='tv'||profile==='disc')&&(COMPLETE.test(value)||SEASON_RANGE.test(value))&&!DISC.test(value))
             add('error','zenith-season-collection','Zenith takes no TV season collections (rule 2.3): package each season on its own. Full discs are the exception, since a disc may hold several seasons.');
         if(profile==='tv'&&EPISODE.test(value))
@@ -3064,7 +3070,7 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         return result(discFamily?'disc':profile);
         function result(templateKey=profile){
             // The tracker's own upload rules, on top of the shared naming guide.
-            for(const issue of rules.check(name,{profile,file,site:options.rules}))add(issue.severity,issue.code,issue.message);const errors=issues.filter(x=>x.severity==='error').length,reviews=issues.length-errors;return {profile,template:templates[templateKey]||'',issues,service:serviceLabel,status:errors?errors+' correction'+(errors===1?'':'s')+' needed':reviews?'No definite errors found · manual review remains':'No supported issues found'};}
+            for(const issue of rules.check(name,{profile,file,site:options.rules,officialTitle:options.officialTitle}))add(issue.severity,issue.code,issue.message);const errors=issues.filter(x=>x.severity==='error').length,reviews=issues.length-errors;return {profile,template:templates[templateKey]||'',issues,service:serviceLabel,status:errors?errors+' correction'+(errors===1?'':'s')+' needed':reviews?'No definite errors found · manual review remains':'No supported issues found'};}
     }
     function report(name,options,file){const r=check(name,options,file);
         const whose=(()=>{try{const key=options&&options.rules?options.rules:rules.current();
@@ -9556,7 +9562,7 @@ const DKOKTO_INTERNALS = (shipped => {
         const {added}=changes();
         if(added.some(entry=>idOf(entry)===id))return {kind:'you',text:'added by you'};
         const report=(sources.reported||[]).find(entry=>key(entry.group)+' @ '+key(entry.tracker)===id);
-        if(report)return {kind:'reported',text:'reported to this project, '+report.date};
+        if(report)return {kind:'reported',text:'reported to this project, '+report.date+(report.issue?' (#'+report.issue+')':'')};
         if(sources.directories)return {kind:'directory',text:sources.directories.label+', '+sources.directories.date};
         return {kind:'unknown',text:'origin not recorded'};
     }
@@ -9598,6 +9604,7 @@ const DKOKTO_GROUP_TAG = ((internals,requests,trackers) => {
     // Same-origin search for the group's other releases here. A link, not a request.
     const hereSearch=tag=>'/torrents?name='+encodeURIComponent(tag);
     const SCENE=/^(?:scene|srrdb)$/i;
+    const REPORT='https://github.com/khamere/torrent_inspector/issues/new?template=group-report.yml';
     // A tracker's address, taken from the cross-check list you already keep rather than
     // guessed at: a private tracker's domain moves, and a wrong one is worse than none.
     // The directory's short name is matched against both the label and the key, so BTN
@@ -9677,6 +9684,9 @@ const DKOKTO_GROUP_TAG = ((internals,requests,trackers) => {
         let found={links:[]};
         try{found=requests.search({name:tag,category:''},{exact:true});}catch{found={links:[]};}
         for(const link of found.links.slice(0,12))rows.push({label:link.label,href:link.url});
+        // The project's issue form, with the tag filled in; what is reported there reaches
+        // other users only through a release.
+        rows.push({label:'Report '+tag+' to the project',href:REPORT+'&group='+encodeURIComponent(tag)});
         return rows;
     }
     function open(mark,tag) {

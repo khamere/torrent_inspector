@@ -9,6 +9,49 @@ was named until 1.25.0.
 
 ---
 
+## 1.44.11 — a film called The Collection is not a boxset
+
+- Reported 26 Sep 2026 on Zenith: "The Collection 2012 1080p BluRay DD+ 5.1 x264-playHD"
+  was red with "Zenith takes no movie boxsets (rule 2.2)". rules.js BOXSET matched the
+  word Collection wherever it stood, film title included.
+- rules.js `check()` takes `officialTitle` (naming.js passes `options.officialTitle`,
+  which detail.js reads from the page's own title). When that title carries the matched
+  word, the boxset finding is not raised. Without a page title — a listing row — a
+  single year straight after the word ("Collection 2012", not "Collection 1999-2019")
+  makes the finding a question: "“Collection” followed by one year: a film of that
+  name, or a boxset?" A range, or no year, is still the error.
+- rules-check.cjs +3 assertions: the film with the page title raises nothing; without
+  it, a question; a year range with an unrelated page title is still the error. Red
+  before the change, green after.
+- Shared with personal Scene Edition 1.50.11.
+
+## 1.44.10 — reporting a group to the project
+
+- Asked 26 Sep 2026: a form on the website where people add scene groups for other
+  users. The site is static and the script sends nothing, so the intake is a GitHub
+  issue form, read by a person, and the directory is fed from it at a release.
+- `github/ISSUE_TEMPLATE/group-report.yml` in the package (kept without the dot because the
+  desktop bridge refuses to write a dot-folder; the pack ships it as `.github/`):
+  fields Release group tag (id `group`), What is it? (Scene group / Internal at a
+  tracker / Not internal anywhere), Tracker (if internal), Where this can be checked,
+  Anything else; label `group-report`. `config.yml` keeps blank issues on and links the
+  guide. tools/package-release.mjs walks `.github/` into the pack and the upload
+  instructions name it.
+- group-tag.js: a last row, "Report <tag> to the project", linking to
+  `…/issues/new?template=group-report.yml&group=<tag>` — GitHub fills the form's `group`
+  field from the query.
+- internals.js `sourceOf()`: a reported entry with an `issue` number reads "reported to
+  this project, <date> (#<issue>)". internals-check.cjs asserts it when present.
+- tools/group-report.mjs: `node tools/group-report.mjs <issue> "<date>" < body.md` turns
+  an issue's rendered fields into the `Tracker|group` data line and the `reported` entry
+  (a scene report becomes a `Scene` home; a correction prints what to remove by hand).
+  tools/group-report-check.mjs (10 checks) ties the tool to the form's field labels and
+  ids. It is not part of run-checks.mjs, being a tool's check, and is run by hand.
+- listing-fixture.js +1: the popup's report link carries the tag (listing fixture 222 →
+  223). The site's Release groups section gains a "Reporting one for everyone" card; the
+  GUIDE's Internal groups paragraph names the row.
+- Shared with personal Scene Edition 1.50.10.
+
 ## 1.44.9 — scene groups in the popup
 
 - Asked 26 Sep 2026: could the popup say "listed as scene", and leave srrDB out when a
