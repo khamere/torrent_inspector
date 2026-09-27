@@ -107,9 +107,10 @@ when the reported original language does not match the listed audio.
 
 **Source check:** the tools-bar button opens the unified panel's Source check tab.
 Current torrent details appear expanded at the top. Every related remembered upload
-appears in a row that starts expanded, showing its filename, ID evidence and return link. The counts
-distinguish ID matches from name/size-only matches; a missing ID is not a verified ID
-match. Read each row's exact evidence and use its link to open the tracker yourself.
+appears in a row that starts expanded, showing its filename, ID evidence and return link. The tally
+line puts each upload in one bucket: *match on all accounts* when the Unique ID, file name
+and size all agree; *match by name and size only* when there was no ID to compare (a
+missing ID is never a verified ID match); *ID mismatch* when an ID differed. Read each row's exact evidence and use its link to open the tracker yourself.
 **Current torrent fingerprint** starts open above the comparisons. **Last saved check
 on another page** stays in a separate disclosure. On individual torrent pages, the open panel updates when page evidence changes and
 when you return from another tracker tab. You do not need to close and reopen it.
@@ -120,8 +121,10 @@ matching source dialog. No lookup or tracker request runs in the background.
 
 
 Everything here is reading. The script looks at the page in front of you and tells you what it
-sees. It makes no request of any kind, uses no account, posts nothing and submits nothing.
-Every link opens when you click it. Nothing it stores leaves your machine.
+sees. It makes no request of its own; the one thing it may ask, if you give it your own API key
+for a tracker, is that tracker's own API, on that tracker's site, and only to read. It uses no
+account, posts nothing and submits nothing. Every link opens when you click it. Nothing it
+stores leaves your machine.
 
 ---
 
@@ -295,6 +298,33 @@ them, and stays quiet on purpose.
 Two things it checks on the report itself while it is there: a Unique ID whose decimal and
 hex halves are different numbers (someone typed it), and a file size that is not the size
 of the file in the page's own list (the report is from another file).
+
+### Your own API key for a tracker
+
+On a UNIT3D tracker the page does not always carry everything a fingerprint wants: the
+MediaInfo may be missing, the file list may show rounded sizes, and a torrent nobody has
+opened is not remembered at all. The tracker's own API has all of it — the MediaInfo text,
+the file list with exact byte counts, the folder and the upload time — so the script can
+read that too, with a key of your own.
+
+Open **Settings & tools → API keys…** on a listing (the same dialog is under **Add a key…**
+in the Source check tab and in Tampermonkey's menu as *Torrent Inspector: tracker API
+keys…*), enter the tracker's host and the API key from your own profile on that tracker,
+and save. The key stays in this browser, in the script's own store, and is never carried in
+a backup. From then on, a torrent page you open is also read from `/api/torrents/{id}` on
+that tracker, and on the moderation queue every torrent linked from the page is read the
+same way, one at a time with a pause between, at most forty — so a Source check on another
+tracker can compare against an upload nobody opened by hand. Each torrent is asked about
+once an hour at most. The page is still read as before and fills in whatever the API leaves
+out; without a key nothing changes.
+
+The script only ever reads: one GET, to `/api/` on the page's own site, with your key in the
+header and the tracker's session cookie left out; anything else is refused before it is
+sent, and the build checks refuse a script that could do otherwise. The **Current torrent
+fingerprint** block says *Read from: this page and the tracker's own API* when the key was
+used, and the Source check tab carries a line saying whether a key is saved for this
+tracker. A key the tracker refuses is tried once; correct it in the dialog and it is tried
+again at once.
 
 ### TorrentLeech and FileList
 
@@ -502,8 +532,9 @@ left out with the reason, rather than given a link that finds nothing.
 
 ## What it will never do
 
-- Send a network request, of any kind, to anywhere.
-- Read or use an account, a cookie or an API key.
+- Send a request anywhere but the page's own tracker, and there only a read of its API with a
+  key you entered yourself; without one, no request at all.
+- Read or use an account or a cookie, or write anything to a tracker.
 - Post, reply, submit, upload or download.
 - Open a link you did not click.
 - Fill in an upload form.
@@ -535,7 +566,8 @@ the record of what you have looked at, the checks you have ticked, and the uploa
 remembered for the source check with what the source said. All of it on your machine: Tampermonkey's own per-script
 store where the manager has it, so the setup is the same on every tracker it runs on, and
 ordinary browser storage otherwise. Nothing is sent anywhere, and every list can be exported as
-JSON and taken with you.
+JSON and taken with you. Tracker API keys live in the same store but are never exported: a key
+is issued to a person by a tracker, so a backup leaves it out.
 
 On FileList, open the torrent’s **Media Info** page once to remember its ID and full
 filename. Return to details: Source check compares that saved ID with other trackers

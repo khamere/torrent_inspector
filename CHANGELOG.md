@@ -9,6 +9,60 @@ was named until 1.25.0.
 
 ---
 
+## 1.45.4 — your own tracker API key; the tally in plain words; a TorrentLeech date tail
+
+- This version continues from 1.45.3. Between them a separate line (1.46.0–1.48.0 with the
+  staff Hub, a shared memory on a server) was built and set aside on 27 Sep 2026 ("I do not
+  want to move to the hub yet"); it lives in `forks/hub-line`. What follows is what was worth
+  keeping from it, without the Hub.
+- tracker-api.js (new, shared): `dkokto_tracker_keys_v1` holds one API key per tracker host
+  and when each torrent was last asked for (NOT_CARRIED in backup-core.js — a key is issued to
+  a person). `request()` is the module's one request — a GET to `/api/…` on the page's own
+  origin, `credentials: 'omit'`, the key in the Authorization header, refused before sending
+  for any other origin or path. `toEntry()` turns an API answer into the fingerprint shape a
+  torrent page produces: title from `name`, Unique ID and complete name from the General
+  section of `media_info`, files and episode rows with byte counts from `files[]`, `folder`,
+  `size`, `created_at` as `uploaded` (the date reader already takes the ISO form; shapes from
+  notes/zenith-api-*.json and thedungeon.quest, 26 Sep 2026). `torrent(host, id)` asks once an
+  hour per torrent and remembers the answer through DKOKTO_SOURCE.remember(), which fills in
+  what the page lacked; `queue()` on `/torrents/moderation` reads every torrent linked from
+  the page's tables (`main.page__staff-moderation--index table.data-table`, from the saved
+  thedungeon.quest queue page), at most 40, one at a time 400 ms apart. `dialog()` is the
+  keys dialog (host, key, the saved list with Remove), opened from Settings & tools → API
+  keys…, from the Source check tab's line (`note()`), and from Tampermonkey's menu
+  (`GM_registerMenuCommand`, a new `@grant` in the standalone header). detail.js asks the API
+  after remembering the page; source-ui.js shows the remembered copy in the Current torrent
+  fingerprint block with a *Read from* row when the key was used.
+- source-ui.js totals(): "N match on all accounts (Unique ID, file name and size)", then
+  "N match by name and size only (no ID to compare)" only when there are any, then the ID
+  mismatches and anything left to review. Same buckets as before, plainer words.
+- elsewhere-core.js: TorrentLeech's Added cell can carry a relative age in brackets after the
+  date; the 40-character cut left "… 01:17:16 PM (" in the fingerprint. The tail is dropped.
+- Checks: tracker-api-check.cjs (8); tools/api-browser.mjs (per edition, against a page whose
+  own origin serves /api/ from the saved Zenith answer); the no-network test in
+  inspector-check.cjs and dk/check.cjs carves out tracker-api.js alone (exactly one fetch, GET
+  only, origin and /api/ checked, no key no request, cookie left out, no @connect, and the Hub
+  absent from the build); mutation sweep with a second fetch in the module and a fetch in
+  another module, red in both editions. elsewhere-fixture.js and source-panel-browser.mjs
+  assert the new tally text. Shared with personal Scene Edition 1.51.4.
+
+## 1.45.3 — the group directory is packed in the built script
+
+- Asked 26 Sep 2026: make the list of internal groups hard to find for someone reading the
+  script. tools/pack-internals.mjs: at build time the text of internals-data.js and its
+  `reported` sources are XORed with a fixed key and base64-encoded; the built module
+  carries `DKOKTO_UNPACK` (atob + TextDecoder, nothing else) and decodes both on load. The
+  source module stays plain, so tools/group-report.mjs and the Node checks work on it as
+  before; the module's header comment no longer lists the reported group names (they are
+  the `reported` entries). This keeps the names out of a text search of the file only:
+  the Internal groups dialog still shows the whole list, and so does the console.
+- Both build.mjs splice the packed module in place of internals-data.js. No network, no
+  new storage; no behaviour changes on the page.
+- inspector-check.cjs and dk/source/check.cjs +1 each: no directory line is readable in the
+  built script, and the packed literals decode to exactly the source module's data and
+  sources. Red on the 1.45.2 build, green on this one.
+- Shared with personal Scene Edition 1.51.3.
+
 ## 1.45.2 — the origin note leaves the header
 
 - Asked 26 Sep 2026: remove the header comment saying the script began life inside a fork

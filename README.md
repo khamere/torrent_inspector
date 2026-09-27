@@ -1,4 +1,4 @@
-# Torrent Inspector 1.45.2
+# Torrent Inspector 1.45.4
 
 ![Torrent Inspector](images/banner.png)
 
@@ -40,8 +40,8 @@ and naming templates remain under **Findings → More tools & naming template**.
 ## Source comparisons
 
 Open the release on another supported tracker, then use **Source check**. It shows
-each upload’s filename, Unique ID, and size, with separate labels for ID matches,
-name/size-only matches, and differences. The panel updates as page evidence changes
+each upload’s filename, Unique ID, and size, and a tally that puts each upload in one
+bucket: a match on all accounts, a match by name and size only, or an ID mismatch. The panel updates as page evidence changes
 and when you return to the tab. The quiet checkbox hides automatic notices.
 
 On **FileList**, open its **Media Info** page once; returning to details uses that
@@ -66,15 +66,25 @@ navigation, templates, and the advanced Inspector are covered in the [guide](GUI
 
 ## Latest release
 
-**1.45.2:** the header no longer carries the note about the script's origin. Torrent
-Inspector is built from its own modules and shares no code with any other script, so the
-note said nothing about what you install; the personal Scene edition, which does carry
-other code, keeps its own credits. The comments throughout the source were also cut back
-to what each piece does and why, with the citations of tracker pages and rules kept. 1.45.1 taught Season check that a title naming the show
-both ways (*My Sad Dead AKA Mis muertos tristes S01*) matches a pack named either way;
-1.45.0 added the upload date to the source check, stopped calling a pack whose two uploads
-pasted MediaInfo for different episodes "not the same file", and made Exact title the
-starting mode of Find releases on a torrent page.
+**1.45.4:** your own tracker API key, optional, kept in your browser. Enter it under
+**Settings & tools → API keys…** (or from Tampermonkey's menu) and the torrent page you are
+on is also read from the tracker's own API on its own site, as is every row of the
+moderation queue when you open that page — so fingerprints carry the Unique ID, exact
+sizes and upload time even for uploads nobody opened by hand, and a Source check elsewhere
+can compare against them. The page still fills in the rest; without a key nothing changes;
+the script only ever reads. Also: the Source check tally now says *8 match on all accounts*
+rather than *8 ID matches · 0 name/size matches*, which read as if name and size had
+failed, and TorrentLeech upload dates no longer carry a stray bracket. 1.45.3 made the
+internal-groups directory no longer readable as plain text in the
+script file. It is packed when the script is built and unpacked in the browser, so a text
+search of the file finds no group or tracker names; the popup, the Internal groups dialog
+and the source citations under each line work as before. This is a deterrent to casual
+reading, not encryption — anyone who opens the dialog or the browser console can still see
+the list. 1.45.2 took the origin note out of the header and cut the comments back; 1.45.1
+taught Season check that a title naming the show both ways matches a pack named either
+way; 1.45.0 added the upload date to the source check, stopped calling a pack whose two
+uploads pasted MediaInfo for different episodes "not the same file", and made Exact title
+the starting mode of Find releases on a torrent page.
 
 **1.44.11:** a film called *The Collection* is no longer a Zenith boxset. The rule 2.2 check
 now steps aside when the page's own title carries the word, and on a listing, where there
