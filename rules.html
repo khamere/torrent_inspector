@@ -100,7 +100,7 @@
 <header class="top">
   <div class="wrap">
     <nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/rules.html">Rules builder</a></nav>
-    <p class="eyebrow">Torrent Inspector 1.45.5</p>
+    <p class="eyebrow">Torrent Inspector 1.51.7</p>
     <h1>Tracker rules</h1>
     <p class="lede">
       Build a rules profile for a tracker, check one you already have, and run a release name
@@ -225,7 +225,7 @@
 <footer>
   <div class="wrap">
     <p><a href="index.html">← Torrent Inspector</a> · profile format documented in
-      <code>TRACKER-RULES.md</code> · built from the modules of 1.45.5</p>
+      <code>TRACKER-RULES.md</code> · built from the modules of 1.51.7</p>
   </div>
 </footer>
 
@@ -328,20 +328,20 @@ const DKOKTO_INSPECTOR = (() => {
     }
     function warnings(name,file){
         const result=[],r=rows(file),label=name.match(/(?:^|[ ._\-])(360|480|576|720|1080|2160|4320)([pi])(?=$|[ ._\-])/i);
-        if(!r.video.length)result.push('No video track reported; video naming claims cannot be checked.');
-        if(r.video.length>1)result.push('Multiple video tracks: comparisons below use the first reported video track.');
+        if(!r.video.length)result.push('No video track in the report');
+        if(r.video.length>1)result.push('Multiple video tracks — first one used');
         const v=r.video[0];if(v&&label){const h=Number(label[1]),w=({360:640,480:720,576:720,720:1280,1080:1920,2160:3840,4320:7680})[h];
-            if(v.width&&v.height&&((v.width<w*.85&&v.height<h*.85)||v.width>w*1.15||v.height>h*1.15))result.push(`Naming conflict: ${label[1]}${label[2]} label versus ${v.width}×${v.height} pixels. Cropping/aspect ratio can affect resolution labels; review the source.`);
-            if(label[2].toLowerCase()==='p'&&/interlaced/i.test(v.scan)||label[2].toLowerCase()==='i'&&/progressive/i.test(v.scan))result.push('Naming conflict: progressive/interlaced label disagrees with reported scan type.');
+            if(v.width&&v.height&&((v.width<w*.85&&v.height<h*.85)||v.width>w*1.15||v.height>h*1.15))result.push(`Naming conflict: ${label[1]}${label[2]} in the name, ${v.width}×${v.height} in the report`);
+            if(label[2].toLowerCase()==='p'&&/interlaced/i.test(v.scan)||label[2].toLowerCase()==='i'&&/progressive/i.test(v.scan))result.push('Naming conflict: scan type (progressive/interlaced)');
         }
         const token=(pattern)=>new RegExp('(?:^|[ ._-])(?:'+pattern+')(?=$|[ ._-])','i').test(name);
         const claimed=[token('x264|H[ .]?264|AVC')?'AVC':null,token('x265|H[ .]?265|HEVC')?'HEVC':null,token('AV1')?'AV1':null].filter(Boolean);
-        if(v&&claimed.length===1&&/^(AVC|HEVC|AV1)/.test(v.codec)&&!v.codec.startsWith(claimed[0]))result.push(`Naming conflict: ${claimed[0]} in the name, but MediaInfo reports ${v.codec}.`);
-        if(v&&token('HDR|HDR10|HDR10\\+|DV|DoVi')&&/^SDR/.test(v.hdr))result.push('Naming conflict: HDR/DV is claimed, but the video reports a BT.709 SDR transfer. Review the complete HDR fields.');
-        else if(v&&token('HDR|HDR10|HDR10\\+|DV|DoVi')&&v.hdr==='Not reported')result.push('HDR/DV claim cannot be verified: HDR fields are missing. Bit depth alone does not prove HDR.');
-        if(v&&token('DV|DoVi')&&!/Dolby Vision/i.test(v.hdr)&&v.hdr!=='Not reported'&&!/^SDR/.test(v.hdr))result.push('Dolby Vision is named but not confirmed in the reported HDR format.');
-        if(token('Atmos')&&!file.audio.some(t=>/Atmos|JOC/i.test(Object.values(t.fields).join(' '))))result.push('Atmos is named but not confirmed in the audio fields. Channel count alone does not prove Atmos.');
-        if(token('HDR10\\+')&&v&&!/HDR10\+|SMPTE ST 2094/i.test(v.hdr)&&v.hdr!=='Not reported')result.push('HDR10+ is named but not confirmed in the reported HDR format.');
+        if(v&&claimed.length===1&&/^(AVC|HEVC|AV1)/.test(v.codec)&&!v.codec.startsWith(claimed[0]))result.push(`Naming conflict: ${claimed[0]} in the name, ${v.codec} in the report`);
+        if(v&&token('HDR|HDR10|HDR10\\+|DV|DoVi')&&/^SDR/.test(v.hdr))result.push('Naming conflict: HDR/DV in the name, SDR (BT.709) in the report');
+        else if(v&&token('HDR|HDR10|HDR10\\+|DV|DoVi')&&v.hdr==='Not reported')result.push('The name says HDR/DV but the report has no HDR fields');
+        if(v&&token('DV|DoVi')&&!/Dolby Vision/i.test(v.hdr)&&v.hdr!=='Not reported'&&!/^SDR/.test(v.hdr))result.push('Dolby Vision not confirmed by the HDR format');
+        if(token('Atmos')&&!file.audio.some(t=>/Atmos|JOC/i.test(Object.values(t.fields).join(' '))))result.push('Atmos not confirmed by the audio fields');
+        if(token('HDR10\\+')&&v&&!/HDR10\+|SMPTE ST 2094/i.test(v.hdr)&&v.hdr!=='Not reported')result.push('HDR10+ not confirmed by the HDR format');
         // The audio the title claims, against the track the report says is the default one.
         const main=r.audio.find(t=>/yes/i.test(t.default))||r.audio[0];
         const CODECS=[[/(?:^|[ ._-])(?:DD\+|DDP|E-?AC-?3)(?=$|[ ._-])/i,'E-AC-3',/E-?AC-?3|Enhanced AC-3/i],
@@ -355,7 +355,7 @@ const DKOKTO_INSPECTOR = (() => {
             const shown=[main.codec,main.features,main.title].filter(Boolean).join(' ');
             for(const [named,label,reported] of CODECS)
                 if(named.test(name)&&!reported.test(shown)) {
-                    result.push('Naming conflict: '+label+' is named, but the default audio track reports “'+String(main.codec).slice(0,40)+'”.');
+                    result.push('Naming conflict: '+label+' in the name, “'+String(main.codec).slice(0,40)+'” on the default audio track');
                     break;
                 }
             // Channels, as the title writes them against the count the report gives.
@@ -363,7 +363,7 @@ const DKOKTO_INSPECTOR = (() => {
             const count=Number(String(main.channels).match(/\d+/)?.[0]||0);
             if(layout&&count) {
                 const claimed=Number(layout[1])+Number(layout[2]);
-                if(claimed!==count)result.push('Naming conflict: '+layout[1]+'.'+layout[2]+' is named, but the default audio track reports '+count+' channel'+(count===1?'':'s')+'.');
+                if(claimed!==count)result.push('Naming conflict: '+layout[1]+'.'+layout[2]+' in the name, '+count+' channel'+(count===1?'':'s')+' on the default audio track');
             }
         }
         // Two audio languages are what Dual-Audio and MULTi mean.
@@ -371,19 +371,19 @@ const DKOKTO_INSPECTOR = (() => {
         if(token('Dual-?Audio|MULTi')&&spoken.size===1)result.push('Dual-Audio/MULTi is named, but only one audio language is reported.');
         // A release whose audio is not English, with nothing to read it by.
         if(r.audio.length&&!r.text.length&&spoken.size&&![...spoken].some(value=>/^(?:en|eng|english)/.test(value)))
-            result.push('The reported audio is '+[...spoken].join(', ')+' and no subtitle track is reported. Confirm subtitles, since the report showing none is not proof that none exist.');
+            result.push('The reported audio is '+[...spoken].join(', ')+' and no subtitle track is reported. Check for subtitles.');
         // A remux or full disc is expected to carry the source's chapters.
         if(token('REMUX')&&!(file.menu||[]).length)
             result.push('No chapter (Menu) section is reported. A REMUX is expected to carry the source’s chapters; confirm from the file rather than from this report alone.');
         return result;
     }
-    const glossary={HDR:'High dynamic range. Look for HDR format and transfer metadata; 10-bit video alone is not proof of HDR.',DV:'Dolby Vision is an HDR format with additional metadata. A DV release label should be checked against the video HDR fields.',Atmos:'Dolby Atmos adds object-based audio metadata. A 5.1 or 7.1 channel count alone does not confirm Atmos.',REMUX:'A remux generally repackages existing encoded streams without re-encoding. MediaInfo alone cannot establish the source or prove that no earlier encoding occurred.','WEB-DL':'A source/release label for downloaded streaming media. Codec and resolution alone cannot verify the originating service or acquisition method.'};
+    const glossary={HDR:'High dynamic range. Look for the HDR format and transfer fields; 10-bit alone is not HDR.',DV:'Dolby Vision is an HDR format with additional metadata. Check the label against the video’s HDR fields.',Atmos:'Dolby Atmos adds object-based audio metadata. A 5.1 or 7.1 channel count alone is not Atmos.',REMUX:'A remux repackages the source streams without re-encoding.','WEB-DL':'A file downloaded from a streaming service, not re-encoded.'};
     function summary(name,file){const r=rows(file),lines=[name||'Torrent inspection',`Container: ${r.container} | Duration: ${r.duration} | Size: ${r.size} | Overall bitrate: ${r.bitrate}`];
         for(const v of r.video)lines.push(`Video ${v.track}: ${v.codec} | ${v.width||'?'}×${v.height||'?'} | ${v.depth} | ${v.frameRate} | ${v.bitrate} | ${v.scan} | ${v.hdr}`);
         for(const a of r.audio)lines.push(`Audio ${a.track}: ${a.language} | ${a.codec}${a.features?' / '+a.features:''} | Channels: ${a.channels} | Default: ${a.default}${a.title?' | '+a.title:''}`);
         for(const s of r.text)lines.push(`Subtitle ${s.track}: ${s.language} | ${s.codec} | Default: ${s.default} | Forced: ${s.forced} | HI: ${s.hearingImpaired}${s.title?' | '+s.title:''}`);
-        if(!r.audio.length)lines.push('Audio: no tracks reported');if(!r.text.length)lines.push('Subtitles: no tracks reported (not proof that none exist)');
-        const checks=warnings(name,file);lines.push(...checks.map(w=>'Review: '+w),'Based on supplied MediaInfo; source and REMUX claims are not independently verified.');return lines.join('\n');
+        if(!r.audio.length)lines.push('Audio: no tracks reported');if(!r.text.length)lines.push('Subtitles: no tracks reported');
+        const checks=warnings(name,file);lines.push(...checks.map(w=>'Review: '+w));return lines.join('\n');
     }
     // The dump where UNIT3D puts it, and '[x-ref="mediainfo"]' on whatever element carries
     // it, which is how ZenGuard 1.9.1 reads Zenith (notes/zenguard-1.9.1-excerpts.js,
@@ -402,7 +402,7 @@ const DKOKTO_INSPECTOR = (() => {
 // Streaming-service abbreviations from the list in hand. Data only: the list
 // records how a service is spelled in a title, never where a release came from.
 // Several services have more than one accepted spelling, separated by " / ".
-const DKOKTO_SERVICES = (() => {
+const DKOKTO_SERVICES = ((storage) => {
     const DATA = `35MM|35mm.online
 9NOW|9Now
 A3P|Atresplayer
@@ -426,7 +426,7 @@ ATK|America's Test Kitchen
 ATV|Apple TV (purchased/channel content)
 ATVP|Apple TV+ (original content)
 AUBC|Australian Broadcasting Corporation (ABC (AU) iView)
-AMBC|Australian Broadcasting Corporation (ABC (US))
+AMBC|American Broadcasting Corporation (ABC (US))
 AOL|AOL
 CORE / BCORE|Sony Pictures Core (formerly BRAVIA CORE)
 BB / BRTB|BritBox
@@ -545,6 +545,7 @@ LIFE|Lifetime
 LN|Love Nature
 MA|Movies Anywhere
 MBC|MBC
+MGLN|MagellanTV
 MMAX|ManoramaMAX
 MNBC|MSNBC
 MS|Microsoft Store
@@ -710,13 +711,79 @@ YTV|Yomiuri TV`;
         entries.push(entry);
         for(const spelling of spellings)if(!index.has(spelling.toLowerCase()))index.set(spelling.toLowerCase(),{...entry,spelling});
     }
-    // Returns the listed spelling and service for a token, whatever case it was typed in.
-    const find=token=>{const key=String(token||'').trim().toLowerCase();return key?index.get(key)||null:null;};
-    const spellings=()=>[...index.values()].map(e=>e.spelling);
-    const list=()=>entries.map(e=>({...e}));
+    const KEY = 'dkokto_services_v1', MAX = 100;
+    const store = storage.open();
+    const tokenPattern = /^[A-Za-z][A-Za-z0-9+]{1,11}(?:-[A-Za-z0-9+]{1,11})?$/;
+    const copy = row => ({...row, aliases: [...row.aliases]});
+    let lastRaw, added = [], combined = index;
+    function validate(value, used) {
+        if (!value || typeof value !== 'object') return 'Enter an abbreviation and service name.';
+        const {abbr, name, aliases = []} = value;
+        if (typeof abbr !== 'string' || !tokenPattern.test(abbr)) return 'Use 2–12 letters or digits, with an optional hyphenated part. Start with a letter.';
+        if (typeof name !== 'string' || !name.trim() || name.length > 120 || /[\x00-\x1f\x7f]/.test(name)) return 'Enter a service name of 1–120 characters.';
+        if (!Array.isArray(aliases) || aliases.length > 8) return 'Use at most 8 alternate abbreviations.';
+        const seen = new Set(used);
+        for (const spelling of [abbr, ...aliases]) {
+            if (typeof spelling !== 'string' || !tokenPattern.test(spelling)) return 'Each abbreviation must be a single release-title token.';
+            const key = spelling.toLowerCase();
+            if (seen.has(key)) return spelling + ' is already listed. Choose a different abbreviation.';
+            seen.add(key);
+        }
+        return '';
+    }
+    function read() {
+        let raw = null;
+        try { raw = store.getItem(KEY); } catch {}
+        if (raw === lastRaw) return;
+        lastRaw = raw;
+        added = [];
+        combined = new Map(index);
+        try {
+            if (typeof raw !== 'string' || raw.length > 60000) return;
+            const rows = JSON.parse(raw);
+            if (!Array.isArray(rows)) return;
+            for (const row of rows.slice(0,1000)) {
+                if (added.length >= MAX) break;
+                if (validate(row, combined.keys())) continue;
+                const entry = {abbr:row.abbr, name:row.name.trim(), aliases:row.aliases || [], custom:true};
+                added.push(entry);
+                for (const spelling of [entry.abbr, ...entry.aliases]) combined.set(spelling.toLowerCase(), {...entry, spelling});
+            }
+        } catch {}
+    }
+    function write(rows) {
+        const raw = JSON.stringify(rows.map(({abbr, name, aliases}) => ({abbr, name, aliases})));
+        try { store.setItem(KEY, raw); } catch {}
+        if (store.getItem(KEY) !== raw) return {ok:false, error:'Streaming services could not be saved in this browser.'};
+        lastRaw = undefined;
+        read();
+        if (typeof window !== 'undefined') window.dispatchEvent(new Event('dk-services-changed'));
+        return {ok:true};
+    }
+    function save(value, previous = '') {
+        read();
+        const old = added.find(row => row.abbr.toLowerCase() === String(previous).toLowerCase());
+        if (previous && !old) return {ok:false, error:'That custom service no longer exists. Reopen the list.'};
+        const remaining = added.filter(row => row !== old);
+        if (remaining.length >= MAX) return {ok:false, error:'You can save up to ' + MAX + ' custom services.'};
+        const used = new Set(index.keys());
+        for (const row of remaining) for (const spelling of [row.abbr, ...row.aliases]) used.add(spelling.toLowerCase());
+        const error = validate(value, used);
+        if (error) return {ok:false, error};
+        return write([...remaining, {abbr:value.abbr, name:value.name.trim(), aliases:value.aliases || []}]);
+    }
+    function remove(abbr) {
+        read();
+        const remaining = added.filter(row => row.abbr.toLowerCase() !== String(abbr).toLowerCase());
+        return remaining.length === added.length ? {ok:false, error:'Only custom services can be removed.'} : write(remaining);
+    }
+    const custom = () => { read(); return added.map(copy); };
+    const find = token => { read(); const hit = combined.get(String(token || '').trim().toLowerCase()); return hit ? copy(hit) : null; };
+    const spellings = () => { read(); return [...combined.values()].map(row => row.spelling); };
+    const list = () => { read(); return [...entries, ...added].map(copy); };
     const describe=token=>{const hit=find(token);return hit?hit.spelling+' — '+hit.name:'';};
-    return {find,list,spellings,describe,count:entries.length};
-})();
+    return {find,list,spellings,describe,custom,save,remove,KEY,MAX,get count() { read(); return entries.length + added.length; }};
+})(typeof module!=='undefined'&&module.exports?require('./store.js'):DKOKTO_STORE);
 
 
 /* ── profiles.js ─────────────────────────────────────────── */
@@ -1339,7 +1406,7 @@ const DKOKTO_RULES = ((profiles) => {
         }
         // Standing reminders: true of every Zenith upload, and not decidable from here.
         if(video||book||profile==='music')
-            add('review','zenith-standing','Zenith rules this cannot check: whether it already exists there (rule 1), another tracker’s exclusivity (1.2), keeping the original group tag (1.4), no archives (2.1), and the description requirements — three source screenshots and MediaInfo for video (3.2, 3.4).');
+            add('review','zenith-standing','Zenith rules this cannot check: whether it already exists there (rule 1), another tracker’s exclusivity (1.2), keeping the original group tag (1.4) and no archives (2.1).'+(video?' The three screenshots and the MediaInfo (3.2, 3.4) are checked on the torrent page.':''));
         return issues;
     }
     // Zenith's own naming for books and music. Audiobook:
@@ -1429,7 +1496,10 @@ const DKOKTO_RULES = ((profiles) => {
     const baseline=()=>[...BUILTIN_BASELINE,...profiles.baseline()];
     // A profile may list the resolutions its tracker accepts; otherwise its base decides.
     const resolutions=site=>profiles.get(site)?.resolutions?.length?profiles.get(site).resolutions:null;
-    return {list,labelOf,hostsOf,guideDate,guideSince,current,choose,forget,check,books,siteFor,baseOf,booksOf,musicOf,audiobooksOf,baseline,resolutions,added,hasRules,settled,BASELINE,KEY,HOSTS,
+    // Screenshots a rule set asks for in the description (Zenith 3.2: three source screenshots).
+    const SCREENSHOTS={zenith:3};
+    function screenshotsNeeded(site=current()){return SCREENSHOTS[site]||0;}
+    return {screenshotsNeeded,list,labelOf,hostsOf,guideDate,guideSince,current,choose,forget,check,books,siteFor,baseOf,booksOf,musicOf,audiobooksOf,baseline,resolutions,added,hasRules,settled,BASELINE,KEY,HOSTS,
         bannedAuthors:()=>[...BANNED_AUTHORS],bannedWorks:()=>[...BANNED_WORKS],use(store){backing=store;migrated=false;}};
 })(typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./profiles.js'):DKOKTO_PROFILES);
 
@@ -1492,17 +1562,24 @@ const DKOKTO_SOURCE_CORE = (() => {
     // The report against the page's file rows ({path, bytes}). The report's file is found
     // by its Complete name, or it is the only video file when there is just one. Sizes are
     // compared within two per cent, since the page rounds.
-    function reportAgainstFiles(file, rows) {
+    function reportAgainstFiles(file, rows, {fullDisc = false} = {}) {
         const general = file?.general?.[0];
         const list = (Array.isArray(rows) ? rows : []).filter(row => row && row.path);
         const out = { name: { report: '', found: null }, size: { report: 0, file: 0, match: null } };
         if (!general || !list.length) return out;
         const complete = base(field(general, 'Complete name', 'CompleteName'));
         out.name.report = complete;
+        // Disc reports describe title sets or playlists, not the control file's bytes.
+        const control = /\.(?:ifo|bup|mpls|bdmv)$/i.test(complete);
+        const discTree = list.some(row => /(?:^|[\\/])(?:VIDEO_TS|BDMV)[\\/]/i.test(row.path));
+        if (fullDisc || control || discTree) {
+            out.size.skipped = 'Disc report covers a title set or playlist';
+            return out;
+        }
         const videos = list.filter(row => VIDEO.test(row.path));
         const byName = complete ? list.find(row => base(row.path) === complete) : null;
         if (complete) out.name.found = !!byName;
-        const target = byName || (videos.length === 1 ? videos[0] : null);
+        const target = byName ? (VIDEO.test(byName.path) ? byName : null) : (videos.length === 1 ? videos[0] : null);
         const reported = bytesOf(field(general, 'File size', 'FileSize'));
         const actual = target ? (Number(target.bytes) || 0) : 0;
         out.size.report = reported;
@@ -1785,12 +1862,12 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         const videos=files.map(pathOf).filter(path=>VIDEO_FILE.test(path));
         const named=episodes([token]).map(e=>e.episode);            // [] for a pack name
         if(!videos.length) {
-            add('review','episode-verify','The file list is in hand but holds no video file, so which episodes it holds cannot be read from it. Verify episode mapping and pack completeness against the intended listing.');
+            add('review','episode-verify','The file list has no video file, so its episodes can’t be read. Check the episodes against the listing.');
             return;
         }
         const held=episodes(videos);
         if(!held.length) {
-            add('review','episode-verify','None of the '+videos.length+' video file'+(videos.length===1?'':'s')+' in the file list carries an S##E## number, so which episodes it holds cannot be read from the list. Verify episode mapping and pack completeness against the intended listing.');
+            add('review','episode-verify','None of the '+videos.length+' video file'+(videos.length===1?'':'s')+' in the file list carries an S##E## number, so its episodes can’t be read. Check the episodes against the listing.');
             return;
         }
         const mine=held.filter(e=>e.season===season).map(e=>e.episode);
@@ -1877,7 +1954,7 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
             }
             if(/\w+\.\w+\.\w+/.test(s)&&!s.includes(' - '))add('error','scene-music','Use words with spaces for music titles, not scene-style dot separators.');
             add('review','music-files','Check files/folders separately: accurate song titles and track numbers (except single-track releases), artist on various-artists tracks, logical disc numbering, no leading spaces and total paths at most 180 characters.');
-            add('review','music-facts','Verify artist, album, release/edition year and format against the release. These cannot be established from the display title.');return result();
+            add('review','music-facts','Check the artist, album, release/edition year and format against the release.');return result();
         }
         if(profile==='ebook'||profile==='audiobook'){
             const fmt=profile==='ebook'?bookfmt:hit(s,'M4B|FLAC|ALAC|PCM|MP3|Opus|Vorbis|AAC');
@@ -1893,8 +1970,8 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
             const isbn=s.match(/(?:\bISBN(?:-1[03])?[: ]*)?\b((?:97[89][ -]?)?\d[\d -]{7,20}[\dX])\b/i);
             const isbnCandidates=[...s.matchAll(/(?:\d[ -]?){9}[\dX]|(?:\d[ -]?){12}\d/gi)].map(m=>m[0].replace(/[ -]/g,''));
             const asin=/\bB0[A-Z0-9]{8}\b/i.test(s);
-            if(options.collection!=='yes'&&!isbnCandidates.some(v=>v.length===10||v.length===13)&&!(profile==='audiobook'&&asin))add('review','isbn','No ISBN/ASIN recognized. Include the ISBN for this edition; collections may omit it. Verify Audible identifiers with the publisher rather than inferring them.');
-            if(isbn&&isbnCandidates.length)add('review','isbn-verify','Verify that the identifier belongs to this edition and format, not the physical book or a different audiobook.');
+            if(options.collection!=='yes'&&!isbnCandidates.some(v=>v.length===10||v.length===13)&&!(profile==='audiobook'&&asin))add('review','isbn','No ISBN/ASIN recognized. Include the ISBN for this edition; collections may omit it. Check Audible identifiers with the publisher.');
+            if(isbn&&isbnCandidates.length)add('review','isbn-verify','Check that the identifier is for this edition and format.');
             if(profile==='audiobook'){
                 if(fmt&&/MP3|AAC|Opus|Vorbis/i.test(fmt[1])&&!/\bVBR\b/i.test(s)&&!/(?:^|\s)(?:64|80|96|112|128|160|192|224|256|320|\d{2,4}\s*kbps)(?=\s|$)/i.test(s))add('review','bitrate','Lossy audiobooks require a bitrate in kbps, except VBR. Confirm bitrate/VBR and include it.');
                 add('review','book-description','Check narrator and publisher in the description, logical chapter numbering, completeness, and the source for non-retail uploads. Speech-only content requires at least 64 kbps; lossy-to-lossy transcodes are prohibited by the guide.');
@@ -1913,9 +1990,9 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
             // The Source check section of the dialog says when there is none to compare.
             if(id&&id.bad)add('error','unique-id-bad','The report’s Unique ID reads “'+String(rawId).slice(0,80)+'”: its decimal and hex halves are different numbers, which MediaInfo never writes. The report was edited by hand — ask for the complete, unedited report from the file.');
             if(Array.isArray(options.fileRows)&&options.fileRows.length) {
-                const against=source.reportAgainstFiles(file,options.fileRows);
-                const gib=b=>(b/1073741824).toFixed(2)+' GiB';
-                if(against.size.match===false)add('error','report-size','The report says the file is '+gib(against.size.report)+' and the file on this page is '+gib(against.size.file)+' (more than 2% apart): the report is from a different file. Ask for the report of the file that was uploaded.');
+                const against=source.reportAgainstFiles(file,options.fileRows,{fullDisc:options.fullDisc===true||(profile==='disc'&&!hit(s,'REMUX'))});
+                const size=b=>b>=1073741824?(b/1073741824).toFixed(2)+' GiB':b>=1048576?(b/1048576).toFixed(2)+' MiB':b>=1024?(b/1024).toFixed(2)+' KiB':b+' B';
+                if(against.size.match===false)add('review','report-size','The report lists '+size(against.size.report)+'; the selected media file on this page lists '+size(against.size.file)+' (more than 2% apart). Check that both sizes describe the same media file.');
                 if(against.name.found===false)add('review','report-name','The report’s Complete name, “'+against.name.report.slice(0,80)+'”, is not among the files on this page. Confirm the report is from this upload.');
             }
         }
@@ -1953,11 +2030,11 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
             // does). Without one, or for a daily show numbered by date, it stays a reminder.
             const files=Array.isArray(options.files)?options.files.slice(0,2000).filter(entry=>pathOf(entry)):[];
             if(ep&&!date&&files.length)episodeFindings(s,ep[1],files,add);
-            else add('review','episode-verify','Verify episode mapping and pack completeness against the intended listing; numbers in a title do not establish which episodes the files contain.');
+            else add('review','episode-verify','Check the episodes against the listing.');
         }
         if(options.year&&year&&String(options.year)!==year)add('error','year-conflict','Title year '+year+' differs from the reference year '+options.year+'.');
         if(knownTitle){const canonical=s.slice(0,knownTitle.length);if(canonical.localeCompare(knownTitle,undefined,{sensitivity:'accent'})!==0)add('review','title-spelling','The title does not start with the supplied official title, including punctuation: '+knownTitle+'. Check AKA / locale and multi-title releases manually.');}
-        else add('review','title-unverified','Verify the internationally recognized title, punctuation, release year, AKA and any required locale against TMDB. Add a reference title below to compare spelling.');
+        else add('review','title-unverified','Check the title, punctuation, year, AKA and locale against TMDB.');
         akaCheck(s,add,options,profile);
         const type=has('REMUX|WEB-DL|WEBRip'),dvd=has('(?:NTSC[ ._]+|PAL[ ._]+)?DVD(?:Rip|5|9)?'),disc=!!(has('Blu-ray|DVD5|DVD9|HD[ ._]DVD')&&!type),remux=/REMUX/i.test(type?.[1]||'');
         const discFamily=disc||remux;const releaseKind=type?.[1]|| (disc?'Full disc':has('HDTV|UHDTV|SDTV')?'TV capture':'Encode');
@@ -1966,7 +2043,7 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         if(dvd&&!discFamily&&!has('DVDRip'))add('error','dvd-encode','DVD encodes use NTSC DVDRip or PAL DVDRip.');
         if(!resolution&&!dvd)add('error','resolution','Include the video resolution (omitted for DVD sources).');
         if(dvd&&resolution)add('error','dvd-resolution','Omit the resolution label for DVD-sourced releases.');
-        if(resolution&&/360/i.test(resolution[1]))add('review','360','360p is allowed only when no official release above 360p exists. Verify availability.');
+        if(resolution&&/360/i.test(resolution[1]))add('review','360','360p is allowed only when no official release above 360p exists.');
         // A profile may list the resolutions its tracker accepts; otherwise its base decides.
         const listed=rules.resolutions?.(site);
         const allowedResolution=listed?listed.some(label=>label.toLowerCase()===String(resolution?.[1]||'').toLowerCase())
@@ -2003,18 +2080,18 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         if(type&&resolution&&pos(type)+start<pos(resolution))add('error','type-order','Resolution belongs before the source/type.');
         if(/WEB/i.test(type?.[1]||'')){
             const prefix=tail.slice(0,pos(type)).trim().replace(/[._]+$/,''),service=prefix.match(/(?:^|[ ._])([A-Z](?:[A-Z0-9+]{1,11}|[A-Z0-9+]{0,11}-[A-Z0-9+]{1,11}))$/i)?.[1];
-            if(!service||/^(?:DS4K|HDR|REMUX|MULTI)$/i.test(service))add('review','web-service','Include and verify the streaming-service abbreviation immediately before WEB-DL / WEBRip. The service cannot be inferred from media tracks.');
+            if(!service||/^(?:DS4K|HDR|REMUX|MULTI)$/i.test(service))add('review','web-service','Put the streaming-service abbreviation right before WEB-DL / WEBRip.');
             else if(/^PMT$/i.test(service))add('error','paramount','Use PMTP for Paramount (your configured convention).');
             else {
                 // The supplied list records accepted spellings only, not provenance.
                 const listed=services.find(service);
-                if(!listed)add('review','service-unknown','“'+service+'” is not in the supplied streaming-service list ('+services.count+' services). Check the abbreviation; a service missing from the list still needs its documented spelling.');
+                if(!listed)add('review','service-unknown','“'+service+'” is not in your streaming-service list ('+services.count+' services). Check its spelling, or add it under Settings & tools → Streaming services.');
                 else {
                     serviceLabel=listed.spelling+' — '+listed.name;
                     if(listed.spelling!==service)add('error','service-spelling','Use the listed spelling for '+listed.name+': '+listed.spelling+', not '+service+'.');
                 }
             }
-        }else if(!has('BluRay|Blu-ray|HDDVD|HD[ ._]DVD|DVD(?:Rip|5|9)?|HDTV|UHDTV|SDTV'))add('review','source','No source recognized. Verify the source and its guide-specific spelling.');
+        }else if(!has('BluRay|Blu-ray|HDDVD|HD[ ._]DVD|DVD(?:Rip|5|9)?|HDTV|UHDTV|SDTV'))add('review','source','No source recognized. Check the source and how the guide spells it.');
         if(options.downscale==='yes'&&/WEB|HDTV|UHDTV/i.test(releaseKind)&&!has('DS4K'))add('error','ds4k','The confirmed WEB/HDTV downscale requires DS4K.');
         if(options.downscale==='no'&&has('DS4K'))add('error','ds4k-conflict','DS4K conflicts with your “not downscaled” setting.');
         if(has('DS4K')&&has('UHD[ ._]BluRay'))add('error','ds4k-disc','Omit DS4K for UHD BluRay downscales; the source tag implies it.');
@@ -2051,7 +2128,7 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
             }else add('review','dub-unverified','Original/main audio languages are not fully confirmed. Review Dubbed, Dual-Audio, MULTi or Language MULTi against the guide.');
         }
         if(options.collection==='yes'||s.includes(' / '))add('review','video-collection','For multiple titles, repeat title/AKA/locale/year/cut/ratio separated by /. Collection names end in Collection or Trilogy. Check every title and file separately.');
-        add('review','provenance','Manually confirm source/service, cut, edition, Hybrid, REPACK/PROPER/RERip, any downscale and release group. Do not invent missing tags. This checker never renames files or certifies tracker compliance.');
+        add('review','provenance','Confirm the source/service, cut, edition, Hybrid, REPACK/PROPER/RERip, any downscale and the release group.');
         return result(discFamily?'disc':profile);
         function result(templateKey=profile){
             // The tracker's own upload rules, on top of the shared naming guide.
