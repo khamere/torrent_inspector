@@ -100,7 +100,7 @@
 <header class="top">
   <div class="wrap">
     <nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/rules.html">Rules builder</a></nav>
-    <p class="eyebrow">Torrent Inspector 1.51.7</p>
+    <p class="eyebrow">Torrent Inspector 1.51.15</p>
     <h1>Tracker rules</h1>
     <p class="lede">
       Build a rules profile for a tracker, check one you already have, and run a release name
@@ -225,7 +225,7 @@
 <footer>
   <div class="wrap">
     <p><a href="index.html">← Torrent Inspector</a> · profile format documented in
-      <code>TRACKER-RULES.md</code> · built from the modules of 1.51.7</p>
+      <code>TRACKER-RULES.md</code> · built from the modules of 1.51.15</p>
   </div>
 </footer>
 
@@ -1677,7 +1677,28 @@ const DKOKTO_SOURCE_CORE = (() => {
         return Math.round((x - y) / 86400000);
     }
 
-    return { uniqueId, bytesOf, exactBytes, reportAgainstFiles, idsIn, compare, base, stem, when, daysApart };
+    // BEP 9: a v1 magnet exact topic is a 40-digit hex or 32-character base32 info hash.
+    function infoHash(value) {
+        if(typeof value!=='string')return '';
+        const raw=value.trim();
+        if(/^[0-9a-f]{40}$/i.test(raw))return raw.toLowerCase();
+        if(!/^[a-z2-7]{32}$/i.test(raw))return '';
+        let bits=0,buffer=0,out='';
+        for(const char of raw.toUpperCase()) {
+            buffer=(buffer<<5)|'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'.indexOf(char);bits+=5;
+            if(bits>=8){bits-=8;out+=((buffer>>>bits)&255).toString(16).padStart(2,'0');buffer&=(1<<bits)-1;}
+        }
+        return out;
+    }
+    function magnetHash(value) {
+        if(typeof value!=='string' || value.length>20000 || !/^magnet:\?/i.test(value))return '';
+        try {
+            const topics=new URL(value).searchParams.getAll('xt').filter(v=>/^urn:btih:/i.test(v));
+            const hashes=topics.map(v=>infoHash(v.slice(9)));
+            return hashes.length && hashes.every(h=>h && h===hashes[0]) ? hashes[0] : '';
+        } catch {return '';}
+    }
+    return { uniqueId, bytesOf, exactBytes, reportAgainstFiles, idsIn, compare, base, stem, when, daysApart, infoHash, magnetHash };
 })();
 
 
