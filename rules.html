@@ -100,7 +100,7 @@
 <header class="top">
   <div class="wrap">
     <nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/rules.html">Rules builder</a></nav>
-    <p class="eyebrow">Torrent Inspector 2.0.0</p>
+    <p class="eyebrow">Torrent Inspector 2.0.2</p>
     <h1>Tracker rules</h1>
     <p class="lede">
       Build a rules profile for a tracker, check one you already have, and run a release name
@@ -225,7 +225,7 @@
 <footer>
   <div class="wrap">
     <p><a href="index.html">← Torrent Inspector</a> · profile format documented in
-      <code>TRACKER-RULES.md</code> · built from the modules of 2.0.0</p>
+      <code>TRACKER-RULES.md</code> · built from the modules of 2.0.2</p>
   </div>
 </footer>
 
@@ -391,7 +391,9 @@ const DKOKTO_INSPECTOR = (() => {
     // carrier wraps another, the innermost is the report; the wrapper would add its heading.
     // CinemaZ's saved page (24 Sep 2026) embeds the report in #collapseMediaInfo pre,
     // including when the Bootstrap panel is collapsed. Shared by the AvistaZ family.
-    function readPage(doc){const all=[...doc.querySelectorAll('.torrent-mediainfo-dump code,.torrent-mediainfo-dump pre,[x-ref="mediainfo"],#collapseMediaInfo pre')].filter(n=>!n.closest('.dk-hub'));
+    // PeerGarden's supplied Fawlty Towers page (9 Oct 2026) keeps the full report
+    // in pre.__mediainfo-raw even while its Raw view is closed.
+    function readPage(doc){const all=[...doc.querySelectorAll('.torrent-mediainfo-dump code,.torrent-mediainfo-dump pre,[x-ref="mediainfo"],#collapseMediaInfo pre,pre.__mediainfo-raw')].filter(n=>!n.closest('.dk-hub'));
         return all.filter(n=>!all.some(o=>o!==n&&n.contains(o))).map(n=>n.textContent.trim()).filter((t,i,a)=>t&&a.indexOf(t)===i);}
     function searchLink(name){const words=str(name).replace(/\s*[([](?:18|19|20)\d{2}[)\]]/g,'').replace(/[’']/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim().split(/\s+/).filter(Boolean);return words.length?'https://www.srrdb.com/browse/'+words.map(encodeURIComponent).join('/')+'/1':'https://www.srrdb.com/';}
     return {parse,rows,warnings,summary,readPage,glossary,searchLink};
