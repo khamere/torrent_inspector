@@ -17,8 +17,7 @@ The script is handed out privately to moderators and staff of supported trackers
 Ask DKOKTO on your tracker for the installation address. No userscript or private
 source directory is published in this public repository.
 
-Normal installations keep their keys/settings when updated. Disable the separate
-Easy Test before using 2.0. Checks compare posted evidence, not the actual media,
+Updates keep your saved keys and settings. Checks compare posted evidence, not the actual media,
 and never approve or submit changes to a tracker. No usage telemetry is added.
 
 ## Reporting a group
