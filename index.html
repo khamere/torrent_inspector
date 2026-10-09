@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
-<title>Torrent Inspector — naming checks and MediaInfo for UNIT3D trackers</title>
+<title>Torrent Inspector 2.0 — check, compare and copy</title>
 <link rel="icon" type="image/svg+xml" href="images/logo.svg">
-<meta name="description" content="A Tampermonkey userscript for UNIT3D trackers: every release title checked against the naming rules as the page renders, the MediaInfo already on the page read properly, release groups linked to where they are internal, and a cross-check against the trackers you are on. Optional API checks using your own keys; no posting or central data store.">
+<meta name="description" content="Check torrent naming and posted MediaInfo, search connected trackers and copy reports or BBCode from one compact box. Easy mode by default, with optional API access and no usage telemetry.">
 <style>
   :root{
     --bg:#0f0b14; --panel:#160f1e; --panel-2:#1b1226; --line:#3b2a4a; --line-2:#553d6b;
@@ -119,523 +119,82 @@
 </head>
 <body>
 
-<header class="top">
-  <div class="wrap">
-    <nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/rules.html">Rules builder</a></nav>
-    <p class="eyebrow">Tampermonkey userscript · unified review workflow</p>
-    <h1>Torrent Inspector<span class="dot">.</span></h1>
-    <p class="lede">Review loaded torrents in one panel. Check naming and MediaInfo, find other
-      releases, compare source evidence and keep your notes together. Start from a listing or
-      open a torrent directly. Searches open when you click; nothing is posted to a tracker.</p>
-    <ul class="pills">
-      <li class="pill"><b>1.51.17</b></li>
-      <li class="pill"><b>45</b> UNIT3D trackers · <b>6</b> additional torrent-page adapters · <b>64</b> searchable trackers</li>
-      <li class="pill">Optional API checks, no posting</li>
-      <li class="pill">Nothing judged without that tracker’s rules</li>
-      <li class="pill">Everything stays in your browser</li>
-    </ul>
-    <div class="cta">
-      <a class="btn primary" href="#install">How to get it</a>
-      <a class="btn" href="rules.html">Rules builder</a>
-    </div>
-    <nav aria-label="On this page"><ul class="toc">
-      <li><a href="#review">Unified panel</a></li>
-      <li><a href="#seasons">Season packs</a></li>
-      <li><a href="#shots">What it looks like</a></li>
-      <li><a href="#badges">The badges</a></li>
-      <li><a href="#source">Source check</a></li>
-      <li><a href="#inspector">MediaInfo &amp; tools</a></li>
-      <li><a href="#group">Release groups</a></li>
-      <li><a href="#moderating">Moderating</a></li>
-      <li><a href="#install">Install</a></li>
-      <li><a href="rules.html">Rules builder</a></li>
-      <li><a href="#tutorials">Tutorials</a></li>
-      <li><a href="#questions">Questions</a></li>
-      <li><a href="#never">What it never does</a></li>
-    </ul></nav>
-  </div>
-</header>
-
-<section id="start">
-  <div class="wrap">
-    <h2>What you get, in one minute</h2>
-    <p class="sub">From a loaded listing to a reviewed torrent, with setup kept in one place.</p>
-    <div class="grid">
-      <div class="card lead">
-        <h3>1 · Start a review queue</h3>
-        <p>A <span style="color:var(--green)">✓</span>, <span style="color:var(--red)">✕</span> or <span style="color:var(--amber)">?</span> beside each release name. Choose <b>Review loaded titles</b> to save the loaded links, or click a badge to open Findings. Use <b>Next unchecked</b> to continue.</p>
-      </div>
-      <div class="card lead">
-        <h3>2 · Find other releases</h3>
-        <p><b>Find other releases</b> opens one search pane: Title or Exact title, quality choices, an editable query and your saved tracker grid.</p>
-      </div>
-      <div class="card lead">
-        <h3>3 · Inspect the evidence</h3>
-        <p>On a torrent page, what the name claims is compared with the report the uploader posted — resolution, codecs, audio, HDR, languages.</p>
-      </div>
-      <div class="card lead">
-        <h3>4 · Record your progress</h3>
-        <p>Read <b>Source check</b>, add private notes and tick <b>Reviewed by me</b>. It records that you looked; it does not approve the torrent or hide naming errors.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="review">
-  <div class="wrap">
-    <h2>One panel for the whole review</h2>
-    <p class="sub">Choose <b>Review loaded titles</b> on a listing, or the verdict pill under the name on a torrent page (<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd> does the same). The same panel opens in both places, even without a selected naming rule set.</p>
-    <p>Everything a review needs sits in one movable panel: <b>Findings</b> for the name, the page and the file list; <b>MediaInfo</b> as summary cards and track tables; <b>Find releases</b>, one editable search with Title / Exact title modes, quality choices and a grid of your enabled trackers; <b>Source check</b>; <b>Season check</b>; and <b>My notes</b>, saved as you type. Drag the title bar to move it, double-click to centre it again. <b>Copy report text</b> stays in the footer.</p>
-    <p>It runs on the same torrent pages as before, and on TorrentLeech, FileList, CinemaZ, AvistaZ, PrivateHD and AnimeZ too — the report is read even when the page keeps it collapsed. Where a tracker has supplied no naming rules, nothing is judged; the panel still reads the MediaInfo and keeps your notes.</p>
-    <div class="shots workflow-shots">
-    <figure><img src="screenshots/18-find-releases.png?v=1.51.17" alt="Find releases: editable query, Title and Exact title modes, quality choices and one grid of enabled trackers." loading="lazy" width="980" height="1048"><figcaption>One search pane replaces the repeated lookup rows. Every search opens only when clicked.</figcaption></figure>
-    <figure><img src="screenshots/17-detail-mediainfo.png?v=1.51.17" alt="The unified Inspector on a torrent detail page, with MediaInfo summary cards, video details and track tables." loading="lazy" width="980" height="846"><figcaption>The verdict pill opens this same panel on the torrent page. MediaInfo and notes remain available without naming rules.</figcaption></figure>
-    <figure><img src="screenshots/16-review-panel.png?v=1.51.17" alt="Review panel with saved queue, Findings, MediaInfo, Find releases, Source check, Season check and My notes tabs, and Previous, Copy report and Next unchecked actions." loading="lazy" width="980" height="846"><figcaption>The running Review panel, using this project’s offline demo.</figcaption></figure>
-    </div>
-    <div class="grid">
-      <div class="card"><h3>Keep the evidence together</h3><p>Switch between <b>Findings</b>, <b>MediaInfo</b>, <b>Find releases</b>, <b>Source check</b>, <b>Season check</b> and <b>My notes</b>. Notes save as typed; the report button stays in the footer. Open More tools for naming templates and the full Inspector.</p></div>
-      <div class="card"><h3>Continue where you left off</h3><p><b>Previous</b> and <b>Next unchecked</b> follow actual links saved from the loaded listing and continue the panel on the selected page. The queue, current tab and notes stay with the torrent and tracker.</p></div>
-      <div class="card"><h3>Your progress stays separate</h3><p><b>Reviewed by me</b> records that you looked. It never hides an error, changes a naming verdict or approves a torrent. Setup and the audit live under <b>Settings &amp; tools</b>.</p></div>
-    </div>
-  </div>
-</section>
-
-<section id="seasons">
-  <div class="wrap">
-    <h2>Season packs, and what rides along in them</h2>
-    <p class="sub">Two things a file list can tell you that a name cannot.</p>
-    <div class="shots workflow-shots">
-    <figure><img src="screenshots/19-season-check.png?v=1.51.17" alt="The Season check tab: the remembered upload's episodes beside this page's, one per row, with same size, only in remembered list, or different size as the result." loading="lazy" width="980" height="990"><figcaption>Season check: the pack on this page against the same season remembered from another tracker. E04 is in the other pack and not in this one.</figcaption></figure>
-    <figure><img src="screenshots/20-extra-files.png?v=1.51.17" alt="Extra files and subfolders under Findings: a subfolder listed for review, and two files named with the tracker rule that refuses them." loading="lazy" width="934" height="541"><figcaption>Extra files and subfolders, under HomieHelpDesk's rules: a Subs folder to look at, an NFO and a loose subtitle the rule refuses.</figcaption></figure>
-    </div>
-    <div class="grid">
-      <div class="card">
-        <h3>Season check</h3>
-        <p>Open a season pack on one tracker, then the same show and season on another, and the <b>Season check</b> tab lines the two file lists up episode by episode: the same size, a different size, or an episode one pack has and the other lacks. The show is matched with or without a year in its title, and a title that names the show both ways ("My Sad Dead AKA Mis muertos tristes") matches either name; two titles with different years stay apart. Nothing is captured by hand — the lists are read from the pages you visited, and the tab refreshes when a list loads or you come back from another tab.</p>
-      </div>
-      <div class="card">
-        <h3>Extra files and subfolders</h3>
-        <p>For TV and movies, <b>Findings</b> lists every folder below the outer torrent folder for you to look at, on every tracker, and names the files a tracker's own supplied rules refuse — NFOs, loose subtitles, images, archives — with the rule beside each. Where a tracker has supplied no such rule, it says so rather than borrowing another tracker's. Samples and files inside containers are left to you.</p>
-      </div>
-      <div class="card">
-        <h3>What it remembers, and for how long</h3>
-        <p>File lists live in the same memory as the source check: two weeks, sixty uploads, in your browser and shared across the trackers the script runs on. Since 1.44.1 it is safe to keep several tracker tabs open — a tab only writes what changed on its own page, and never over what another tab saved.</p>
-      </div>
-    </div>
-  </div>
-</section>
-<section id="shots">
-  <div class="wrap">
-    <h2>What it looks like</h2>
-    <p class="sub">
-      Taken from the project's own offline demo pages on the current build, with captions describing the same workflow. Made-up releases throughout; nothing from a real site.
-    </p>
-    <div class="shots">
-      <figure class="wide">
-        <img src="screenshots/01-listing-badges.png?v=1.51.17" alt="A torrent listing where each loaded title carries a green tick, a red cross or an amber question mark, above Rules, Review loaded titles and Settings &amp; tools." loading="lazy" width="1180" height="616">
-        <figcaption>The listing bar keeps Rules, Review loaded titles and counts visible; Settings &amp; tools holds setup and audits. The count is of the titles on screen — nothing else is read.</figcaption>
-      </figure>
-      <figure>
-        <img src="screenshots/02-naming-explained.png?v=1.51.17" alt="A dialog explaining a naming error, listing the manual checks that remain and the tracker's title template." loading="lazy" width="980" height="846">
-        <figcaption>Click a badge to open Findings in Review. Corrections and manual checks stay with the torrent; templates are under More tools.</figcaption>
-      </figure>
-      <figure>
-        <img src="screenshots/03-banned-group.png?v=1.51.17" alt="A dialog naming a release group that appears on a tracker's banned list, with the reason that list gives." loading="lazy" width="980" height="846">
-        <figcaption>A banned or low-quality group is named with the list it is on and the reason that list gives — never an accusation of its own.</figcaption>
-      </figure>
-      <figure class="wide">
-        <img src="screenshots/05-torrent-page.png?v=1.51.17" alt="A torrent page showing the badge beside the release name, the compact lookup actions, the Compare releases button and the MediaInfo." loading="lazy" width="1180" height="693">
-        <figcaption>A torrent page: the badge, the compact lookup actions, the <b>Compare releases</b> capture button, and the MediaInfo the checks read.</figcaption>
-      </figure>
-      <figure>
-        <img src="screenshots/14-source-banner.png?v=1.51.17" alt="The source-check banner: same release as the other tracker's upload, with the Unique ID, file name and size ticked, the exact byte count, and a link back." loading="lazy" width="564" height="217">
-        <figcaption>The optional compact source notice. Open Source check for the full comparison view; the quiet checkbox hides automatic notices.</figcaption>
-      </figure>
-      <figure>
-        <img src="screenshots/15-source-section.png?v=1.51.17" alt="The Source check section of the badge dialog: the Unique ID and file name remembered, and what the page was looked over for." loading="lazy" width="934" height="613">
-        <figcaption>Source check shows the current filename, ID and size, expanded tracker comparisons, and a separate last saved check from another page.</figcaption>
-      </figure>
-      <figure>
-        <img src="screenshots/13-tools-bar.png?v=1.51.17" alt="The tools bar with Nav and Check a name." loading="lazy" width="170" height="33">
-        <figcaption>Away from a torrent page: Nav and Check a name. On a torrent page the panel under the name is the way in, so the bar keeps only Nav.</figcaption>
-      </figure>
-      <figure>
-        <img src="screenshots/06-inspector-naming.png?v=1.51.17" alt="The Inspector panel showing a release-name check against the chosen tracker's rules." loading="lazy" width="940" height="828">
-        <figcaption>The full Inspector remains under Findings → More tools → Open Inspector for advanced tools, including pasted reports.</figcaption>
-      </figure>
-      <figure>
-        <img src="screenshots/10-cross-check.png?v=1.51.17" alt="The request cross-check panel, with a search link for each tracker that can carry that kind of request." loading="lazy" width="940" height="404">
-        <figcaption>A request gets a search link per tracker that can carry it. One that cannot is left out, with the reason.</figcaption>
-      </figure>
-      <figure>
-        <img src="screenshots/12-nav.png?v=1.51.17" alt="The torrent navigation panel, with page and ID modes, a step size, a jump box and the current page named." loading="lazy" width="330" height="260">
-        <figcaption>Nav: step by listing page or by torrent ID, or jump straight to one.</figcaption>
-      </figure>
-    </div>
-  </div>
-</section>
-
-
-
-<section id="badges">
-  <div class="wrap">
-    <h2>Every loaded title, checked as the page renders</h2>
-    <p class="sub">
-      Listings, a member's uploads, bookmarks, playlists, the home page panels, a film's own page,
-      and the moderation queues.
-    </p>
-
-    <div class="rows">
-      <div class="row">
-        <span class="badge pass" aria-hidden="true">✓</span>
-        <span class="name">The Money Pit 1986 1080p BluRay DTS 5.1 x264-<span class="tag">iJiA</span></span>
-        <p class="why"><b>Passed.</b> The title checks found nothing wrong — not a promise that the media, the source history or tracker approval were verified.</p>
-      </div>
-      <div class="row">
-        <span class="badge err" aria-hidden="true">✕</span>
-        <span class="name">Dead.Silence.2007.2160p.UHD.BluRay.DTS-HD.MA.5.1.DV.HDR.x265-<span class="tag">B0MBARDiERS</span></span>
-        <p class="why"><b>Corrections found.</b> The guide writes display titles with spaces, so the fix is written out for you — <em>Dead Silence 2007 2160p UHD BluRay DTS-HD MA 5.1 DV HDR x265-B0MBARDiERS</em> — keeping the dots that belong, like H.264 and DDP5.1.</p>
-      </div>
-      <div class="row">
-        <span class="badge rev" aria-hidden="true">?</span>
-        <span class="name">Bottle Top Bill 2005 540p WEB-DL AAC 2.0 H.264</span>
-        <p class="why"><b>Your judgement needed.</b> A rule the title alone cannot settle, or a missing group tag. It asks instead of guessing; once you have looked and it conforms, <b>Mark as conforming</b> turns it green with a dotted ring that says the verdict is yours. Red is never marked over.</p>
-      </div>
-    </div>
-
-    <div class="grid" style="margin-top:18px">
-      <div class="card">
-        <h3>Whose rules?</h3>
-        <p>Seven rule sets ship with it — <b>DarkPeers</b>, <b>Zenith</b>, <b>LUME</b>, <b>OnlyEncodes+</b>, <b>HomieHelpDesk</b>, <b>MidnightScene</b> and <b>InfinityHD</b> — each built from that tracker's own published guide and banned list, and each in force on its own tracker with no setup.</p>
-        <p>Anywhere else nothing is judged until you pick a rule set from the <b>Rules</b> dropdown, because a red ✕ quoting a rulebook that tracker never wrote is worse than no badge. The choice is remembered per tracker.</p>
-      </div>
-      <div class="card">
-        <h3>Add your own tracker</h3>
-        <p><b>Tracker rules…</b> takes a banned list pasted straight off the page plus tick-boxes for the common rules; profiles export and import as JSON, and <b>Edit a copy</b> lets you adjust a shipped one.</p>
-        <p><a href="rules.html"><b>Build one on the web →</b></a> No install needed: a tracker's staff can write, check and try its profile before handing it to anyone. That page runs the script's own modules.</p>
-      </div>
-      <div class="card">
-        <h3>Audit a whole sweep</h3>
-        <p><b>Audit loaded titles</b>, under Settings &amp; tools, lists every name on the page with its faults as copyable text, and remembers what you checked while browsing so one audit can cover many pages.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="source">
-  <div class="wrap">
-    <h2>Is this the same file the source tracker has?</h2>
-    <p class="sub">Open a release on one tracker, then on another. The second page answers.</p>
-    <div class="grid">
-      <div class="card">
-        <h3>What it remembers</h3>
-        <p>When you open a torrent page, the script remembers what makes that upload what it is: the report's Unique ID, the file name, the folder, the file list and the sizes. Kept for two weeks, in your browser.</p>
-      </div>
-      <div class="card">
-        <h3>Your own API key, optional</h3>
-        <p>Press the always-visible <b>Check other trackers</b> button on a torrent page. Its dedicated panel opens directly with the detected <b>resolution and release group</b>, <b>Search</b> and <b>Search all editions</b>. Recommended home-tracker buttons search supported APIs and show results in this same box. Missing setup opens inline with Save key and search. Unsupported API destinations have an explicit Open website fallback. A home association suggests where to look and does not confirm a release match. Matching torrent hashes or MediaInfo IDs appear first; other candidates are folded away. V1 info hashes are compared when both APIs expose them, separately from MediaInfo IDs. Missing hashes remain unknown; different hashes can still contain the same media. The language code zxx and its full no-language label compare equally, while original reports and real audio differences are preserved. Each expanded result has separate <b>Copy MediaInfo</b> and <b>Copy description</b> buttons; a clipboard fallback stays inside the same result. Results within each group are ordered oldest upload first across trackers, with upload dates shown and missing dates last. This ranks returned results, not proof of origin. Under <b>Settings</b>, choose a tracker, read its key guidance, and press <b>Save &amp; test</b>. A small search request confirms connectivity with <b>Ready</b> or explains the problem. <b>Test connection</b> checks an existing key. Testing keeps current results and can be cancelled. Keys and tracker choices are reused, without another dialog. Already use Prowlarr or Jackett? The same Settings has an optional connection: enter its server address and key, use <b>Save &amp; discover</b>, select discovered trackers, then press the normal <b>Search</b>. Capability-aware identifier searches and available torrent-hash matches appear alongside direct results. Torznab metadata does not supply original MediaInfo or BBCode; unavailable evidence stays labelled. After searching, the page’s <b>Source</b> row also shows matching trackers, failed requests and partial results. Click that row to reopen the results without another search. Existing visited-page mismatches remain visible.</p>
-        <p>Open your API-key page on a tracker and press <b>Use this key</b> on the line the script adds — or enter it under <b>Settings &amp; tools → API keys…</b>. The torrent page you are on is then also read from the tracker's own API on its own site — the MediaInfo text, the file list with exact byte counts, the folder, the upload time — and so is every row of the moderation queue when you open it, so a fingerprint is complete even for an upload nobody opened by hand. The key stays in your browser and is never carried in a backup; the page still fills in the rest; the script only ever reads. Without a key nothing changes.</p>
-      </div>
-      <div class="card">
-        <h3>Read all current comparisons</h3>
-        <p>Open the same release on another tracker, then choose <b>Source check</b>. Current torrent details appear first; comparison rows start expanded with filenames, exact ID evidence and return links. The tally puts each upload in one bucket: a match on all accounts, a match by name and size only, or an ID mismatch. On individual torrent pages, the open panel updates as evidence loads and when you return from another tracker tab; no closing and reopening is needed. FileList details also uses the ID remembered from that torrent’s separate Media Info page, labelled as saved evidence. FileList and TorrentLeech refresh when you return to the tab. <b>Last saved check on another page</b> labels the older answer separately.</p>
-      </div>
-      <div class="card">
-        <h3>Where to find it</h3>
-        <p>The torrent page’s <b>Source</b> row gives the answer, and the Review panel’s <b>Source check</b> tab has every current comparison in an expandable tracker row; the row and the banner always say the same thing. The current fingerprint and last saved check from another page are labelled separately. Tick <b>Only show this when I open Source check</b> in the panel or notice to hide automatic notices.</p>
-      </div>
-      <div class="card">
-        <h3>More torrent pages, the same Review panel</h3>
-        <p>TorrentLeech and FileList offer lookups and source evidence. CinemaZ, AvistaZ, PrivateHD and AnimeZ also support MediaInfo checks: Inspect torrent reads the loaded report, even when collapsed. The four-site adapter uses CinemaZ’s supplied markup; missing reports stay unknown. These pages have no invented naming rules.</p>
-      </div>
-    </div>
-    <p class="note" style="margin-top:18px">
-      <strong>It reads the page you went to.</strong> The page-based check follows the pages you open. Optional API search can read other trackers without opening them; otherwise you follow the link,
-      and the answer is read from that page's own text — including a MediaInfo tab you have not opened.
-    </p>
-  </div>
-</section>
-
-<section id="inspector">
-  <div class="wrap">
-    <h2>The MediaInfo already on the page, read properly</h2>
-    <p class="sub">On a torrent page, the verdict pill or <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd>; anywhere else, <b>Check a name</b> in the tools bar. For pasted reports, open <b>More tools → Open Inspector for advanced tools</b>.</p>
-    <div class="scroll">
-      <table>
-        <thead><tr><th>The title claims</th><th>Checked against the report</th></tr></thead>
-        <tbody>
-          <tr><td>1080p, 2160p</td><td>The actual pixel dimensions, and progressive against the scan type</td></tr>
-          <tr><td>x264, x265, AV1</td><td>The video format the report names</td></tr>
-          <tr><td>DD+ 5.1, DTS-HD MA, Atmos</td><td>The default audio track — DD and DD+ kept apart — and the channel layout against the reported count</td></tr>
-          <tr><td>DV, HDR10+</td><td>Whether that HDR format is actually there</td></tr>
-          <tr><td>Dual-Audio, MULTi</td><td>The languages in the file, and subtitles for non-English audio</td></tr>
-          <tr><td>REMUX</td><td>Chapters, and a TrueHD track's compatibility track where the tracker requires one</td></tr>
-          <tr><td>S02, S02E03</td><td>The episodes the file list actually holds: a gap in a season pack, a pack name over one episode, a file from another season</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="grid" style="margin-top:18px">
-      <div class="card">
-        <h3>Compare two releases</h3>
-        <p>Capture this release, open the other and capture that. The file lists and sizes compared to the byte, the two reports field by field, the tags and encode settings each file carries, and both releases in the block layout <b>WinMerge or meld</b> reads. It does not pick a winner: source and provenance are not in a report, and it says so.</p>
-      </div>
-      <div class="card">
-        <h3>Move around — <b>Nav</b></h3>
-        <p>Step by any number of listing pages or torrent IDs, or jump straight to one. <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd>, or the button. Your filters and sorting stay on the address; only the page number changes. It follows a link, the same as typing the address.</p>
-      </div>
-      <div class="card">
-        <h3><b>[ MULTIPLE FILES ]</b> — a pack in one click</h3>
-        <p>A torrent with more than one file says so under its name; click the marker and the whole list goes to your clipboard with every exact size. One file gets <code>[ SINGLE FILE · 2449415267 B ]</code>, the size to the byte.</p>
-      </div>
-      <div class="card">
-        <h3>The comment you type every day, once</h3>
-        <p>A <b>⤵</b> button beside the comment box fills your template in, with <code>{title}</code>, <code>{size}</code>, <code>{bytes}</code>, <code>{files}</code>, <code>{url}</code>, <code>{id}</code>, <code>{date}</code> filled from the page. It writes into the box and stops — you press post.</p>
-      </div>
-      <div class="card">
-        <h3>Check a title before you upload</h3>
-        <p>The naming box checks against the chosen tracker's rules, with reference fields that make the manual checks decidable and a searchable streaming-service list. MagellanTV (MGLN) is included. Add missing services through Settings &amp; tools → Streaming services, then edit or remove your own entries whenever needed.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="group">
-  <div class="wrap">
-    <h2>Release groups, and where they are internal</h2>
-    <p class="sub">Click the group tag at the end of any release name.</p>
-    <div class="grid">
-      <div class="card">
-        <h3>What the menu shows</h3>
-        <p><b>Listed as internal at …</b> — every tracker, not just one — or <b>Listed as scene</b> for a group recorded under the name <em>Scene</em>. Then that group's other releases on the tracker you are on, an srrDB search for a group with no home, the same search on each tracker you have chosen, and a link to report the group to the project.</p>
-      </div>
-      <div class="card">
-        <h3>Where the list comes from</h3>
-        <p>A community directory of internal groups ships with it — <b>854 groups across 152 trackers</b> — dated and cited in the source. A directory can go stale, so every line reads <em>“listed as internal at”</em>, and a group that is not on it is reported as not on it rather than guessed at.</p>
-        <p>What you add sits on top of the directory, so a group added in a later version still reaches you.</p>
-      </div>
-      <div class="card">
-        <h3>Adding one</h3>
-        <p>Click a tag with no home and the menu offers <em>Add … to a tracker</em>. The whole list is under <b>Settings &amp; tools → Internal groups…</b> in the listing bar, as text you can paste a directory page into, one tracker per line: <code>Tracker|group group|https://address</code>.</p>
-        <p>A tracker's line is a link only when the script has its address; private tracker domains move, so it will not invent one.</p>
-      </div>
-      <div class="card" id="report">
-        <h3>Reporting one for everyone</h3>
-        <p>Know a group's home, or that it is scene? <a href="https://github.com/khamere/torrent_inspector/issues/new?template=group-report.yml" rel="noreferrer noopener">Report it to the project</a> — a short form on GitHub: the tag, scene or which tracker, and where it can be checked. A person reads each report, and the ones that check out go into the next update's directory as <em>reported to this project, date (#issue)</em>, which every user's popup then shows under the line. Nothing reaches anyone's script without going through a release. The group popup carries the same link with the tag filled in.</p>
-      </div>
-    </div>
-    <p class="note" style="margin-top:18px">
-      If another script has already turned a group tag into a link, this one <strong>leaves it alone</strong> — nothing for two scripts to fight over.
-    </p>
-  </div>
-</section>
-
-<section id="moderating">
-  <div class="wrap">
-    <h2>Moderating a queue</h2>
-    <p class="sub">On <code>/torrents/pending</code>, <code>/torrents/rejected</code> and <code>/torrents/postponed</code>.</p>
-    <div class="grid">
-      <div class="card">
-        <h3>A decision log</h3>
-        <p>Each row takes <em>Approved / Rejected / Asked the uploader / Left for someone else</em>, with the date, so a sweep does not repeat itself. It records what <b>you</b> decided and changes nothing on the tracker.</p>
-      </div>
-      <div class="card">
-        <h3>A reply, written from the findings</h3>
-        <p>Inside the badge dialog: the corrections numbered in the guide's own words, the release name and its link, a closing line. Manual checks appear as <em>worth confirming</em>, never as faults. Edit before you copy; nothing is sent.</p>
-      </div>
-      <div class="card">
-        <h3>What the page itself says</h3>
-        <p>TMDB title and year against the name. The Type and Resolution filed against what the name claims. The file list — containers, samples, whether a season pack's files agree. Whether MediaInfo or BDInfo was posted. <code>Dual-Audio</code> against the page's own original language.</p>
-      </div>
-    </div>
-    <p class="note" style="margin-top:18px">
-      <strong>Where a rule is in hand it is cited and the finding is an error. Where none is, the finding says so.</strong>
-      Nothing invents a rule to sound authoritative.
-    </p>
-  </div>
-</section>
-
-<section id="install">
-  <div class="wrap">
-    <h2>Getting it</h2>
-    <p>Torrent Inspector is handed out privately to moderators and staff of the trackers it serves, not published for download: it carries a directory of each tracker's internal groups, and some trackers would rather that list were not public. If you moderate on one of the supported trackers, ask <b>DKOKTO</b> there and you will be sent the address; the script then installs in one click and updates itself from that address.</p>
-    <ol class="steps">
-      <li>Install <a href="https://www.tampermonkey.net/" rel="noreferrer noopener">Tampermonkey</a> if you do not have it.</li>
-      <li>Open the address you were given. Tampermonkey opens its own install page; read what it asks for, then press <b>Install</b>.</li>
-      <li>Reload the tracker. The bar appears above the listing and the tools bar at the bottom right.</li>
-    </ol>
-    <h3 style="margin-top:22px">Which trackers it runs on</h3>
-    <p><b>46 UNIT3D trackers</b>, DarkPeers and Zenith among them, plus TorrentLeech, FileList, CinemaZ, AvistaZ, PrivateHD and AnimeZ for torrent-page review.
-      Which sites run UNIT3D comes from <a href="https://hdvinnie.github.io/Private-Trackers-Spreadsheet/" rel="noreferrer noopener">HDVinnie's Private Trackers Spreadsheet</a>;
-      each address comes from the tracker itself or its Jackett or Prowlarr definition, and a site with no definition to read is left out rather than guessed at.
-      Every tracker is a <code>// @match</code> line at the top of the file — delete one to stop it running there, copy one to add your own.
-      The list is generated from the catalogue when the script is built, so the two cannot drift apart.</p>
-    <p class="note">
-      On the seven trackers with a shipped rule set the badges appear straight away. Anywhere else <b>nothing is badged</b> until you choose a rule set from the <b>Rules</b> picker or add that tracker under <b>Tracker rules…</b>; everything that needs no rulebook — the Inspector, <b>Compare releases</b>, the group tags, the cross-check, the source check — works there straight away.
-    </p>
-    <p style="margin-top:16px; color:var(--dim)">
-      Updates come to you: the script carries the address it is published at, so Tampermonkey checks on its own schedule and offers the new version.
-      If you download the file instead, do not double-click it — Windows tries to <em>run</em> a <code>.js</code> file rather than install it.
-      Keep one copy enabled; if the full DKOKTO Scene Edition is running on the same page, this one stands aside.
-    </p>
-  </div>
-</section>
-
-<section id="tutorials">
-  <div class="wrap">
-    <h2>Tutorials</h2>
-    <p class="sub">Things people actually do with it, start to finish. Every one is reading and clipboard only.</p>
-
-    <div class="tut">
-      <h3>1 · Your first five minutes</h3>
-      <p class="goal">From installed to badges on the page.</p>
-      <ol class="steps">
-        <li><b>Install and reload.</b> On DarkPeers, Zenith, LUME, OnlyEncodes+, HomieHelpDesk, MidnightScene and InfinityHD the badges appear straight away. Anywhere else nothing is judged yet — that is deliberate.</li>
-        <li><b>Choose whose rules apply here.</b> The listing bar has a <b>Rules</b> dropdown with all seven sets. Pick the tracker you are on if it is there, otherwise the closest one. The choice is remembered per tracker.</li>
-        <li><b>Tick the trackers you are on.</b> Open <b>Settings &amp; tools → Choose trackers…</b> and tick them once; the list follows you to every tracker the script runs on.</li>
-        <li><b>Hover a badge.</b> One line tells you why. Click it for the corrections and a copyable report.</li>
-      </ol>
-    </div>
-
-    <div class="tut">
-      <h3>2 · Is it the same file the source tracker has?</h3>
-      <p class="goal">A release you are checking against where it was first published.</p>
-      <ol class="steps">
-        <li><b>Open the torrent page</b> you are checking. The script remembers its Unique ID, file name, folder, files and sizes; open <b>Review → Source check</b> (the verdict pill) to see them immediately.</li>
-        <li><b>Open the same release on the source tracker.</b> <b>Find releases</b> searches by <em>Title</em> or <em>Exact title</em>; the link opens only when you click.</li>
-        <li><b>Read Source check.</b> Its expanded rows show the filename, ID and size evidence. A name/size-only match is labelled separately from an ID match. Automatic notices are optional.</li>
-        <li><b>Go back.</b> <em>Back to that torrent</em> returns you; the first page keeps that answer under <b>Last saved check on another page</b>, and a different Unique ID is a red finding there.</li>
-        <li><b>Closed it too soon?</b> Press <b>Source check</b> in the tools bar to open all comparisons in the unified panel. To hide automatic notices, tick the quiet checkbox in that tab.</li>
-      </ol>
-      <p class="note">A page that is a different encode of the same title is not about your upload and stays quiet on purpose; the <b>Source check</b> button says what the page was looked over for.</p>
-    </div>
-
-    <div class="tut">
-      <h3>3 · Sweeping a pending queue</h3>
-      <p class="goal">For moderators, on <code>/torrents/pending</code>.</p>
-      <ol class="steps">
-        <li><b>Read the bar first.</b> It counts the errors, passes and reviews on the page.</li>
-        <li><b>Choose Review loaded titles.</b> The queue saves actual links from the loaded listing. Open a torrent from Review to continue with its own MediaInfo.</li>
-        <li><b>Inspect the six tabs.</b> Findings, MediaInfo, Find releases, Source check, Season check and My notes keep the work together. Copy report text stays in the footer.</li>
-        <li><b>Tick Reviewed by me, then Next unchecked.</b> Notes save as typed. This local progress mark never changes a verdict or approves a torrent; the separate decision log records moderation outcomes.</li>
-        <li><b>Audit the sweep.</b> <b>Audit loaded titles</b> under Settings &amp; tools gives every name with its faults as copyable text, across the pages you have been through.</li>
-      </ol>
-      <p class="note">The amber <b>?</b> rows are not failures — they are the checks a title alone cannot settle.</p>
-    </div>
-
-    <div class="tut">
-      <h3>4 · Settling a trump with <b>Compare releases</b></h3>
-      <p class="goal">Two releases of the same film, and a decision to justify.</p>
-      <ol class="steps">
-        <li><b>Open the first torrent,</b> press <b>Compare releases</b> under the release name, <em>Capture this page as A</em>.</li>
-        <li><b>Open the other</b> — on any tracker the script runs on — and capture it as <b>B</b>.</li>
-        <li><b>Read the three tables:</b> files and sizes with the gap in bytes, the two reports field by field, the tags and encode settings each container carries.</li>
-        <li><b>Copy what you need.</b> <em>Copy the differences</em> for a report; <em>Copy both blocks</em> for WinMerge or meld.</li>
-      </ol>
-      <p class="note"><strong>It will not pick a winner.</strong> Where both torrents carry the same release name and the files differ, it concludes one thing — at least one of them is not the release its name claims — and says plainly that neither page can tell you which.</p>
-    </div>
-
-    <div class="tut">
-      <h3>5 · Teaching it a tracker's rules</h3>
-      <p class="goal">When you are on a tracker it does not know yet.</p>
-      <ol class="steps">
-        <li><b>Try a shipped one first.</b> <b>Tracker rules… → Added trackers</b> lists the seven under <em>Built into the script</em>; <b>Edit a copy</b> gives you one to adjust.</li>
-        <li><b>Or build one from the form.</b> The tracker's name and address, its banned list pasted straight off the page in whatever shape it publishes, and tick-boxes for the common rules.</li>
-        <li><b>Check what you are about to add.</b> <b>Show the JSON</b> prints it first; a pattern that will not compile is refused with the reason.</li>
-        <li><b>Keep it or share it.</b> <em>Copy JSON</em> and <em>Save as file</em> export a profile; the <b>Paste or load</b> tab takes one back.</li>
-      </ol>
-      <p class="note">A profile is <strong>data, not code</strong>: patterns are matched against a title, and nothing in one is ever run.</p>
-    </div>
-
-    <div class="tut">
-      <h3>6 · Checking a title before you upload</h3>
-      <p class="goal">Catch it in the box rather than in a postponed queue.</p>
-      <ol class="steps">
-        <li><b>Open the naming box</b> — <b>Check a name</b> in the tools bar (on a torrent page, <b>Review → Findings → More tools → Open Inspector for advanced tools</b>) — and paste the title you intend to use.</li>
-        <li><b>Pick the category and the tracker.</b> The same title can be clean on one and rejected on another.</li>
-        <li><b>Fill the reference fields</b> — official title, original-language title, service — and several <em>“cannot be decided from the title”</em> reviews become answers.</li>
-        <li><b>Paste your MediaInfo.</b> The report is compared with what the title claims.</li>
-      </ol>
-      <p class="note">Already using <b>Upload Assistant</b>? Nothing here touches the upload form.</p>
-    </div>
-  </div>
-</section>
-
-<section id="questions">
-  <div class="wrap">
-    <h2>Questions people actually ask</h2>
-    <dl class="qa">
-      <dt>Is it 46 trackers or 64?</dt>
-      <dd>Both, counting different things. <b>46</b> is the number of UNIT3D trackers supported. Six additional torrent-page adapters cover TorrentLeech, FileList, CinemaZ, AvistaZ, PrivateHD and AnimeZ. These offer Review without applying naming rules; the four AvistaZ-family sites also expose their loaded MediaInfo. <b>65</b> is the total number of searchable trackers, including sites where the script only builds a link you click. The userscript has 53 <code>@match</code> lines, with DarkPeers taking two.</dd>
-
-      <dt>Sixty-three trackers — how do I find the ones I'm on?</dt>
-      <dd>The chooser puts the trackers you have ticked first, open. The rest are folded by what they carry, and the search box filters by name, language or software — type <em>italian</em> and you get the Italian ones. Each tracker's search address sits behind its own <b>Address</b> button.</dd>
-
-      <dt>Why does my installed version differ from this page?</dt>
-      <dd>This page describes 1.51.17. The script updates itself from the private address it was installed from, on Tampermonkey's own schedule; this page is updated by hand when a release goes out, so the two can be a step apart for a day.</dd>
-
-      <dt>Do I have to set it up again on every tracker?</dt>
-      <dd>No. The trackers you are on, the rules you have added, your internal-groups list, your templates, the source-check setting and which rules apply where all live in Tampermonkey's per-script store, which every site the script runs on can see. The audit, the decision log and private notes stay per tracker on purpose: they are a record of work on that tracker, not a setting. <b>Settings &amp; tools → Backup…</b> saves and restores the lot as one file.</dd>
-
-      <dt>Do the shipped rule sets apply automatically?</dt>
-      <dd>Yes, on their own trackers: each names its tracker's address, so on <code>darkpeers.org</code>, <code>znth.cx</code>, <code>luminarr.me</code>, <code>onlyencodes.cc</code>, <code>homiehelpdesk.net</code>, <code>midnightscene.cc</code> and <code>infinityhd.net</code> it selects itself. If you have picked a different rule set for that site, your pick wins. On the other thirty-eight you choose a rule set, or add that tracker's rules yourself; the group tags are marked everywhere regardless.</dd>
-
-      <dt>Where do those rules come from, and what is missing from them?</dt>
-      <dd>From each tracker's own published guide and banned list, and the script says which parts it does not have. Every worked example in a guide passes that guide's rules — that is a test in the suite, and if a rule ever corrects one of the guide's own examples the suite fails. A tracker's rule numbers are cited only where its page prints them; HomieHelpDesk's page numbers its sections, so its rules are cited by section. MidnightScene allows AV1, confirmed 24 September 2026; its older codec-list omission no longer raises a warning. No banned list is invented for a tracker that has not published one.</dd>
-
-      <dt>Two torrents both say 5.70 GiB. Are they the same file?</dt>
-      <dd>Not necessarily, which is why every comparison here reads the <em>byte count</em> the page carries rather than the rounded figure — the <b>Compare releases</b> tables, the file marker and the source-check banner all show it. Where a page carries none, none is worked back out of the rounded figure and presented as exact.</dd>
-
-      <dt>Two torrents have the same release name — which is the real one?</dt>
-      <dd>The source check answers that where the Unique IDs can be compared: the same ID is the same file, a different one is not. <b>Compare releases</b> shows what they differ in. What neither can tell you is which of two different files is the genuine release — no page carries that.</dd>
-
-      <dt>Why is “Listed as internal at …” not a link for my tracker?</dt>
-      <dd>The script does not have that tracker's address and will not guess one. Tick the tracker in your cross-check list and the link appears, or put the address on its line in <b>Internal groups…</b>.</dd>
-
-      <dt>Will it clash with my other userscripts?</dt>
-      <dd>It tries hard not to. A group tag another script has already linked is left alone, and if the full DKOKTO Scene Edition is present, this one stands down.</dd>
-
-      <dt>Does a green ✓ mean the upload is fine?</dt>
-      <dd>No. It means the title checks passed. The media, the source history and tracker approval are not verified, and the tool says so rather than implying more than it knows.</dd>
-
-      <dt>Can it approve, reject or post for me?</dt>
-      <dd>No. Nothing is approved, rejected, posted, submitted or edited on the tracker. The decision log records what <em>you</em> decided; the reply builder writes a draft you copy; the <b>⤵</b> button fills your own comment box and stops there.</dd>
-
-      <dt>Where is my data kept?</dt>
-      <dd>In your own browser, each store with a fixed cap. Nothing is uploaded, and clearing your browser data clears it.</dd>
-    </dl>
-  </div>
-</section>
-
-<section id="never">
-  <div class="wrap">
-    <h2>Reads, never writes</h2>
-    <p class="sub">The whole point of the thing, and the part worth checking yourself in the source.</p>
-    <div class="grid">
-      <div class="card">
-        <h3>Optional read-only API checks</h3>
-        <p>With your own saved keys, the script can read the current tracker’s API for page evidence. <b>Check other trackers</b> opens a dedicated panel for manual searches of selected UNIT3D trackers, with MediaInfo and file comparisons. Each tracker receives only its own key; cookies are omitted, redirects refused, requests limited and results cached briefly. Recent API summaries appear in the page’s Source row and stay in the current tab. Tampermonkey grants access to named supported tracker domains. No tracker changes are submitted, keys are excluded from backups, and there is no central server or usage telemetry.</p>
-      </div>
-      <div class="card">
-        <h3>No writing to the tracker</h3>
-        <p>Nothing is posted, submitted, approved, rejected or edited on your behalf. One button types, and only into your own comment box; what goes up is what you press post on.</p>
-      </div>
-      <div class="card">
-        <h3>Local, bounded, yours</h3>
-        <p>Every list it keeps lives on your machine with a fixed cap and is never sent anywhere. Your setup is shared across the trackers it runs on; what you did on a particular tracker stays there. Both are storage on this machine, not a request.</p>
-      </div>
-    </div>
-    <p class="note" style="margin-top:18px">
-      Where the tool cannot know something it says so rather than guessing, and where it applies a rule it names the rule. That is the design, not a disclaimer.
-    </p>
-  </div>
-</section>
-
-<footer>
-  <div class="wrap">
-    <p><b>Torrent Inspector 1.51.17</b> — a personal fork, offered as-is. <a href="rules.html">Rules builder</a> · <a href="https://github.com/khamere/torrent_inspector" rel="noreferrer noopener">GitHub</a></p>
-    <p>Found something wrong? A screenshot with the badge's tooltip visible is the fastest fix — several bugs were found exactly that way, and each one now has a test built from the row that showed it up.</p>
-  </div>
-</footer>
-
-</body>
-</html>
+<header class="top"><div class="wrap">
+<nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/rules.html">Rules builder</a></nav>
+<p class="eyebrow">A simpler torrent review workflow</p>
+<h1>Check. Compare. Copy<span class="dot">.</span></h1>
+<p class="lede">Torrent Inspector 2.0 keeps the checks, tracker setup and matching releases
+in one box on the torrent page. Connect once, then press <b>Check this torrent</b>.</p>
+<ul class="pills"><li class="pill"><b>2.0.0</b></li><li class="pill">Easy mode by default</li>
+<li class="pill">46 UNIT3D trackers · PeerGarden support · 65 searchable trackers</li>
+<li class="pill">No posting · No usage telemetry</li></ul>
+<div class="cta"><a class="btn primary" href="#install">How to get it</a><a class="btn" href="#review">See the workflow</a><a class="btn" href="rules.html">Rules builder</a></div>
+<nav aria-label="On this page"><ul class="toc"><li><a href="#start">Start here</a></li><li><a href="#review">Easy mode</a></li><li><a href="#source">Matching evidence</a></li><li><a href="#shots">Advanced tools</a></li><li><a href="#questions">Questions</a></li></ul></nav>
+</div></header>
+<section id="start"><div class="wrap"><h2>Three steps for everyday use</h2>
+<p class="sub">Setup is saved. You do not need to open another settings panel for each torrent.</p>
+<div class="grid">
+<div class="card lead"><h3>1 · Connect once</h3><p>Open <b>Set up trackers</b>, then choose <b>Connect Prowlarr</b> or <b>Add a tracker manually</b>. Your keys and tracker choices are remembered.</p></div>
+<div class="card lead"><h3>2 · Check this torrent</h3><p>Read the findings and matching releases in the same box. Use <b>Retry</b> for a failed tracker or <b>Search more broadly</b> when the search is too narrow.</p></div>
+<div class="card lead"><h3>3 · Copy and finish</h3><p>Use <b>Copy MediaInfo</b> or <b>Copy description</b> beside the release you need. Descriptions keep their original BBCode. Complete the manual checks and press <b>Mark reviewed</b>.</p></div>
+</div></div></section>
+<section id="review"><div class="wrap"><h2>Everything stays in the box</h2>
+<p class="sub">A short scrolling area keeps long result lists from stretching the tracker page.</p>
+<p>Check and review buttons stay accessible. Wider screens show results in columns;
+phones stack them. As scans arrive, your reading position, open details and focus are kept.
+Each result shows its title and any reported filename before you open <b>Details</b>.</p>
+<div class="shots workflow-shots">
+<figure><img src="screenshots/easy-check.png?v=2.0.0" alt="Easy mode with its main check action, matching releases and separate report and BBCode copy buttons." loading="lazy" width="1180" height="1000"><figcaption>The normal 2.0 workflow: check and compare from the torrent page.</figcaption></figure>
+<figure><img src="screenshots/easy-mobile.png?v=2.0.0" alt="Easy mode on a narrow screen, with the same check and review controls and results inside the box." loading="lazy" width="390" height="1044"><figcaption>The same controls on a phone-sized screen.</figcaption></figure>
+<figure><img src="screenshots/16-review-panel.png?v=2.0.0" alt="Advanced review panel with Findings, MediaInfo, Find releases, Source check, Season check and notes tabs." loading="lazy" width="980" height="846"><figcaption>Advanced mode keeps the original review tools available.</figcaption></figure>
+</div>
+<p>For a queue, choose <b>Review loaded titles</b> on a listing, then open a torrent.
+<b>Mark reviewed &amp; next</b> continues when another queued item is available.
+In Advanced review, <b>Next unchecked</b> follows the captured queue. Listing settings
+remain under <b>Settings &amp; tools</b>.</p>
+</div></section>
+<section id="source"><div class="wrap"><h2>See what actually matches</h2>
+<p class="sub">A release name is a starting point. The returned evidence tells you what can be compared.</p>
+<div class="grid">
+<div class="card"><h3>Reports, hashes and bytes</h3><p><b>Details</b> compares MediaInfo IDs, filenames, exact file bytes and available v1 torrent hashes. Missing fields stay unknown. A name/size match does not confirm identical media or HDR.</p></div>
+<div class="card"><h3>Oldest returned matches first</h3><p>Uploads are ordered oldest first within each comparison group, with missing dates last. This ranks returned results; it does not prove where a release originated.</p></div>
+<div class="card"><h3>Scene and home trackers</h3><p>A listed home gives a recommended tracker search. Scene-listed and unlisted groups can use <b>Search srrDB</b> by title and group. It opens only when clicked and does not automatically confirm a scene record.</p></div>
+</div>
+<p class="note" style="margin-top:18px">A matching report for one episode does not prove that an entire season pack is identical.
+Advanced mode keeps remembered-page comparisons in <b>Source check</b> and episode tables in <b>Season check</b>.
+<b>Last saved check on another page</b> is older stored evidence, shown separately.</p>
+</div></section>
+<section id="connect"><div class="wrap"><h2>Use the trackers you already have</h2>
+<div class="grid"><div class="card"><h3>Prowlarr</h3><p>Enter the server address and API key, then press <b>Connect</b> once. Supported direct keys are imported. Configured trackers such as TorrentLeech and FileList use search fallback automatically, without a second checklist.</p></div>
+<div class="card"><h3>Direct tracker keys</h3><p>Choose <b>Add a tracker manually</b>, select the tracker and press <b>Save &amp; test</b>. PeerGarden supports direct searches, MediaInfo, original BBCode and available torrent hashes.</p></div>
+<div class="card"><h3>Your saved setup</h3><p>Updating the normal installation preserves its keys and settings. Blank saved-key fields are intentional. Keys are excluded from backups; no credentials are shipped in the project.</p></div></div>
+<p class="note" style="margin-top:18px">Fallback results may have no MediaInfo or original description to copy. The script does not invent missing reports.</p>
+</div></section>
+<section id="shots"><div class="wrap"><h2>More detail when you need it</h2>
+<p class="sub">Press Advanced mode at the top of the box. Return to Easy mode without losing your results.</p>
+<div class="shots">
+<figure><img src="screenshots/17-detail-mediainfo.png?v=2.0.0" alt="Advanced MediaInfo view showing summary cards, codecs and track tables for the posted report." loading="lazy" width="980" height="846"><figcaption>Read the report with track details and naming evidence.</figcaption></figure>
+<figure><img src="screenshots/18-find-releases.png?v=2.0.0" alt="Advanced Find releases with an editable query, title modes and a grid of selected tracker searches." loading="lazy" width="980" height="1048"><figcaption>Find releases keeps the detailed search controls available.</figcaption></figure>
+<figure><img src="screenshots/19-season-check.png?v=2.0.0" alt="Season check comparing episode lists from remembered uploads and showing missing or different files." loading="lazy" width="980" height="990"><figcaption>Compare season packs episode by episode.</figcaption></figure>
+</div><p>Advanced tools also include private notes, naming templates, captured-release comparisons
+and rules profiles. The <a href="rules.html">Rules builder</a> helps you create a profile for your tracker.</p>
+</div></section>
+<section id="install"><div class="wrap"><h2>Install or update</h2>
+<p>The script is <b>handed out privately</b> to moderators and staff of supported trackers.
+Ask DKOKTO on your tracker for the installation address. This public website carries the
+screenshots and Rules builder; it does not offer the userscript for download.</p>
+<ol class="steps"><li>Install Tampermonkey, then open the supplied installation link.</li>
+<li>Update the existing <b>Torrent Inspector</b> entry and reload your tracker tabs.</li>
+<li>If you tested <b>Torrent Inspector Easy Test</b>, disable it. Keep only normal Torrent Inspector enabled.</li></ol>
+<p>Normal-installation keys and settings are retained. Easy Test used a separate installation;
+if that was the only edition you configured, connect Prowlarr once again in the normal box.</p>
+</div></section>
+<section id="questions"><div class="wrap"><h2>A few useful answers</h2><dl class="qa">
+<dt>Does green mean the upload is approved?</dt><dd>No. It means the supported checks passed. The tool reads posted evidence, not the actual media, and never approves a torrent.</dd>
+<dt>Do I need to open every tracker?</dt><dd>Connected APIs can return evidence into the same box. Unsupported APIs and missing content may still need an explicit website visit.</dd>
+<dt>Where are my keys?</dt><dd>In your installed script's browser storage. They are reused for later checks and excluded from backups. Prowlarr cookies, passwords and RSS passkeys are not copied.</dd>
+<dt>Can I keep using the original interface?</dt><dd>Yes. Use Advanced mode. Findings, MediaInfo, Find releases, Source check, Season check and notes remain available.</dd>
+<dt>What does it send?</dt><dd>The API searches you request, using each destination's own key. It sends no usage telemetry and never submits tracker changes. External lookup links open only when clicked.</dd>
+</dl></div></section>
+<footer><div class="wrap"><p><b>Torrent Inspector 2.0.0</b> · <a href="rules.html">Rules builder</a> · <a href="https://github.com/khamere/torrent_inspector" rel="noopener noreferrer">GitHub</a></p></div></footer>
+</body></html>

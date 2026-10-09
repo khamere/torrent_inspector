@@ -100,7 +100,7 @@
 <header class="top">
   <div class="wrap">
     <nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/rules.html">Rules builder</a></nav>
-    <p class="eyebrow">Torrent Inspector 1.51.17</p>
+    <p class="eyebrow">Torrent Inspector 2.0.0</p>
     <h1>Tracker rules</h1>
     <p class="lede">
       Build a rules profile for a tracker, check one you already have, and run a release name
@@ -225,7 +225,7 @@
 <footer>
   <div class="wrap">
     <p><a href="index.html">← Torrent Inspector</a> · profile format documented in
-      <code>TRACKER-RULES.md</code> · built from the modules of 1.51.17</p>
+      <code>TRACKER-RULES.md</code> · built from the modules of 2.0.0</p>
   </div>
 </footer>
 
@@ -359,11 +359,11 @@ const DKOKTO_INSPECTOR = (() => {
                     break;
                 }
             // Channels, as the title writes them against the count the report gives.
-            const layout=name.match(/(?:^|[ ._-])([1-9])\.([01])(?=$|[ ._-])/);
+            const layout=name.match(/(?:^|[ ._-])(?<!\d\.)([1-9][0-9]?\.[0-9](?:\.[0-9]{1,2})?)(?!\.\d)(?=$|[ ._-])/);
             const count=Number(String(main.channels).match(/\d+/)?.[0]||0);
             if(layout&&count) {
-                const claimed=Number(layout[1])+Number(layout[2]);
-                if(claimed!==count)result.push('Naming conflict: '+layout[1]+'.'+layout[2]+' in the name, '+count+' channel'+(count===1?'':'s')+' on the default audio track');
+                const claimed=layout[1].split('.').map(Number).reduce((sum,n)=>sum+n,0);
+                if(claimed!==count)result.push('Naming conflict: '+layout[1]+' in the name, '+count+' channel'+(count===1?'':'s')+' on the default audio track');
             }
         }
         // Two audio languages are what Dual-Audio and MULTi mean.
@@ -2073,8 +2073,8 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
             add('error','resolution-value','“'+resolution[1]+'” is not a resolution the guide lists: '+(listed?listed.join(', ')+'.':RESOLUTION_LIST[base]));
         const video=has('MPEG-2|VC-1|H[ .]?264|H[ .]?265|x264|x265|AVC|HEVC|VP9|AV1|XviD');
         const audio=has('DTS[ ._-]HD[ ._]MA|DTS[ ._-]HD[ ._]HRA|DTS[ ._]Headphone:X|DTS:X|DTS-ES|DD[+][ ._]EX|DD[ ._]EX|DD[+]|DDP|DD|TrueHD|DTS|LPCM|FLAC|ALAC|AAC|Opus|MP3|MP2|Vorbis');
-        const compactAudio=tail.match(/(?:^|[ ._])(DDP|DD\+|DD|AAC|TrueHD|FLAC)(\d{1,2}\.\d)(?=$|[ ._-])/i);
-        const channels=has('[0-9]{1,2}[.][0-9]'),audioIndex=audio?pos(audio):compactAudio?compactAudio.index:-1;
+        const compactAudio=tail.match(/(?:^|[ ._])(DDP|DD\+|DD|AAC|TrueHD|FLAC)(\d{1,2}\.\d(?:\.\d{1,2})?)(?!\.\d)(?=$|[ ._-])/i);
+        const channels=has('(?<![0-9][.])[0-9]{1,2}[.][0-9](?:[.][0-9]{1,2})?(?![.][0-9])'),audioIndex=audio?pos(audio):compactAudio?compactAudio.index:-1;
         // A layout written with a space (DTS 3 1) is present but malformed: report the
         // separator, not a missing layout.
         const spacedChannels=!channels&&audio?tail.slice(pos(audio)+audio[1].length).match(/^[ ]([0-9]{1,2})[ ]([0-9])(?=$|[ ._-])/):null;
