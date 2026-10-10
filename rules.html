@@ -100,7 +100,7 @@
 <header class="top">
   <div class="wrap">
     <nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/rules.html">Rules builder</a></nav>
-    <p class="eyebrow">Torrent Inspector 2.0.4</p>
+    <p class="eyebrow">Torrent Inspector 2.0.5</p>
     <h1>Tracker rules</h1>
     <p class="lede">
       Build a rules profile for a tracker, check one you already have, and run a release name
@@ -225,7 +225,7 @@
 <footer>
   <div class="wrap">
     <p><a href="index.html">← Torrent Inspector</a> · profile format documented in
-      <code>TRACKER-RULES.md</code> · built from the modules of 2.0.4</p>
+      <code>TRACKER-RULES.md</code> · built from the modules of 2.0.5</p>
   </div>
 </footer>
 
@@ -1729,6 +1729,16 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
     const DECORATION=/^[\s\p{Cf}\p{Co}\p{So}\p{Sk}]+|[\s\p{Cf}\p{Co}\p{So}\p{Sk}]+$/gu;
     // Stripped before normalising as well as after: NFKC turns a trailing ™ into "TM".
     const norm=s=>String(s||'').replace(DECORATION,'').normalize('NFKC').replace(DECORATION,'').trim();
+    function titleHasDotSeparators(value,officialTitle) {
+        let rest=value;
+        // Exact reference punctuation is title evidence; do not reinterpret it as separators.
+        if(officialTitle&&rest.slice(0,officialTitle.length).localeCompare(officialTitle,undefined,{sensitivity:'accent'})===0&&
+            (!rest.slice(officialTitle.length)||/^[\s/]/.test(rest.slice(officialTitle.length))))rest=rest.slice(officialTitle.length);
+        // Standalone initials such as S.H.I.E.L.D. or U.S. are not dotted words.
+        // Dot boundaries remain significant so a filename cannot hide inside an acronym.
+        rest=rest.replace(/(^|[^\p{L}\p{N}.])(?:\p{L}\.)+\p{L}\.?(?=$|[^\p{L}\p{N}.])/gu,'$1');
+        return /[\p{L}]\.[\p{L}]/u.test(rest);
+    }
     const field=(t,...keys)=>keys.map(k=>t?.fields?.[k]).find(Boolean)||'';
     // DarkPeers lists its resolutions; Zenith accepts other progressive labels (540p was
     // seen on a real listing there), so only a malformed interlaced label is wrong.
@@ -2037,7 +2047,7 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         const year=years.at(-1)?.[1]||'';
         const start=ep?pos(ep):date?date.index:year?years.at(-1).index:firstTech;
         const tail=s.slice(start),has=p=>hit(tail,p),knownTitle=norm(options.officialTitle);
-        if(/[\p{L}]\.[\p{L}]/u.test(before))add('review','display-spacing','This looks like a filename with dot separators. Tracker display titles use readable words and preserve the official punctuation; do not blindly replace every period.');
+        if(titleHasDotSeparators(before,knownTitle))add('review','display-spacing','Some title words are joined with dots. Use spaces between words, and keep punctuation that belongs to the title.');
         if(profile==='movie'&&!year)add('error','movie-year','Include the movie release year from TMDB after the title.');
         if(profile==='tv'){
             if(!ep&&!date)add('error','tv-number','Include TV numbering: S01, S01E02, S01E02E03, S01E02-04, or a daily-show date YYYY-MM-DD / YYYY-MM.');
