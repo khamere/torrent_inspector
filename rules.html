@@ -100,7 +100,7 @@
 <header class="top">
   <div class="wrap">
     <nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/rules.html">Rules builder</a></nav>
-    <p class="eyebrow">Torrent Inspector 2.0.2</p>
+    <p class="eyebrow">Torrent Inspector 2.0.4</p>
     <h1>Tracker rules</h1>
     <p class="lede">
       Build a rules profile for a tracker, check one you already have, and run a release name
@@ -225,7 +225,7 @@
 <footer>
   <div class="wrap">
     <p><a href="index.html">← Torrent Inspector</a> · profile format documented in
-      <code>TRACKER-RULES.md</code> · built from the modules of 2.0.2</p>
+      <code>TRACKER-RULES.md</code> · built from the modules of 2.0.4</p>
   </div>
 </footer>
 
@@ -252,13 +252,13 @@ const DKOKTO_STORE = (() => {
     const local=()=>{try{return typeof localStorage!=='undefined'?localStorage:window.localStorage;}catch{return null;}};
     const carried=new Set();
     // One store per key, so a module keeps holding the same thing it always held.
-    function open() {
+    function open(options={}) {
         return {
             getItem(name) {
                 const both=shared();
                 if(!both){try{return local()?.getItem(name)??null;}catch{return null;}}
                 const value=both.getItem(name);
-                if(value!=null)return value;
+                if(value!=null){if(options.private)try{local()?.removeItem(name);}catch{}return value;}
                 // Nothing shared yet: adopt what this site already has, once, so a setup
                 // made before this existed becomes the shared one rather than being
                 // replaced by an empty list.
@@ -267,11 +267,18 @@ const DKOKTO_STORE = (() => {
                 let here=null;
                 try{here=local()?.getItem(name)??null;}catch{}
                 if(here==null)return null;
-                try{both.setItem(name,here);}catch{}
+                try{both.setItem(name,here);if(options.private)local()?.removeItem(name);}catch{}
                 return here;
             },
             setItem(name,value) {
                 const both=shared();
+                // Server credentials belong to the script manager, never the tracker page.
+                if(options.private){
+                    if(!both)throw Error('Use Tampermonkey to save the Prowlarr connection privately.');
+                    both.setItem(name,value);
+                    try{local()?.removeItem(name);}catch{}
+                    return;
+                }
                 if(both)try{both.setItem(name,value);}catch{}
                 try{local()?.setItem(name,String(value));}catch{}
             },
