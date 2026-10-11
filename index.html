@@ -125,7 +125,7 @@
 <h1>Check. Compare. Copy<span class="dot">.</span></h1>
 <p class="lede">Torrent Inspector 2.0 keeps the checks, tracker setup and matching releases
 in one box on the torrent page. Connect once, then press <b>Check this torrent</b>.</p>
-<ul class="pills"><li class="pill"><b>2.0.5</b></li><li class="pill">Easy mode by default</li>
+<ul class="pills"><li class="pill"><b>2.0.6</b></li><li class="pill">Easy mode by default</li>
 <li class="pill">46 UNIT3D trackers · PeerGarden support · 65 searchable trackers</li>
 <li class="pill">No posting · No usage telemetry</li></ul>
 <div class="cta"><a class="btn primary" href="#install">How to get it</a><a class="btn" href="#review">See the workflow</a><a class="btn" href="rules.html">Rules builder</a></div>
@@ -143,10 +143,13 @@ in one box on the torrent page. Connect once, then press <b>Check this torrent</
 <p>Check and review buttons stay accessible. Wider screens show results in columns;
 phones stack them. As scans arrive, your reading position, open details and focus are kept.
 Each result shows its title and any reported filename before you open <b>Details</b>.</p>
+<p><b>Suggested title</b> explains supported formatting fixes and gives you a copy
+button. <b>Review reply</b> lets you choose findings, read a BBCode preview and copy
+one message. Nothing is renamed or posted automatically.</p>
 <div class="shots workflow-shots">
-<figure><img src="screenshots/easy-check.png?v=2.0.5" alt="Easy mode with its main check action, matching releases and separate report and BBCode copy buttons." loading="lazy" width="1180" height="1000"><figcaption>The normal 2.0 workflow: check and compare from the torrent page.</figcaption></figure>
-<figure><img src="screenshots/easy-mobile.png?v=2.0.5" alt="Easy mode on a narrow screen, with the same check and review controls and results inside the box." loading="lazy" width="390" height="1044"><figcaption>The same controls on a phone-sized screen.</figcaption></figure>
-<figure><img src="screenshots/16-review-panel.png?v=2.0.5" alt="Advanced review panel with Findings, MediaInfo, Find releases, Source check, Season check and notes tabs." loading="lazy" width="980" height="846"><figcaption>Advanced mode keeps the original review tools available.</figcaption></figure>
+<figure><img src="screenshots/easy-check.png?v=2.0.6" alt="Easy mode with its main check action, matching releases and separate report and BBCode copy buttons." loading="lazy" width="1180" height="1000"><figcaption>The normal 2.0 workflow: check and compare from the torrent page.</figcaption></figure>
+<figure><img src="screenshots/easy-mobile.png?v=2.0.6" alt="Easy mode on a narrow screen, with the same check and review controls and results inside the box." loading="lazy" width="390" height="1044"><figcaption>The same controls on a phone-sized screen.</figcaption></figure>
+<figure><img src="screenshots/16-review-panel.png?v=2.0.6" alt="Advanced review panel with Findings, MediaInfo, Find releases, Source check, Season check and notes tabs." loading="lazy" width="980" height="846"><figcaption>Advanced mode keeps the original review tools available.</figcaption></figure>
 </div>
 <p>For a queue, choose <b>Review loaded titles</b> on a listing, then open a torrent.
 <b>Mark reviewed &amp; next</b> continues when another queued item is available.
@@ -161,7 +164,9 @@ remain under <b>Settings &amp; tools</b>.</p>
 <div class="card"><h3>Scene and home trackers</h3><p>A listed home gives a recommended tracker search. Scene-listed and unlisted groups can use <b>Search srrDB</b> by title and group. It opens only when clicked and does not automatically confirm a scene record.</p></div>
 </div>
 <p class="note" style="margin-top:18px">A matching report for one episode does not prove that an entire season pack is identical.
-Advanced mode keeps remembered-page comparisons in <b>Source check</b> and episode tables in <b>Season check</b>.
+In Easy mode, expand <b>Season-pack checks</b> to compare episode numbers and file
+sizes from returned or remembered file lists. Missing evidence and incomplete
+lists remain clear. Advanced mode keeps its original <b>Season check</b> tab.
 <b>Last saved check on another page</b> is older stored evidence, shown separately.</p>
 </div></section>
 <section id="connect"><div class="wrap"><h2>Use the trackers you already have</h2>
@@ -173,9 +178,9 @@ Advanced mode keeps remembered-page comparisons in <b>Source check</b> and episo
 <section id="shots"><div class="wrap"><h2>More detail when you need it</h2>
 <p class="sub">Press Advanced mode at the top of the box. Return to Easy mode without losing your results.</p>
 <div class="shots">
-<figure><img src="screenshots/17-detail-mediainfo.png?v=2.0.5" alt="Advanced MediaInfo view showing summary cards, codecs and track tables for the posted report." loading="lazy" width="980" height="846"><figcaption>Read the report with track details and naming evidence.</figcaption></figure>
-<figure><img src="screenshots/18-find-releases.png?v=2.0.5" alt="Advanced Find releases with an editable query, title modes and a grid of selected tracker searches." loading="lazy" width="980" height="1048"><figcaption>Find releases keeps the detailed search controls available.</figcaption></figure>
-<figure><img src="screenshots/19-season-check.png?v=2.0.5" alt="Season check comparing episode lists from remembered uploads and showing missing or different files." loading="lazy" width="980" height="990"><figcaption>Compare season packs episode by episode.</figcaption></figure>
+<figure><img src="screenshots/17-detail-mediainfo.png?v=2.0.6" alt="Advanced MediaInfo view showing summary cards, codecs and track tables for the posted report." loading="lazy" width="980" height="846"><figcaption>Read the report with track details and naming evidence.</figcaption></figure>
+<figure><img src="screenshots/18-find-releases.png?v=2.0.6" alt="Advanced Find releases with an editable query, title modes and a grid of selected tracker searches." loading="lazy" width="980" height="1048"><figcaption>Find releases keeps the detailed search controls available.</figcaption></figure>
+<figure><img src="screenshots/19-season-check.png?v=2.0.6" alt="Season check comparing episode lists from remembered uploads and showing missing or different files." loading="lazy" width="980" height="990"><figcaption>Compare season packs episode by episode.</figcaption></figure>
 </div><p>Advanced tools also include private notes, naming templates, captured-release comparisons
 and rules profiles. The <a href="rules.html">Rules builder</a> helps you create a profile for your tracker.</p>
 </div></section>
@@ -195,5 +200,5 @@ screenshots and Rules builder; it does not offer the userscript for download.</p
 <dt>Can I keep using the original interface?</dt><dd>Yes. Use Advanced mode. Findings, MediaInfo, Find releases, Source check, Season check and notes remain available.</dd>
 <dt>What does it send?</dt><dd>The API searches you request, using each destination's own key. It sends no usage telemetry and never submits tracker changes. External lookup links open only when clicked.</dd>
 </dl></div></section>
-<footer><div class="wrap"><p><b>Torrent Inspector 2.0.5</b> · <a href="rules.html">Rules builder</a> · <a href="https://github.com/khamere/torrent_inspector" rel="noopener noreferrer">GitHub</a></p></div></footer>
+<footer><div class="wrap"><p><b>Torrent Inspector 2.0.6</b> · <a href="rules.html">Rules builder</a> · <a href="https://github.com/khamere/torrent_inspector" rel="noopener noreferrer">GitHub</a></p></div></footer>
 </body></html>

@@ -8,6 +8,11 @@ titles, reported filenames, upload dates and separate **Copy MediaInfo** and
 **Copy description** buttons. Descriptions keep the original BBCode. PeerGarden direct
 API support, automatic Prowlarr fallback and srrDB click lookups are included.
 
+Supported formatting fixes have a **Suggested title** copy button. **Review reply**
+combines selected findings into a BBCode preview. **Season-pack checks** compares
+episode numbers and file sizes from returned or remembered lists, while keeping
+missing evidence clear. These all stay inside Easy mode's compact box.
+
 **[torrent.dkokto.dev](https://torrent.dkokto.dev/)** shows the current workflow and
 screenshots, with a [Rules builder](https://torrent.dkokto.dev/rules.html) for custom profiles.
 
