@@ -100,7 +100,7 @@
 <header class="top">
   <div class="wrap">
     <nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/rules.html">Rules builder</a></nav>
-    <p class="eyebrow">Torrent Inspector 2.0.6</p>
+    <p class="eyebrow">Torrent Inspector 2.0.9</p>
     <h1>Tracker rules</h1>
     <p class="lede">
       Build a rules profile for a tracker, check one you already have, and run a release name
@@ -225,7 +225,7 @@
 <footer>
   <div class="wrap">
     <p><a href="index.html">← Torrent Inspector</a> · profile format documented in
-      <code>TRACKER-RULES.md</code> · built from the modules of 2.0.6</p>
+      <code>TRACKER-RULES.md</code> · built from the modules of 2.0.9</p>
   </div>
 </footer>
 
@@ -235,8 +235,8 @@
 // localStorage is per domain; Tampermonkey's per-script store is shared by every site the
 // script runs on, and is used where it exists. Otherwise (another manager, the offline
 // fixtures) this falls back to localStorage, one tracker at a time. Nothing is sent anywhere.
-// Anything already in localStorage is carried up the first time a key is read, and writes
-// go to both, so an older copy of the script still sees what a newer one saved.
+// Ordinary settings are mirrored for older copies. Credentials are read only from
+// the script manager: a page-written value cannot authorize a saved connection.
 const DKOKTO_STORE = (() => {
     // Read each time rather than once, so the checks can exercise both paths.
     function shared() {
@@ -253,41 +253,74 @@ const DKOKTO_STORE = (() => {
     const carried=new Set();
     // One store per key, so a module keeps holding the same thing it always held.
     function open(options={}) {
-        return {
+        const accepts=value=>{try{return !options.validate || options.validate(value)===true;}catch{return false;}};
+        const removeLegacy=name=>{try{local()?.removeItem(name);}catch{}};
+        const opened={
             getItem(name) {
                 const both=shared();
-                if(!both){try{return local()?.getItem(name)??null;}catch{return null;}}
-                const value=both.getItem(name);
-                if(value!=null){if(options.private)try{local()?.removeItem(name);}catch{}return value;}
+                if(options.strictRead&&!options.private){
+                    // Restore's keep-existing option must distinguish a known gap
+                    // from an unreadable store. Presence checks never migrate data.
+                    if(both){const saved=both.getItem(name);if(saved!=null)return saved;}
+                    const page=local();
+                    if(!page)throw Error('Saved settings could not be read.');
+                    return page.getItem(name)??null;
+                }
+                if(!both){if(options.private)return null;try{return local()?.getItem(name)??null;}catch{return null;}}
+                let value;
+                try{value=both.getItem(name);}catch{if(options.private)return null;try{return local()?.getItem(name)??null;}catch{return null;}}
+                if(value!=null&&accepts(value)){if(options.private)removeLegacy(name);return value;}
+                if(options.private)return null;
                 // Nothing shared yet: adopt what this site already has, once, so a setup
                 // made before this existed becomes the shared one rather than being
                 // replaced by an empty list.
                 if(carried.has(name))return null;
-                carried.add(name);
                 let here=null;
                 try{here=local()?.getItem(name)??null;}catch{}
-                if(here==null)return null;
-                try{both.setItem(name,here);if(options.private)local()?.removeItem(name);}catch{}
+                if(here==null||!accepts(here))return null;
+                try{
+                    both.setItem(name,here);
+                    if(both.getItem(name)!==String(here))throw Error('Storage did not retain the value.');
+                    carried.add(name);
+                }catch{}
                 return here;
             },
             setItem(name,value) {
                 const both=shared();
-                // Server credentials belong to the script manager, never the tracker page.
+                const text=String(value);
+                // Credentials belong to the script manager, never the tracker page.
                 if(options.private){
-                    if(!both)throw Error('Use Tampermonkey to save the Prowlarr connection privately.');
-                    both.setItem(name,value);
-                    try{local()?.removeItem(name);}catch{}
+                    if(!both)throw Error('Use Tampermonkey to save credentials privately.');
+                    if(!accepts(text))throw Error('The credential record could not be saved.');
+                    // Refuse to overwrite an unreadable manager record, and detect a
+                    // manager that silently ignores writes before removing any legacy copy.
+                    both.getItem(name);
+                    both.setItem(name,text);
+                    if(both.getItem(name)!==text)throw Error('The script manager could not save credentials.');
+                    removeLegacy(name);
                     return;
                 }
-                if(both)try{both.setItem(name,value);}catch{}
-                try{local()?.setItem(name,String(value));}catch{}
+                let persisted=false;
+                if(both)try{both.setItem(name,text);persisted=both.getItem(name)===text;}catch{}
+                try{const page=local();page?.setItem(name,text);persisted=page?.getItem(name)===text||persisted;}catch{}
+                if(!persisted||opened.getItem(name)!==text)throw Error('These settings could not be saved in this browser.');
             },
             removeItem(name) {
                 const both=shared();
-                if(both)try{both.removeItem(name);}catch{}
-                try{local()?.removeItem(name);}catch{}
+                if(options.private&&!both)throw Error('Use Tampermonkey to remove credentials privately.');
+                // Do not adopt a surviving legacy page copy while checking a removal.
+                carried.add(name);
+                let failure=false,page;
+                if(both)try{both.removeItem(name);}catch{failure=true;}
+                try{page=local();page?.removeItem(name);}catch{failure=true;}
+                const absent=value=>value==null||value==='';
+                try{if(both&&!absent(both.getItem(name)))failure=true;}catch{failure=true;}
+                try{if(page&&!absent(page.getItem(name)))failure=true;}catch{failure=true;}
+                if(failure||!both&&!page)throw Error('These saved settings could not be removed.');
+                carried.delete(name);
             }
         };
+        return opened;
     }
     return {open,isShared:()=>!!shared(),forget:()=>carried.clear()};
 })();
@@ -313,10 +346,17 @@ const DKOKTO_INSPECTOR = (() => {
                 for(const t of item.track){const type=str(t['@type']).toLowerCase(),fields={};for(const [k,v] of Object.entries(t))if(typeof v==='string'||typeof v==='number')fields[key(k)]=str(v);add(type,fields);}
             }
         }else{
-            for(const line of raw.replace(/\r/g,'').split('\n')){
-                const heading=line.trim().match(/^(General|Video|Audio|Text|Subtitle|Menu|Other|Image)(?:\s*#\d+)?\s*$/i);
+            for(const rawLine of raw.replace(/\r/g,'').split('\n')){
+                const line=rawLine.trim();
+                if(!line)continue;
+                const heading=line.match(/^(General|Video|Audio|Text|Subtitle|Menu|Other|Image)(?:\s*#\d+)?\s*$/i);
                 if(heading){const type=heading[1].toLowerCase();track=null;add(type==='subtitle'?'text':type,{});continue;}
-                const m=line.match(/^\s*([^:]{1,100}?)\s*:\s*(.*)$/);if(track&&m){const k=key(m[1]);if(!track.fields[k])track.fields[k]=m[2].trim();}
+                // Find the first separator directly. Large blank or colon-free
+                // lines must not make the field matcher repeatedly backtrack.
+                const colon=line.indexOf(':');
+                if(!track||colon<1||colon>100)continue;
+                const k=key(line.slice(0,colon));
+                if(k&&!track.fields[k])track.fields[k]=line.slice(colon+1).trim();
             }
         }
         if(file.general.length||file.video.length||file.audio.length||file.text.length)files.push(file);
@@ -402,8 +442,22 @@ const DKOKTO_INSPECTOR = (() => {
     // in pre.__mediainfo-raw even while its Raw view is closed.
     function readPage(doc){const all=[...doc.querySelectorAll('.torrent-mediainfo-dump code,.torrent-mediainfo-dump pre,[x-ref="mediainfo"],#collapseMediaInfo pre,pre.__mediainfo-raw')].filter(n=>!n.closest('.dk-hub'));
         return all.filter(n=>!all.some(o=>o!==n&&n.contains(o))).map(n=>n.textContent.trim()).filter((t,i,a)=>t&&a.indexOf(t)===i);}
+    // MidnightScene's supplied full-disc page (11 Oct 2026) carries the report in
+    // code[x-ref="bdinfo"] inside a BDInfo panel. Read reports, never description
+    // text or our own comparison copies, and keep them out of MediaInfo parsing.
+    function readDiscPage(doc){
+        const own='.dk-hub,.dk-detail-links,.dk-easy';
+        const carriers=[...doc.querySelectorAll('[x-ref="bdinfo"]')];
+        for(const panel of doc.querySelectorAll('section.panelV2,div.panelV2,section')){
+            if(panel.closest(own))continue;
+            const heading=panel.querySelector(':scope > header .panel__heading,:scope > .panel__heading,:scope > h2');
+            if(heading&&/^BDInfo$/i.test(heading.textContent.trim()))carriers.push(...panel.querySelectorAll('pre,code'));
+        }
+        const all=[...new Set(carriers)].filter(n=>!n.closest(own)).slice(0,20);
+        return all.filter(n=>!all.some(o=>o!==n&&n.contains(o))).map(n=>n.textContent.trim()).filter((t,i,a)=>t&&a.indexOf(t)===i);
+    }
     function searchLink(name){const words=str(name).replace(/\s*[([](?:18|19|20)\d{2}[)\]]/g,'').replace(/[’']/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim().split(/\s+/).filter(Boolean);return words.length?'https://www.srrdb.com/browse/'+words.map(encodeURIComponent).join('/')+'/1':'https://www.srrdb.com/';}
-    return {parse,rows,warnings,summary,readPage,glossary,searchLink};
+    return {parse,rows,warnings,summary,readPage,readDiscPage,glossary,searchLink};
 })();
 
 
@@ -1842,8 +1896,8 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
             for(const match of text.matchAll(EPISODE)) {
                 const season=Number(match[1]),first=Number(match[2]);
                 const numbers=[first];
-                for(const part of match[3].match(/E\d{1,4}|-E?\d{1,4}/g)||[]) {
-                    const n=Number(part.replace(/^-?E?/,''));
+                for(const part of match[3].match(/E\d{1,4}|-E?\d{1,4}/gi)||[]) {
+                    const n=Number(part.replace(/^-?E?/i,''));
                     if(part.startsWith('-')){if(n>first&&n-first<=100)for(let e=first+1;e<=n;e++)numbers.push(e);}
                     else numbers.push(n);
                 }
