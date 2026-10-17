@@ -1,4 +1,4 @@
-# Torrent Inspector 2.1.0
+# Torrent Inspector 2.1.1
 
 Read the visible page checks, then press **Check this torrent** to search your
 connected trackers. Findings, setup, results and review tools share one interface.
@@ -9,6 +9,9 @@ Results show report/BBCode copy buttons directly; **Details** opens comparison
 and report evidence. **Retry** repeats a failed tracker. **Search options** holds
 filters, **Search more broadly** and **Search all trackers**. Website
 search tabs and comparisons stay under **More** on the page.
+Equivalent **Candidates to review** can share a card without becoming matches.
+Each tracker keeps its own report, original BBCode, date and link; similar names
+alone or conflicting identity evidence do not group results.
 
 **Page checks passed** and **Review needed** describe loaded evidence and required
 confirmations; they never approve an upload. The **Personal Release** check row
@@ -20,9 +23,9 @@ combines selected findings into a BBCode preview. **Season-pack checks** runs wh
 the local file list appears and flags **Missing episode numbers**, before
 the main check. Your optional expected count/list takes precedence for partial
 packs and can check leading or trailing absences. No official length is guessed.
-**Check a local .torrent file** reads chosen metadata locally. **Check screenshot duplicates
-(optional)** opens the loaded-image duplicate check. These tools stay collapsed
-below the visible checks until needed.
+**Check a local .torrent file** reads chosen metadata locally. The **Screenshots**
+row checks image count and loaded sizes. Expand it for each image's details.
+Optional season and local-file tools stay collapsed until needed.
 
 On requests, **Search trackers** opens the compact results box and starts the saved
 API search in one click. Request lists have matching **Search trackers** and **Web
@@ -46,7 +49,7 @@ cue sheets and a 100% score are recommendations. Original Scene/P2P names are ke
 Page checks use a full-width table, with expandable evidence and manual checks.
 The header **Set up trackers** button opens saved connections in the same panel.
 Search results stay below the checks; **Other editions** starts collapsed. Local
-.torrent, screenshot, suggested-title and review-reply tools open when needed.
+.torrent, suggested-title and review-reply tools open when needed.
 
 Full Blu-ray BDInfo can show **Matching disc report** when its disc label, exact
 disc bytes, playlist, duration and tracks agree. Incomplete reports stay for review.
@@ -66,12 +69,10 @@ credentials need to be entered once in setup. Keys stay out of backups.
 Checks compare posted evidence, not the actual media, and never approve or submit
 changes to a tracker. No usage telemetry is added.
 
-Optional inputs and tools stay collapsed. A local .torrent file is never announced, uploaded
-or saved in settings. If an image host blocks pixel access, **Check loaded images
-for duplicates** can reread image files from their displayed URLs anonymously through
-Tampermonkey. It does not follow original-image or gallery links. Screenshot
-originals open only when clicked. Missing evidence
-stays unknown, and no suggested name or review reply is posted automatically.
+Optional inputs and tools stay collapsed. A local .torrent file is never announced,
+uploaded or saved in settings. Screenshot checks read loaded counts and dimensions;
+original-image links open only when clicked. Missing evidence stays unknown, and
+no suggested name or review reply is posted automatically.
 
 ## Reporting a group
 
