@@ -100,7 +100,7 @@
 <header class="top">
   <div class="wrap">
     <nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/rules.html">Rules builder</a></nav>
-    <p class="eyebrow">Torrent Inspector 2.0.9</p>
+    <p class="eyebrow">Torrent Inspector 2.1.0</p>
     <h1>Tracker rules</h1>
     <p class="lede">
       Build a rules profile for a tracker, check one you already have, and run a release name
@@ -225,7 +225,7 @@
 <footer>
   <div class="wrap">
     <p><a href="index.html">← Torrent Inspector</a> · profile format documented in
-      <code>TRACKER-RULES.md</code> · built from the modules of 2.0.9</p>
+      <code>TRACKER-RULES.md</code> · built from the modules of 2.1.0</p>
   </div>
 </footer>
 
@@ -425,12 +425,12 @@ const DKOKTO_INSPECTOR = (() => {
         return result;
     }
     const glossary={HDR:'High dynamic range. Look for the HDR format and transfer fields; 10-bit alone is not HDR.',DV:'Dolby Vision is an HDR format with additional metadata. Check the label against the video’s HDR fields.',Atmos:'Dolby Atmos adds object-based audio metadata. A 5.1 or 7.1 channel count alone is not Atmos.',REMUX:'A remux repackages the source streams without re-encoding.','WEB-DL':'A file downloaded from a streaming service, not re-encoded.'};
-    function summary(name,file){const r=rows(file),lines=[name||'Torrent inspection',`Container: ${r.container} | Duration: ${r.duration} | Size: ${r.size} | Overall bitrate: ${r.bitrate}`];
+    function summary(name,file,{nameChecks=true}={}){const r=rows(file),lines=[name||'Torrent inspection',`Container: ${r.container} | Duration: ${r.duration} | Size: ${r.size} | Overall bitrate: ${r.bitrate}`];
         for(const v of r.video)lines.push(`Video ${v.track}: ${v.codec} | ${v.width||'?'}×${v.height||'?'} | ${v.depth} | ${v.frameRate} | ${v.bitrate} | ${v.scan} | ${v.hdr}`);
         for(const a of r.audio)lines.push(`Audio ${a.track}: ${a.language} | ${a.codec}${a.features?' / '+a.features:''} | Channels: ${a.channels} | Default: ${a.default}${a.title?' | '+a.title:''}`);
         for(const s of r.text)lines.push(`Subtitle ${s.track}: ${s.language} | ${s.codec} | Default: ${s.default} | Forced: ${s.forced} | HI: ${s.hearingImpaired}${s.title?' | '+s.title:''}`);
         if(!r.audio.length)lines.push('Audio: no tracks reported');if(!r.text.length)lines.push('Subtitles: no tracks reported');
-        const checks=warnings(name,file);lines.push(...checks.map(w=>'Review: '+w));return lines.join('\n');
+        const checks=nameChecks?warnings(name,file):[];lines.push(...checks.map(w=>'Review: '+w));return lines.join('\n');
     }
     // The dump where UNIT3D puts it, and '[x-ref="mediainfo"]' on whatever element carries
     // it, which is how ZenGuard 1.9.1 reads Zenith (notes/zenguard-1.9.1-excerpts.js,
@@ -1235,6 +1235,9 @@ const DKOKTO_GROUPS = ((profiles) => {
             if(/\s$/.test(value.slice(0,at)))continue;
             const tail=value.slice(at+1).trim();
             if(!tail||tail.length>40)continue;
+            // A tag is outside format/edition brackets; quality hyphens are not tags.
+            if(/[\[\](){}]/.test(tail))continue;
+            if(/^\d+(?:\.\d+)?$/.test(tail)&&/(?:^|[ ._])(?:FLAC|ALAC|MP3|AAC|PCM)[ ._]+\d{1,2}$/i.test(value.slice(0,at)))continue;
             // A spaced " - " is a name separator, never the inside of a tag.
             if(/\s-\s/.test(tail))continue;
             const words=tail.split(/\s+/);
@@ -1420,11 +1423,15 @@ const DKOKTO_RULES = ((profiles) => {
 
     // What this site's rules can be checked for, from a title and (where present) the
     // MediaInfo report on the page.
-    function check(title='',{site=current(),profile='auto',file=null,officialTitle=''}={}) {
+    function check(title='',{site=current(),profile='auto',file=null,officialTitle='',files,reports}={}) {
         const issues=[],add=(severity,code,message)=>{if(!issues.some(i=>i.code===code))issues.push({severity,code,message});};
         // An added tracker is checked against the rules its profile carries.
         const added=profiles.get(site);
-        if(added)return profiles.evaluate(added,title,profile);
+        if(added){
+            const checked=profiles.evaluate(added,title,profile);
+            if(site==='ihd'&&profile==='music')checked.push(...infinityMusicEvidence({file,files,reports}));
+            return checked;
+        }
         if(site!=='zenith')return issues;
         const value=String(title||'');
         const video=['movie','tv','disc'].includes(profile);
@@ -1470,6 +1477,48 @@ const DKOKTO_RULES = ((profiles) => {
         // Standing reminders: true of every Zenith upload, and not decidable from here.
         if(video||book||profile==='music')
             add('review','zenith-standing','Zenith rules this cannot check: whether it already exists there (rule 1), another tracker’s exclusivity (1.2), keeping the original group tag (1.4) and no archives (2.1).'+(video?' The three screenshots and the MediaInfo (3.2, 3.4) are checked on the torrent page.':''));
+        return issues;
+    }
+    // Section 10, supplied 16 Oct 2026. Positive evidence can establish a conflict;
+    // missing fields, relative paths and one posted track cannot certify an album.
+    function infinityMusicEvidence({file,files,reports}) {
+        if(!file&&files===undefined&&reports===undefined)return [];
+        const issues=[],add=(severity,code,message)=>{if(!issues.some(row=>row.code===code))issues.push({severity,code,message});};
+        // MUST facts that posted metadata cannot prove need a fresh confirmation on
+        // this torrent, not a once-hidden standing note or an automatic green result.
+        add('review','ihd-music-confirm-edition','Confirm this is one complete edition with every released track, in one enclosing folder even for a single track. Check multi-disc coverage against the actual edition (10.1.2–10.1.3).');
+        add('review','ihd-music-confirm-source','Confirm a lossless source with no lossy conversion, upsampling or 24-bit padding. WEB files are untouched; analogue rips give their equipment/software lineage. SACD DSD-to-FLAC conversion is allowed (10.1.4, 10.2.2–10.2.4).');
+        add('review','ihd-music-confirm-tags','Confirm every track has artist, album, title and track-number tags. For a Scene or P2P release, confirm original file and folder names are unchanged (10.1.5–10.1.6).');
+        add('review','ihd-music-confirm-extras','Confirm any rip logs are unedited and any included videos came with the release, rather than being sourced separately. If neither is included, confirm that before ticking this (10.2.5, 10.3.4).');
+        add('review','ihd-music-confirm-type','Confirm concert recordings, broadcasts, demos or outtakes are marked Bootleg. Withdrawn/deleted releases and pre-release leaks keep their normal type; if none of these apply, confirm that before ticking this (10.7).');
+        const paths=(Array.isArray(files)?files:[]).slice(0,2000).map(row=>typeof row==='string'?row:row?.path).filter(value=>typeof value==='string').map(value=>value.replace(/\\/g,'/').slice(0,300));
+        const show=values=>values.slice(0,5).join(', ')+(values.length>5?' and '+(values.length-5)+' more':'');
+        const system=paths.filter(path=>/^(?:\.DS_Store|Thumbs\.db|desktop\.ini)$|^\._/i.test(path.split('/').pop()));
+        if(system.length)add('error','ihd-music-system-files','Remove system files (10.3.2): '+show(system)+'.');
+        const otherAudio=paths.filter(path=>/\.(?:mp3|mp2|m4a|m4b|aac|ac3|eac3|dts|dsf|dff|dsd|wav|aiff?|alac|ape|wv|wma|ogg|opus|mka|tak|tta|amr|au|pcm)$/i.test(path));
+        if(otherAudio.length)add('error','ihd-music-other-audio','Music tracks must be FLAC; other audio files are not allowed (10.1.1, 10.3.3): '+show(otherAudio)+'. SACD-to-FLAC conversion is allowed, but DSD files themselves are not.');
+        if(!paths.length)add('review','ihd-music-files-unread','Open the file list to check for other audio formats and system files. Confirm the complete edition is in one folder, even for a single track (10.1.2–10.1.3).');
+        else if(paths.length>=2000||paths.some(path=>path.length>=300)||paths.some(path=>!path.includes('/'))||new Set(paths.map(path=>path.split('/')[0])).size!==1)
+            add('review','ihd-music-folder-unconfirmed','The loaded names do not establish the complete folder layout. Confirm one enclosing folder, even for a single track; CD1/CD2, Disc 1/Disc 2 and disc-prefixed track numbers are allowed (10.1.2–10.1.3).');
+        const loaded=(Array.isArray(reports)?reports:file?[file]:[]).slice(0,100);
+        let audioReports=0,unknownFormat=false,unknownDepth=false;
+        const field=(track,key)=>{const value=track?.fields?.[key];return typeof value==='string'?value.trim().slice(0,120):'';};
+        for(const report of loaded){
+            // A supplied bonus video may legitimately contain a different audio codec.
+            // Its origin needs review; it is not a FLAC music-track report.
+            if(!report||report.video?.length||!Array.isArray(report.audio)||!report.audio.length)continue;
+            audioReports++;
+            for(const track of report.audio.slice(0,100)){
+                const format=field(track,'format'),depth=field(track,'bitdepth');
+                if(!format||/^(?:unknown|not reported|not available|undetermined|n\/a)$/i.test(format)||format.includes('/'))unknownFormat=true;
+                else if(!/^(?:FLAC|Free Lossless Audio Codec)$/i.test(format))add('error','ihd-music-report-format','A posted audio-only report states '+format+', but music tracks must be FLAC (10.1.1). Check the actual track; renaming its extension does not convert it.');
+                const bits=/^(\d{1,3})(?:\s*bits?)?$/i.exec(depth);
+                if(!bits)unknownDepth=true;
+                else if(![16,24].includes(Number(bits[1])))add('error','ihd-music-report-depth','A posted audio-only report states '+bits[1]+' bits. InfinityHD accepts only 16-bit or 24-bit FLAC (10.1.1); do not upsample or pad a file to make it fit.');
+            }
+        }
+        if(!audioReports)add('review','ihd-music-report-unread','No readable audio-only track report is loaded. Check that the music files really are 16-bit or 24-bit FLAC; the title and .flac extensions do not prove it (10.1.1).');
+        else if(unknownFormat||unknownDepth)add('review','ihd-music-report-incomplete','A posted audio report omits or does not clearly identify '+[unknownFormat?'the codec':'',unknownDepth?'the bit depth':''].filter(Boolean).join(' and ')+'. Check those tracks; no format or bit depth has been guessed (10.1.1).');
         return issues;
     }
     // Zenith's own naming for books and music. Audiobook:
@@ -1778,6 +1827,27 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         ebook:'Author - Name Year [Edition] Format ISBN [Retail / Scan / OCR]',
         software:'The supplied guide specifies no title template for games/software; install and usage instructions must be in the description.'
     };
+    // InfinityHD's supplied guide has its own music form and codec vocabulary.
+    // These exceptions must not change the other trackers that inherit DP naming.
+    const IHD_MUSIC_TEMPLATE='Artist - Album (Year) [Edition] [Media FLAC Quality Log Score% Cue]-Tag';
+    const IHD_VIDEO={disc:['mpeg-2','vc-1','avc','hevc','prores','cineform','jpeg2000'],web:['h264','h265','vp9','av1'],encode:['x264','x265','av1']};
+    // The supplied InfinityHD music guide omits default quality and gives Log a score.
+    // Only the final format bracket is technical evidence; album and edition words are not.
+    function infinityMusic(title,add) {
+        const format=title.match(/\[(?:CD|WEB|Vinyl|SACD|DVD|Blu-ray|Cassette|DAT|Soundboard|Other) FLAC([^\[\]]*)\](?:-[^\[\]]+)?$/i);
+        if(!format)return;
+        const log=format[1].match(/(?:^|\s)Log(?:\s+(\S+))?(?=\s|$)/i);
+        if(log){
+            const score=/^(\d+(?:\.\d+)?)%$/.exec(log[1]||'');
+            if(!score||!Number.isFinite(Number(score[1]))||Number(score[1])>100)
+                add('error','ihd-music-log-score','When Log is named, include its checker score from 0% to 100%, for example Log 100%. Check the actual log score before naming it.');
+        }
+        const quality=format[1].match(/^\s+(\d{1,2})-(\d{2,3}(?:\.\d+)?)(?=\s|$)/);
+        if(quality&&![16,24].includes(Number(quality[1])))
+            add('error','ihd-music-bit-depth','InfinityHD music requires 16-bit or 24-bit FLAC (10.1.1). Check the real audio before correcting the title; changing its label does not convert it.');
+        if(quality&&Number(quality[1])===16&&Number(quality[2])===44.1)
+            add('error','ihd-music-default-quality','Leave 16-44.1 out of the format brackets. Keep the media label, with Log score and Cue only when they apply.');
+    }
     // Site decorations at either end of a title (a personal-release flame, a staff star, an
     // icon-font glyph) are not part of the release name.
     const DECORATION=/^[\s\p{Cf}\p{Co}\p{So}\p{Sk}]+|[\s\p{Cf}\p{Co}\p{So}\p{Sk}]+$/gu;
@@ -1818,13 +1888,28 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
     const hit=(s,pattern)=>new RegExp('(?:^|[ ._])('+pattern+')(?=$|[ ._-])','i').exec(s);
     const pos=m=>m?m.index+m[0].indexOf(m[1]):-1;
     const lang=s=>{const x=norm(s).toLowerCase();return ({en:'english',eng:'english',ja:'japanese',jpn:'japanese',de:'german',deu:'german',ger:'german',fr:'french',fra:'french',fre:'french',es:'spanish',spa:'spanish',sv:'swedish',swe:'swedish',da:'danish',dan:'danish',no:'norwegian',nor:'norwegian',fi:'finnish',fin:'finnish',pt:'portuguese',por:'portuguese',it:'italian',ita:'italian'})[x]||x;};
+    function infinityDub(tail,tracks,originalLanguage,add) {
+        const language=value=>lang(String(value||'').replace(/\s*\([^)]*\)\s*$/,''));
+        const original=language(originalLanguage),langs=[...new Set(tracks.filter(t=>!/commentary|audio description|descriptive/i.test(field(t,'title'))).map(t=>language(field(t,'language'))))];
+        const unknown=langs.some(value=>!value||['und','zxx','unknown','not reported'].includes(value));
+        const tag=hit(tail,'Dubbed|Dual[ .-]?Audio|Multi')?.[1].replace(/[ .-]/g,'').toLowerCase()||'';
+        if(!unknown&&langs.length>=2){
+            if(tag==='multi'||tag==='dualaudio'&&langs.length===2&&original&&original!=='english'&&langs.includes(original)&&langs.includes('english'))return;
+            add('review','dub-tag','InfinityHD uses Multi for two or more main audio languages; Dual-Audio also applies to original audio plus an English dub. Confirm the main tracks and use a suitable tag.');return;
+        }
+        if(!unknown&&langs.length===1&&original){
+            if(langs[0]===original){if(tag)add('review','dub-unnecessary','Only original-language main audio was recognized; a Dub tag may be unnecessary.');return;}
+            if(original!=='english'&&langs[0]==='english'){if(tag!=='dubbed')add('review','dub-tag','InfinityHD uses Dubbed for an English dub without the original-language audio. Confirm the main tracks.');return;}
+        }
+        add('review','dub-unverified','Original/main audio languages are not fully confirmed. Check InfinityHD’s Dubbed, Dual-Audio or Multi labels against the main audio tracks.');
+    }
     // Split a music title into artist / album / year / format, tolerating the common
     // "Artist - Album Year Format-Tag" shape so the correction can be shown in full.
     function music(s) {
         const split=s.indexOf(' - ');
         const artist=split>0?s.slice(0,split).trim():'';
         const rest=split>0?s.slice(split+3).trim():s;
-        const year=rest.match(/(?:^|[\s([])((?:18|19|20)\d{2})(?=[\s)\]]|$)/);
+        const year=rest.match(/\(((?:18|19|20)\d{2})\)(?=\s|$)/)||rest.match(/(?:^|[\s([])((?:18|19|20)\d{2})(?=[\s)\]]|$)/);
         if(!artist||!year)return {artist,year:year?.[1]||'',parenthesized:false,dashedFormat:false,format:'',tag:'',suggestion:''};
         const album=rest.slice(0,year.index).trim().replace(/[-–(\s]+$/,'');
         const after=rest.slice(year.index+year[0].length).replace(/^[)\]\s]+/,'');
@@ -1990,6 +2075,7 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         const s=norm(name);let profile=options.profile||'auto';
         // Which tracker's rules these checks are being read against.
         const site=options.rules||rules.current();
+        const infinity=site==='ihd';
         // Which set of templates this site follows: its own, or the one its profile names.
         const base=rules.baseOf?rules.baseOf(site):(site==='zenith'?'zenith':'dp');
         const ownBooks=rules.booksOf?rules.booksOf(site)==='own':false;
@@ -2001,7 +2087,7 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         const ep=hit(s,'S\\d{2}(?:E\\d{2}(?:E\\d{2}|-\\d{2})?)?');
         const date=s.match(/(?:^|\s)((?:19|20)\d{2}-\d{2}(?:-\d{2})?)(?=\s|$)/);
         const bookfmt=hit(s,'EPUB|PDF|AZW3|MOBI|FB2|HTML|CHM|DJVU|DOCX?|KFX|LIT|PDB|TXT|RTF|CBR|CBZ');
-        if(profile==='auto')profile=ep||date?'tv':bookfmt?'ebook':/ - .+\((?:19|20)\d{2}\) - /u.test(s)?'music':resolution||hit(s,'WEB-DL|WEBRip|REMUX|BluRay|Blu-ray|DVDRip|HDTV|UHDTV|DVD5|DVD9')||file?.video?.length?'movie':'unknown';
+        if(profile==='auto')profile=(infinity&&/^.+?\s-\s.+?\s\((?:18|19|20)\d{2}\)\s+\[/.test(s)||/ - .+\((?:19|20)\d{2}\) - /u.test(s))?'music':ep||date?'tv':bookfmt?'ebook':resolution||hit(s,'WEB-DL|WEBRip|REMUX|BluRay|Blu-ray|DVDRip|HDTV|UHDTV|DVD5|DVD9')||file?.video?.length?'movie':'unknown';
         if(!s){add('error','empty','Enter the torrent display title to check.');return result();}
         // The chosen tracker's banned and low-quality group list, matched on the group tag alone.
         const group=groups.find(s,{site});
@@ -2019,13 +2105,12 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         // A profile with books:"own" (profiles.js) names books its own way: no shared book
         // template is held against them, only the profile's rules, applied in result().
         if(ownBooks&&(profile==='ebook'||profile==='audiobook')){
-            add('review','book-own',(rules.labelOf?rules.labelOf(site):site)+' names books its own way, so no shared book template is applied here: what is checked is its own rule set, below.');
             if(profile==='audiobook'&&rules.audiobooksOf&&rules.audiobooksOf(site)==='folder-standard')
                 audiobookPayload(Array.isArray(options.files)?options.files.slice(0,2000).map(pathOf).filter(Boolean):[],add);
             return result('own-books');
         }
         if(ownMusic&&profile==='music'){
-            add('review','music-own',(rules.labelOf?rules.labelOf(site):site)+' names music its own way, so no shared music template is applied here: what is checked is its own rule set, below.');
+            if(infinity)infinityMusic(s,add);
             return result('own-music');
         }
         // Zenith's books and music follow templates of their own (rules.js).
@@ -2102,7 +2187,7 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         const start=ep?pos(ep):date?date.index:year?years.at(-1).index:firstTech;
         const tail=s.slice(start),has=p=>hit(tail,p),knownTitle=norm(options.officialTitle);
         if(titleHasDotSeparators(before,knownTitle))add('review','display-spacing','Some title words are joined with dots. Use spaces between words, and keep punctuation that belongs to the title.');
-        if(profile==='movie'&&!year)add('error','movie-year','Include the movie release year from TMDB after the title.');
+        if(profile==='movie'&&!year)add('error','movie-year','Include the movie release year from '+(infinity?'IMDb':'TMDB')+' after the title.');
         if(profile==='tv'){
             if(!ep&&!date)add('error','tv-number','Include TV numbering: S01, S01E02, S01E02E03, S01E02-04, or a daily-show date YYYY-MM-DD / YYYY-MM.');
             if(year&&options.tvYear!=='yes')add('review','tv-year','TV years are only included to distinguish series sharing a name. Remove the year unless this is needed.');
@@ -2123,20 +2208,22 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
             // Episodes are read from the file list where a page hands one in (a torrent page
             // does). Without one, or for a daily show numbered by date, it stays a reminder.
             const files=Array.isArray(options.files)?options.files.slice(0,2000).filter(entry=>pathOf(entry)):[];
-            if(ep&&!date&&files.length)episodeFindings(s,ep[1],files,add);
+            const guidePack=infinity&&(/\bS\d{2}\s*-\s*S?\d{2}(?=$|\s)/i.test(s)||ep&&/^S\d{2}$/i.test(ep[1])&&(/^(?:Extras|OVA)(?=$|\s)/i.test(s.slice(pos(ep)+ep[1].length,firstTech).trim())||/^S00$/i.test(ep[1])&&/[A-Za-z]/.test(s.slice(pos(ep)+ep[1].length,firstTech))));
+            if(ep&&!date&&files.length&&!guidePack)episodeFindings(s,ep[1],files,add);
             else add('review','episode-verify','Check the episodes against the listing.');
         }
         if(options.year&&year&&String(options.year)!==year)add('error','year-conflict','Title year '+year+' differs from the reference year '+options.year+'.');
         if(knownTitle){const canonical=s.slice(0,knownTitle.length);if(canonical.localeCompare(knownTitle,undefined,{sensitivity:'accent'})!==0)add('review','title-spelling','The title does not start with the supplied official title, including punctuation: '+knownTitle+'. Check AKA / locale and multi-title releases manually.');}
-        else add('review','title-unverified','Check the title, punctuation, year, AKA and locale against TMDB.');
+        else add('review','title-unverified','Check the title, punctuation, year, AKA and locale against '+(infinity?'IMDb':'TMDB')+'.');
         akaCheck(s,add,options,profile);
         const type=has('REMUX|WEB-DL|WEBRip'),dvd=has('(?:NTSC[ ._]+|PAL[ ._]+)?DVD(?:Rip|5|9)?'),disc=!!(has('Blu-ray|DVD5|DVD9|HD[ ._]DVD')&&!type),remux=/REMUX/i.test(type?.[1]||'');
         const discFamily=disc||remux;const releaseKind=type?.[1]|| (disc?'Full disc':has('HDTV|UHDTV|SDTV')?'TV capture':'Encode');
+        const dvdOmissions=dvd&&!infinity;
         if(remux&&has('Blu-ray|HD[ ._]DVD|DVDRip|DVD5|DVD9'))add('error','remux-source','REMUX source spelling is BluRay, UHD BluRay, 3D BluRay, HDDVD, NTSC DVD or PAL DVD; full-disc/encode labels differ.');
-        if(dvd&&!has('NTSC|PAL'))add('review','dvd-system','DVD source labels require NTSC or PAL. Confirm the system from the source.');
-        if(dvd&&!discFamily&&!has('DVDRip'))add('error','dvd-encode','DVD encodes use NTSC DVDRip or PAL DVDRip.');
-        if(!resolution&&!dvd)add('error','resolution','Include the video resolution (omitted for DVD sources).');
-        if(dvd&&resolution)add('error','dvd-resolution','Omit the resolution label for DVD-sourced releases.');
+        if(dvdOmissions&&!has('NTSC|PAL'))add('review','dvd-system','DVD source labels require NTSC or PAL. Confirm the system from the source.');
+        if(dvdOmissions&&!discFamily&&!has('DVDRip'))add('error','dvd-encode','DVD encodes use NTSC DVDRip or PAL DVDRip.');
+        if(!resolution&&!dvdOmissions)add('error','resolution',infinity?'Include one of InfinityHD’s listed video resolutions.':'Include the video resolution (omitted for DVD sources).');
+        if(dvdOmissions&&resolution)add('error','dvd-resolution','Omit the resolution label for DVD-sourced releases.');
         if(resolution&&/360/i.test(resolution[1]))add('review','360','360p is allowed only when no official release above 360p exists.');
         // A profile may list the resolutions its tracker accepts; otherwise its base decides.
         const listed=rules.resolutions?.(site);
@@ -2144,7 +2231,7 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
             :LISTED_RESOLUTION[base].test(resolution?.[1]||'');
         if(resolution&&!allowedResolution)
             add('error','resolution-value','“'+resolution[1]+'” is not a resolution the guide lists: '+(listed?listed.join(', ')+'.':RESOLUTION_LIST[base]));
-        const video=has('MPEG-2|VC-1|H[ .]?264|H[ .]?265|x264|x265|AVC|HEVC|VP9|AV1|XviD');
+        const video=has('MPEG-2|VC-1|H[ .]?264|H[ .]?265|x264|x265|AVC|HEVC|VP9|AV1|XviD'+(infinity?'|ProRes|CineForm|JPEG[ .]2000':''));
         const audio=has('DTS[ ._-]HD[ ._]MA|DTS[ ._-]HD[ ._]HRA|DTS[ ._]Headphone:X|DTS:X|DTS-ES|DD[+][ ._]EX|DD[ ._]EX|DD[+]|DDP|DD|TrueHD|DTS|LPCM|FLAC|ALAC|AAC|Opus|MP3|MP2|Vorbis');
         const compactAudio=tail.match(/(?:^|[ ._])(DDP|DD\+|DD|AAC|TrueHD|FLAC)(\d{1,2}\.\d(?:\.\d{1,2})?)(?!\.\d)(?=$|[ ._-])/i);
         const channels=has('(?<![0-9][.])[0-9]{1,2}[.][0-9](?:[.][0-9]{1,2})?(?![.][0-9])'),audioIndex=audio?pos(audio):compactAudio?compactAudio.index:-1;
@@ -2158,17 +2245,17 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         if(!audioLabel)add('error','audio-missing','Include the default audio codec using the guide’s labels.');
         if(!channelLabel&&spacedChannels)add('error','channel-spacing','Write the channel layout with a period: '+spacedChannels[1]+'.'+spacedChannels[2]+', not '+spacedChannels[1]+' '+spacedChannels[2]+'. The layout itself is fine — 3.1 and other discrete layouts are valid when they match the default audio track.');
         else if(!channelLabel)add('error','channels-missing','Include the default track’s discrete channel layout, e.g. 2.0 or 5.1. Do not infer an LFE channel from total channel count alone.');
-        if(!video&&!(dvd&&discFamily))add('error','video-missing','Include the video codec using the spelling for this release type.');
-        if(video){const v=video[1].replace(/[ .]/g,'').toLowerCase(),allowed=discFamily?['mpeg-2','vc-1','avc','hevc']:/WEB-DL/i.test(releaseKind)?['h264','h265','vp9','mpeg-2','av1']:(/HDTV|UHDTV|SDTV/i.test(releaseKind)||releaseKind==='TV capture')?['h264','h265','vp9','mpeg-2','av1','x264','x265','xvid']:['x264','x265','av1','xvid'];
+        if(!video&&!(dvdOmissions&&discFamily))add('error','video-missing','Include the video codec using the spelling for this release type.');
+        if(video){const v=video[1].replace(/[ .]/g,'').toLowerCase(),allowed=infinity?(discFamily?IHD_VIDEO.disc:/WEB-DL/i.test(releaseKind)||releaseKind==='TV capture'?IHD_VIDEO.web:IHD_VIDEO.encode):discFamily?['mpeg-2','vc-1','avc','hevc']:/WEB-DL/i.test(releaseKind)?['h264','h265','vp9','mpeg-2','av1']:(/HDTV|UHDTV|SDTV/i.test(releaseKind)||releaseKind==='TV capture')?['h264','h265','vp9','mpeg-2','av1','x264','x265','xvid']:['x264','x265','av1','xvid'];
             if(/^h26[45]$/.test(v)&&!/^H\.26[45]$/i.test(video[1]))add('error','h26-spelling','Use H.264 / H.265 with the period in the video codec label.');
             if(!allowed.includes(v))add('error','video-label','Video codec label '+video[1]+' does not match the guide for '+releaseKind+'. Expected: '+allowed.join(', ')+'. This is a naming distinction, not a conversion.');
-            if(dvd&&discFamily)add('error','dvd-video','Omit the video codec for DVD full discs/remuxes.');
+            if(dvdOmissions&&discFamily)add('error','dvd-video','Omit the video codec for DVD full discs/remuxes.');
             if(audioIndex>=0&&(discFamily?pos(video)>audioIndex:pos(video)<audioIndex))add('error','core-order',discFamily?'Full disc/REMUX order is HDR, video codec, audio codec, channels, object tag.':'Encode/WEB/HDTV order is audio codec, channels, object tag, Hi10P/HDR, video codec.');
         }
         // A missing tag is a question, not an error: the guide allows omitting it when the
         // release has none. The same reader decides here as decides which group a title
         // carries (a group name may contain spaces).
-        if(!groups.trailingTag(tail))
+        if(!infinity&&!groups.trailingTag(tail))
             add('review','tag','No release group tag closes the title. The guide allows it to be omitted only where the release has none, so confirm this is genuinely untagged rather than the tag having been dropped.');
         if(audioIndex>=0&&channels&&pos(channels)<audioIndex)add('error','channel-order','Channels follow the audio codec.');
         if(type&&resolution&&pos(type)+start<pos(resolution))add('error','type-order','Resolution belongs before the source/type.');
@@ -2195,6 +2282,7 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         const object=has('Atmos|Auro3D');
         if(object&&channels&&pos(object)<pos(channels))add('error','object-order','Atmos/Auro3D follows the default audio channel layout.');
         if(type&&video&&pos(type)>pos(video))add('error','type-codec-order','The source/type belongs before the codec details.');
+        if(infinity){const dub=has('Dubbed|Dual[ .-]?Audio|Multi');if(dub&&(audioIndex>=0&&pos(dub)>audioIndex||discFamily&&video&&pos(dub)<pos(video)||type&&pos(dub)<pos(type)))add('error','dub-order',discFamily?'InfinityHD places the Dub tag after the video codec and before the audio codec.':'InfinityHD places the Dub tag after the source/type and before the audio codec.');}
         if(hi&&hdr)add('error','hi-hdr','Hi10P is only for 10-bit SDR AVC/H.264/x264, not HDR.');
         if(hi&&video&&!/AVC|[Hx][ .]?264/i.test(video[1]))add('error','hi-codec','Hi10P applies only to AVC/H.264/x264.');
         const vtrack=file?.video?.[0],depth=Number.parseInt(field(vtrack,'bitdepth')),transfer=field(vtrack,'transfercharacteristics'),vfmt=field(vtrack,'format');
@@ -2213,7 +2301,8 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
             const total=Number.parseInt(field(t,'channels'));if(channelLabel&&Number.isFinite(total)&&channelLabel.split('.').map(Number).reduce((a,b)=>a+b,0)!==total)add('error','channel-conflict','Title layout '+channelLabel+' does not total the default track’s '+total+' reported channels.');
             if(has('Atmos')&&!/Atmos|JOC/i.test(Object.values(t.fields).join(' ')))add('review','default-atmos','Atmos is not confirmed on the default audio track, even if another track has it.');
         }
-        if(!disc){const original=lang(options.originalLanguage),langs=[...new Set(tracks.filter(t=>!/commentary|audio description|descriptive/i.test(field(t,'title'))).map(t=>lang(field(t,'language'))))];
+        if(infinity)infinityDub(tail,tracks,options.originalLanguage,add);
+        else if(!disc){const original=lang(options.originalLanguage),langs=[...new Set(tracks.filter(t=>!/commentary|audio description|descriptive/i.test(field(t,'title'))).map(t=>lang(field(t,'language'))))];
             const unknown=langs.some(l=>!l||['und','zxx','not reported'].includes(l));
             if(original&&langs.length&&!unknown){let needed='';if(langs.length===1&&langs[0]===original)needed='none';else if(original!=='english'&&langs.length===1&&langs[0]==='english')needed='Dubbed';else if(original!=='english'&&langs.length===2&&langs.includes(original)&&langs.includes('english'))needed='Dual-Audio';else if(langs.length>=3&&langs.includes(original))needed='MULTi';else if(original==='english'&&langs.length===2&&langs.includes('english'))needed=langs.find(l=>l!=='english')+' MULTi';
                 if(needed==='none'&&has('Dubbed|Dual-Audio|MULTi'))add('review','dub-unnecessary','Only original-language main audio was recognized; a Dub tag may be unnecessary.');
@@ -2226,12 +2315,12 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         return result(discFamily?'disc':profile);
         function result(templateKey=profile){
             // The tracker's own upload rules, on top of the shared naming guide.
-            for(const issue of rules.check(name,{profile,file,site:options.rules,officialTitle:options.officialTitle}))add(issue.severity,issue.code,issue.message);const errors=issues.filter(x=>x.severity==='error').length,reviews=issues.length-errors;return {profile,template:templates[templateKey]||'',issues,service:serviceLabel,status:errors?errors+' correction'+(errors===1?'':'s')+' needed':reviews?'No definite errors found · manual review remains':'No supported issues found'};}
+            for(const issue of rules.check(name,{profile,file,files:options.files,reports:options.musicReports,personalRelease:options.personalRelease,site:options.rules,officialTitle:options.officialTitle}))add(issue.severity,issue.code,issue.message);const errors=issues.filter(x=>x.severity==='error').length,reviews=issues.length-errors;return {profile,template:infinity&&profile==='music'?IHD_MUSIC_TEMPLATE:templates[templateKey]||'',issues,service:serviceLabel,status:errors?errors+' correction'+(errors===1?'':'s')+' needed':reviews?'No definite errors found · manual review remains':'No supported issues found'};}
     }
     function report(name,options,file){const r=check(name,options,file);
         const whose=(()=>{try{const key=options&&options.rules?options.rules:rules.current();
             return rules.hasRules&&rules.hasRules()?rules.labelOf(key):'';}catch{return '';}})();
-        return [(whose?whose+' ':'')+'display-title naming review',name,'Category: '+r.profile,...(r.service?['Service: '+r.service]:[]),r.status,'Template: '+r.template,...r.issues.map(i=>(i.severity==='error'?'CORRECT':'REVIEW')+': '+i.message),'Rules: '+(whose?'the '+whose+' naming guide':'the naming guide in hand')+'; no live rules lookup or upload performed.'].join('\n');}
+        return [(whose?whose+' ':'')+'display-title naming review',name,'Category: '+r.profile,...(r.service?['Service: '+r.service]:[]),r.status,'Template: '+r.template,...r.issues.map(i=>(i.severity==='error'?'CORRECT':'REVIEW')+': '+i.message),'Rules: '+(whose?whose+' naming guide':'No naming guide selected')+'.'].join('\n');}
     return {check,report,templates,akaCheck,episodes,isSeasonPack};
 })(typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./inspector.js'):DKOKTO_INSPECTOR,
    typeof module!=='undefined'&&module.exports&&typeof require==='function'?require('./services.js'):DKOKTO_SERVICES,
@@ -2310,7 +2399,7 @@ const DKOKTO_TRACKER_GUIDES = (() => {
             {code:'full-disc',profiles:['disc'],
              message:'Edition, Region and 3D are Full Disc elements on LUME. Region is the disc’s release country as a three-letter code. A Full Disc SOURCE is written Blu-ray, UHD Blu-ray, HD DVD, NTSC DVD5/DVD9 or PAL DVD5/DVD9; a remux uses BluRay, UHD BluRay, HDDVD, NTSC DVD or PAL DVD.'},
             {code:'web-sources',profiles:['movie','tv'],
-             message:'LUME’s Streaming Provider Abbreviations list is in hand and every one of its 195 general abbreviations was already recognised here; its Japanese broadcasters and anime services were added to that list in 1.30.0. Three of them collide with a spelling already in use — MX, TBS and ABC mean something else on the list this ships with — and were left as they were rather than quietly changed.'}
+             message:'For MX, TBS or ABC, confirm the intended service against LUME’s provider list.'}
         ]
     };
 
@@ -2813,16 +2902,14 @@ Sicario Silence SM737 STUTTERSHIT Tigole TSP TSPxL UTR ViSION WAF Will1869 x0r Y
         notes:[
             {code:'naming-details',profiles:['movie','tv','disc'],
              message:'What the naming guide states that a title alone cannot settle: the Title is TMDB’s name; Geographics (AU, UK, US) only to tell apart content of the same name and year; a TV year only where two series share a name or TVDB carries it; the Language only when there is no English audio, ALL UPPER CASE (a pattern cannot tell case, so that is not checked); Cut assumed Theatrical; Hybrid only where the main stream comes from more than one source; Region only on a full disc; the Service abbreviation on web content; Channels of the default track.'},
-            {code:'not-supplied',profiles:['movie','tv','disc','music'],
-             message:'Only MidnightScene’s Upload Naming Guide and its banned list are in hand (21 Sep 2026). Its upload rules — content, descriptions, trumping — were not supplied, so nothing is claimed about them.'},
             {code:'music-details',profiles:['music'],
              message:'Music beyond the name: the Title as on the cover, with its capitalization and Unicode; English title case for artists and titles unless an official stylization exists (non-English titles follow their own language); EP only where the word is on the artwork; Media - Format such as CD-FLAC, WEB-FLAC, Vinyl-FLAC; a scene release’s folder and files are left as released.'}
         ]
     };
 
     // --- InfinityHD -----------------------------------------------------------------------
-    // Banned Release Groups page and Naming Guide, supplied 23 Sep 2026 and kept verbatim in
-    // notes/infinityhd-rules-2026-09-23.md. Templates match the shared "dp" order. No other
+    // Banned Release Groups supplied 23 Sep 2026; Naming Guide refreshed 14 Oct 2026 in
+    // notes/infinityhd-naming-2026-10-14.txt. Video templates match the shared "dp" order. No other
     // page of the site has been seen (search, upload rules, trumping, description), so
     // nothing is claimed about them.
     //
@@ -2832,7 +2919,7 @@ Sicario Silence SM737 STUTTERSHIT Tigole TSP TSPxL UTR ViSION WAF Will1869 x0r Y
     // included, since the matcher only compares a tag that closes a title.
     //
     // Resolutions are listed as "One of: 1080i, 1080p, 2160p, 4320p" and the HDR list is
-    // HDR, HDR10+, DV, DV HDR10+, HLG, PQ10 (no "DV HDR"); both are checked as written.
+    // HDR, HDR10+, DV, DV HDR, DV HDR10+, HLG, PQ10; both are checked as written.
     // The Tag is omitted where there is no group, so nothing asks for one.
     const IHD_BANNED=`1000 24xHD 41RGB 4K4U AG AOC AROMA aXXo AZAZE BARC0DE BAUCKLEY BdC beAst BONE BRiNK BTM C1NEM4
 C4K CDDHD CHAOS CHD CHX CiNE COLLECTiVE CREATiVE24 CrEwSaDe CTFOH d3g DDR DepraveD DNL DRX EDITH
@@ -2846,29 +2933,29 @@ worldmkv x0r XLF YIFY YTSMX Zero00 Zeus`
         .split(/\s+/).map(name=>[name]);
 
     const INFINITYHD={
-        format:FORMAT,version:1,key:'ihd',label:'InfinityHD',base:'dp',hosts:['infinityhd.net'],
-        source:'infinityhd.net — Banned Release Groups and Naming Guide, as supplied 23 Sep 2026.',
+        format:FORMAT,version:1,key:'ihd',label:'InfinityHD',base:'dp',music:'own',hosts:['infinityhd.net'],
+        source:'infinityhd.net — Naming Guide supplied 14 Oct 2026; Music requirements section 10 supplied 16 Oct 2026; Banned Release Groups supplied 23 Sep 2026.',
         groups:{banned:IHD_BANNED,conditional:[],sources:[{name:'BRrip',pattern:'(?:^|[ ._])BR-?rip(?=$|[ ._-])'}]},
         resolutions:['1080i','1080p','2160p','4320p'],
         rules:[
-            {code:'no-group',severity:'error',profiles:['movie','tv','disc'],
+            {code:'no-group',severity:'error',profiles:['movie','tv','disc','music'],
              forbid:'-\\s?(?:NOGRP|NOGROUP)\\s*$',
              message:'The Tag is omitted where there is no group — not written as NOGRP or NOGROUP.'},
             {code:'acodec-ddp',severity:'error',profiles:['movie','tv','disc'],
              forbid:'(?:^|[ .])(?:DDP\\d?(?:\\.\\d)?|E-?AC-?3)(?=$|[ .-])',
-             message:'The ACodec element is DD+; DDP and E-AC-3 are not among the names the guide gives (DD, DD EX, DD+, TrueHD, DTS, DTS-HD, FLAC, AAC).'},
+             message:'Use DD+ for Dolby Digital Plus. The guide lists DD+, rather than DDP or E-AC-3, for the title.'},
             {code:'acodec-ac3',severity:'error',profiles:['movie','tv','disc'],
              forbid:'(?:^|[ .])AC-?3(?=$|[ .-])',
              message:'The ACodec element writes Dolby Digital as DD (or DD EX), not AC3.'},
             {code:'acodec-dolby',severity:'error',profiles:['movie','tv','disc'],
              forbid:'(?:^|[ .])Dolby[ .](?:Digital|TrueHD)',
-             message:'The ACodec element uses the short names the guide gives: DD, DD EX, DD+, TrueHD, DTS, DTS-HD, FLAC, AAC.'},
+             message:'Use the audio codec’s short title label, such as DD, DD EX, DD+, TrueHD, DTS-HD MA, DTS-HD HRA, DTS:X, FLAC, LPCM, AAC or Opus.'},
             {code:'object-atmos',severity:'error',profiles:['movie','tv','disc'],
              forbid:'(?:^|[ .])Dolby[ .]Atmos(?=$|[ .-])',
              message:'The Object element is Atmos on its own (the only other value is Auro3D).'},
             {code:'hdr-vocab',severity:'error',profiles:['movie','tv','disc'],
-             forbid:'(?:^|[ .])(?:HDR10(?!\\+)|DoVi|Dolby[ .]Vision|DV[ .]HDR(?![ .]?10\\+))(?=$|[ .-])',
-             message:'The HDR element is one of HDR, HDR10+, DV, DV HDR10+, HLG or PQ10 — HDR10 on its own is written HDR, Dolby Vision is DV, and "DV HDR" is not on the list (DV HDR10+ is).'},
+             forbid:'(?:^|[ .])(?:HDR10(?!\\+)|DoVi|Dolby[ .]Vision|HDR[ .]Vivid)(?=$|[ .-])',
+             message:'Use HDR, HDR10+, DV, DV HDR, DV HDR10+, HLG or PQ10. Write HDR10 as HDR and Dolby Vision as DV. HDR Vivid is not listed in this guide.'},
             {code:'vcodec-dot',severity:'error',profiles:['movie','tv','disc'],
              forbid:'(?:^|[ .])H26[45](?=$|[ .-])',
              message:'The VCodec element writes it H.264 or H.265, with the dot.'},
@@ -2907,13 +2994,37 @@ worldmkv x0r XLF YIFY YTSMX Zero00 Zeus`
              message:'A second repack, proper or rerip is written REPACK2, PROPER2 or RERip2 — the number joined to the word.'},
             {code:'multi-season',severity:'error',profiles:['tv'],
              forbid:'(?:^|[ .])S\\d{2}[ .]?-[ .]?S?\\d{2}(?![ .]*COMPLETE)',
-             message:'A complete season pack is written S01-S03 COMPLETE — the range, then the word COMPLETE.'}
+             message:'Write a multi-season pack as S01-S03 COMPLETE. The guide allows these only for official retail box sets.'},
+            {code:'music-form',severity:'error',profiles:['music'],
+             require:'^\\S.*?\\s-\\s\\S.*?\\s\\((?:18|19|20)\\d{2}\\)\\s(?:\\[[^\\[\\]]+\\]\\s)?\\[[^\\[\\]]+\\](?:-[^\\[\\]]+)?$',
+             message:'Use Artist - Album (Year) [Edition] [Media FLAC Quality Log Score% Cue]-Tag. Leave Edition, Quality, Log, Cue and Tag out when they do not apply; do not put a dash before the format brackets.'},
+            {code:'music-format',severity:'error',profiles:['music'],
+             require:'\\[(?:CD|WEB|Vinyl|SACD|DVD|Blu-ray|Cassette|DAT|Soundboard|Other) FLAC(?: \\d{1,2}-\\d{2,3}(?:\\.\\d+)?)?(?: Log(?: (?:100|\\d{1,2})(?:\\.\\d+)?%)?)?(?: Cue)?\\](?:-[^\\[\\]]+)?$',
+             message:'Put Media FLAC in the final brackets, followed by any quality, Log score and Cue: for example [WEB FLAC 24-48] or [CD FLAC Log 100% Cue].'}
         ],
         notes:[
             {code:'naming-details',profiles:['movie','tv','disc'],
-             message:'What the naming guide states that a title alone cannot settle: the Name is IMDb’s, with its punctuation; AKA Original where the original name differs; LOCALE only to tell apart same-named titles; a TV year only where series share a name; specials S00E## (on TVDB) or S##E00 (not) with the special’s name; extras packs S## Extras or S00 Description; OVAs S## OVA; daily shows YYYY-MM-DD; Cut only where more than one official cut exists; Ratio one of IMAX, Open Matte, MAR; Hybrid where the main streams come from more than one source; Region on full discs only; Hi10P for 10-bit SDR AVC.'},
-            {code:'not-supplied',profiles:['movie','tv','disc'],
-             message:'Only InfinityHD’s banned list and Naming Guide are in hand (23 Sep 2026). Its upload rules, description requirements and trumping rules were not supplied, so nothing is claimed about them; the banned page says to open a Helpdesk ticket when unsure about a release.'}
+             message:'Use the IMDb name, year and punctuation unless IMDb is wrong. Add AKA for a different original title, and LOCALE or a TV year only to distinguish same-named titles. Daily shows use YYYY-MM-DD or YYYY-MM; specials need their names; extras and OVAs keep their own labels. Multi-season packs must be official retail box sets. Check the cut, ratio, source, Hybrid and edition against the release; region is for full discs, and Hi10P is for 10-bit SDR AVC.'},
+            {code:'music-details',profiles:['music'],
+             message:'Check the credited artist and album against the release and linked MusicBrainz entry. Use the album’s first release year; put a later edition’s year/title in [Edition]. Leave quality out for 16-bit 44.1 kHz; otherwise use bit depth and sample rate. Add Log and its checker score only for an included log, and Cue only for an included cue sheet. Keep an existing group tag; leave it out when there is none.'},
+            {code:'music-edition',profiles:['music'],
+             message:'10.1.1–10.1.3, 10.2.4: one complete edition, with every released track, in one folder even for a single track. Tracks must be 16-bit or 24-bit FLAC; surround is allowed. Multi-disc releases may use CD1/CD2 or Disc 1/Disc 2 folders, or 1-01/2-01 track numbers. DSD-to-FLAC conversion from SACD is allowed; DSD files are not. Posted reports cover only the tracks they describe.'},
+            {code:'music-integrity',profiles:['music'],
+             message:'10.1.4, 10.2.2, 10.2.5: confirm the source is lossless, with no lossy-to-FLAC conversion, upsampling or padding to 24 bits. WEB files must be untouched service downloads. Rip logs must be unedited; use the site’s checker result, never an invented score. Names and posted reports cannot establish that history.'},
+            {code:'music-tags',profiles:['music'],
+             message:'10.1.5–10.1.6: check artist, album, title and track-number tags on every track. MusicBrainz Picard is recommended for matching the exact edition. Scene and P2P releases are welcome; keep their original file and folder names unchanged. A Personal Release flag alone does not prove that this is an own rip.'},
+            {code:'music-cd-advice',profiles:['music'],
+             message:'10.2.1: for CD, secure EAC or XLD ripping with a log and cue sheet is recommended; a 100% log is recommended. These are recommendations, not mandatory rejection thresholds. An absent log, absent cue or lower score does not by itself violate a must rule.'},
+            {code:'music-description',profiles:['music'],
+             message:'10.2.3, 10.5.1: analogue rips must describe their lineage: turntable or tape deck, cartridge, preamp, converter and software. Source and edition notes are recommended for every upload. Check the description yourself; the script does not infer lineage from a source label.'},
+            {code:'music-payload',profiles:['music'],
+             message:'10.3: allowed extras include logs, cue sheets, artwork/scans (including a store’s animated cover), LRC lyrics, TXT/NFO, playlists, PDF booklets and MD5/FFP/SFV/AccurateRip checksums. No system files or other audio formats. A video must have come with the release; a separately sourced YouTube or other music video is not allowed. Check video provenance yourself.'},
+            {code:'music-own-rip',profiles:['music'],
+             message:'10.6.2: for your own rips, the suggested folder is Artist.Album.Year.Source.FLAC.Bit-depth.Sample-rate-Tag, with the release type before Tag for a non-album. Suggested tracks: ##. Title.flac, or 1-01. Title.flac on multiple discs. This is a should rule. Group releases retain their original names; do not rename them to this pattern.'},
+            {code:'music-copies',profiles:['music'],
+             message:'10.4: music has no slots. The album page orders same-format copies by matching studio/live kind, then highest log score, a cue sheet, and most seeders. That is the site’s copy ordering; API upload age does not establish these facts or a release’s origin.'},
+            {code:'music-bootlegs',profiles:['music'],
+             message:'10.7: concert recordings, radio/TV broadcasts, demos and outtakes are allowed as Bootleg. Date, venue or broadcast source notes are recommended. Withdrawn/deleted releases, streaming removals and pre-release leaks are allowed and keep their normal release type.'}
         ]
     };
 
@@ -2924,10 +3035,10 @@ worldmkv x0r XLF YIFY YTSMX Zero00 Zeus`
          source:'onlyencodes.cc/wikis/2 — Upload Guide + Rules, as supplied 10 Sep 2026.'},
         {profile:HOMIEHELPDESK,summary:'HomieHelpDesk upload rules, banned groups and naming standard: what a title can be checked for, and the rest as standing reminders.',
          source:'homiehelpdesk.net/pages/7 — Upload rules, with its banned list and naming standard, as supplied 20 Sep 2026.'},
-        {profile:MIDNIGHTSCENE,summary:'MidnightScene’s Upload Naming Guide, video and music, and its banned list; its upload rules were not supplied.',
+        {profile:MIDNIGHTSCENE,summary:'MidnightScene’s video and music naming guide and banned groups.',
          source:'midnightscene.cc — Upload Naming Guide and Banned Release Groups, as supplied 21 Sep 2026.'},
-        {profile:INFINITYHD,summary:'InfinityHD’s Naming Guide and its banned list; its upload rules were not supplied.',
-         source:'infinityhd.net — Banned Release Groups and Naming Guide, as supplied 23 Sep 2026.'}
+        {profile:INFINITYHD,summary:'InfinityHD’s naming guide, music requirements and banned groups.',
+         source:'infinityhd.net — Naming Guide supplied 14 Oct 2026; Banned Release Groups supplied 23 Sep 2026.'}
     ];
     // A fresh copy each time: what the caller does with it must never reach this list.
     const list=()=>ALL.map(entry=>({...entry,profile:JSON.parse(JSON.stringify(entry.profile))}));

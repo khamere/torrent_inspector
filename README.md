@@ -1,17 +1,52 @@
-# Torrent Inspector 2.0
+# Torrent Inspector 2.1.0
 
-Check torrent naming and posted MediaInfo, search connected trackers and copy evidence
-from one compact box. Easy mode is the default; Advanced mode keeps the original tools.
+Read the visible page checks, then press **Check this torrent** to search your
+connected trackers. Findings, setup, results and review tools share one interface.
+On first use, **Set up trackers** offers **Connect Prowlarr** or **Add a tracker
+manually**. Save/test a connection, then check. Your setup is saved.
 
-Use **Set up trackers** once, then **Check this torrent**. Matching results show their
-titles, reported filenames, upload dates and separate **Copy MediaInfo**, **Copy BDInfo** and
-**Copy description** buttons. Descriptions keep the original BBCode. PeerGarden direct
-API support, automatic Prowlarr fallback and srrDB click lookups are included.
+Results show report/BBCode copy buttons directly; **Details** opens comparison
+and report evidence. **Retry** repeats a failed tracker. **Search options** holds
+filters, **Search more broadly** and **Search all trackers**. Website
+search tabs and comparisons stay under **More** on the page.
 
-Supported formatting fixes have a **Suggested title** copy button. **Review reply**
-combines selected findings into a BBCode preview. **Season-pack checks** compares
-episode numbers and file sizes from returned or remembered lists, while keeping
-missing evidence clear. These all stay inside Easy mode's compact box.
+**Page checks passed** and **Review needed** describe loaded evidence and required
+confirmations; they never approve an upload. The **Personal Release** check row
+is separate from **Internal**. Expand any check row for its evidence and manual confirmations.
+
+**Copy recommended name** beside **Check this torrent** copies a name reassessed
+against the active guide. Supported corrections retain the expandable **Suggested title** preview. **Review reply**
+combines selected findings into a BBCode preview. **Season-pack checks** runs when
+the local file list appears and flags **Missing episode numbers**, before
+the main check. Your optional expected count/list takes precedence for partial
+packs and can check leading or trailing absences. No official length is guessed.
+**Check a local .torrent file** reads chosen metadata locally. **Check screenshot duplicates
+(optional)** opens the loaded-image duplicate check. These tools stay collapsed
+below the visible checks until needed.
+
+On requests, **Search trackers** opens the compact results box and starts the saved
+API search in one click. Request lists have matching **Search trackers** and **Web
+links** buttons. One compact request-page toolbar holds search and header **Set up
+trackers**; **Website searches** stays folded. Results use at most two columns on
+wide screens and one on phones.
+**Matches request details** means an ID and the listed requirements agree; title-only
+or incomplete results stay under **Check these releases**, and conflicts under
+**Other editions**. Open a result or copy its returned report and BBCode directly.
+These are request-detail comparisons, not MediaInfo/hash or same-file matches.
+Searching never fills, claims or approves a request.
+
+InfinityHD naming follows its movie, TV and music guide,
+including **DV HDR** and bracketed music with an optional group tag. Metadata and
+official retail box-set status still need manual confirmation. Music requirements
+§10 add FLAC 16/24-bit report/file checks; missing evidence
+stays for review. Completeness, tags, provenance, untouched WEB files, analog
+lineage, log integrity and bundled videos remain manual. Secure CD ripping, logs,
+cue sheets and a 100% score are recommendations. Original Scene/P2P names are kept.
+
+Page checks use a full-width table, with expandable evidence and manual checks.
+The header **Set up trackers** button opens saved connections in the same panel.
+Search results stay below the checks; **Other editions** starts collapsed. Local
+.torrent, screenshot, suggested-title and review-reply tools open when needed.
 
 Full Blu-ray BDInfo can show **Matching disc report** when its disc label, exact
 disc bytes, playlist, duration and tracks agree. Incomplete reports stay for review.
@@ -31,10 +66,12 @@ credentials need to be entered once in setup. Keys stay out of backups.
 Checks compare posted evidence, not the actual media, and never approve or submit
 changes to a tracker. No usage telemetry is added.
 
-The latest fixes keep the same interface. FileList tooltip parsing stays inert;
-API results remain tied to the requested torrent and saved connection. Cancelled
-searches stop, tools recover after page replacements, and failed group or template
-saves keep the previously saved state.
+Optional inputs and tools stay collapsed. A local .torrent file is never announced, uploaded
+or saved in settings. If an image host blocks pixel access, **Check loaded images
+for duplicates** can reread image files from their displayed URLs anonymously through
+Tampermonkey. It does not follow original-image or gallery links. Screenshot
+originals open only when clicked. Missing evidence
+stays unknown, and no suggested name or review reply is posted automatically.
 
 ## Reporting a group
 
