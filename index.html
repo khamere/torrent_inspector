@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
-<title>Torrent Inspector 2.1.1 — check, compare and copy</title>
+<title>Torrent Inspector 2.2.0 — check, compare and copy</title>
 <link rel="icon" type="image/svg+xml" href="images/logo.svg">
-<meta name="description" content="Visible page checks, one Check this torrent button and inline tracker results. Naming, reply and review tools share one interface, with saved setup and no usage telemetry.">
+<meta name="description" content="A compact review drawer with Automatic checks, Needs you and Other trackers. Saved setup, report copying and review replies stay together, with no usage telemetry.">
 <style>
   :root{
     --bg:#0f0b14; --panel:#160f1e; --panel-2:#1b1226; --line:#3b2a4a; --line-2:#553d6b;
@@ -123,9 +123,9 @@
 <nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/rules.html">Rules builder</a></nav>
 <p class="eyebrow">A simpler torrent review workflow</p>
 <h1>Check. Compare. Copy<span class="dot">.</span></h1>
-<p class="lede">Torrent Inspector 2.1.1 keeps the checks, tracker setup and matching releases
-in one box on the torrent page. Connect once, then press <b>Check this torrent</b>.</p>
-<ul class="pills"><li class="pill"><b>2.1.1</b></li><li class="pill">One interface</li>
+<p class="lede">Torrent Inspector 2.2.0 keeps the checks, tracker setup and matching releases
+in one drawer beside the torrent page. Read the page checks, then connect trackers when you want searches.</p>
+<ul class="pills"><li class="pill"><b>2.2.0</b></li><li class="pill">One interface</li>
 <li class="pill">46 UNIT3D trackers · PeerGarden support · 65 searchable trackers</li>
 <li class="pill">No posting · No usage telemetry</li></ul>
 <div class="cta"><a class="btn primary" href="#install">How to get it</a><a class="btn" href="#review">See the workflow</a><a class="btn" href="rules.html">Rules builder</a></div>
@@ -134,23 +134,22 @@ in one box on the torrent page. Connect once, then press <b>Check this torrent</
 <section id="start"><div class="wrap"><h2>Three steps for everyday use</h2>
 <p class="sub">Setup is saved. You do not need to open another settings panel for each torrent.</p>
 <div class="grid">
-<div class="card lead"><h3>1 · Open a torrent</h3><p>Page checks are visible immediately. Press <b>Check this torrent</b> to start an API search and show results in the same panel.</p></div>
-<div class="card lead"><h3>2 · Connect once</h3><p>On first use, <b>Set up trackers</b> offers <b>Connect Prowlarr</b> or <b>Add a tracker manually</b>. Save/test a connection, then press <b>Check this torrent</b>. Your setup is remembered.</p></div>
+<div class="card lead"><h3>1 · Open a torrent</h3><p>Read the verdict line. Open <b>Automatic checks</b> for the page evidence and <b>Needs you</b> for manual checks. No API key is needed for the loaded-page checks.</p></div>
+<div class="card lead"><h3>2 · Connect once</h3><p><b>Set up trackers</b> shows Prowlarr import and a manual tracker-key form together. Use either path and save/test a connection. <b>Check this torrent</b> searches connected trackers; your setup is remembered.</p></div>
 <div class="card lead"><h3>3 · Copy and review</h3><p>Use the copy buttons on a result for its report or original BBCode. <b>Details</b> opens its comparison and report. Use <b>Retry</b> beside a failed tracker. Finish the manual checks, then use <b>Mark reviewed</b> to save your progress.</p></div>
 </div></div></section>
 <section id="review"><div class="wrap"><h2>One place to check and review</h2>
-<p class="sub">A full-width checks table, one main action and the tools you need below it.</p>
-<p><b>Check this torrent</b> starts API search in one click. Results keep setup,
+<p class="sub">One verdict line, three folded groups and the same evidence when you expand them.</p>
+<p><b>Check this torrent</b> in the header starts API search and opens <b>Other trackers</b>. Results keep setup,
 comparisons and copying together. <b>Search options</b> holds filters, <b>Search more broadly</b> and <b>Search all trackers</b>.
-<b>More</b> on the page holds website search tabs separately from the API action.</p>
+<b>More</b> in the bottom action row holds website search tabs separately from the API action.</p>
 <p><b>Set up trackers</b> in the header opens saved tracker controls when needed.
 Page checks and returned results stay in the same panel.
-Check and review buttons stay accessible. Wider screens show results in columns;
-phones stack them. As scans arrive, your reading position, open details and focus are kept.
+Open <b>Automatic checks</b> for the page findings, <b>Needs you</b> for confirmations and <b>Other trackers</b> for search results. As scans arrive, your reading position, open details and focus are kept.
 Each result shows its title and any reported filename. Equivalent identities share
 a card, including eligible <b>Candidates to review</b>. Grouped candidates still need review against this torrent; they do not become matches. Each tracker keeps its own date, original report and BBCode, copy buttons and <b>Open torrent</b>. Similar names alone or conflicting identity evidence do not group results; <b>Other editions</b> stay separate. <b>Details</b> opens its comparison and report; copying works without opening it.</p>
-<p><b>Copy recommended name</b> beside <b>Check this torrent</b> copies a name reassessed against the active guide.
-Expand any check row for evidence or manual confirmations. <b>Suggested title</b> opens below the checks when a correction is available.
+<p><b>Copy recommended name</b> in the bottom action row copies a name reassessed against the active guide.
+Expand a group and check row for evidence or manual confirmations. A <b>Suggested title</b> card above the groups explains a correction when one is available; its <b>Review reply</b> combines selected findings into BBCode.
 <b>Page checks passed</b> means the checked items and manual checks are clear; <b>Review needed</b> means something still needs review.
 Listing badges say <b>Title</b> to show that only the displayed name was checked. Failed tracker searches show a failure count and a retry action.
 The <b>Personal Release</b> check row shows <b>Yes</b>, <b>No</b> or <b>Unknown</b> from an explicit tracker badge or API flag, separately from <b>Internal</b>. Missing evidence stays <b>Unknown</b>; it does not identify who made the release or add requests.
@@ -158,13 +157,13 @@ Open a row for its full evidence or title preview. <b>Suggested title</b> explai
 button. <b>Review reply</b> lets you choose findings, read a BBCode preview and copy
 one message. Missing release information is never guessed. Nothing is renamed or posted automatically.</p>
 <p>InfinityHD naming follows its movie, TV and music guide, including <b>DV HDR</b> and bracketed music with an optional group tag. Metadata and official retail box-set status still need manual confirmation. Music requirements §10 add FLAC 16/24-bit report/file checks; missing evidence stays for review. Completeness, tags, provenance, untouched WEB files, analog lineage, unmodified logs and bundled-video origin remain manual. Secure CD ripping, logs, cue sheets and a 100% score are recommendations. Original Scene/P2P names are kept.</p>
-<p>Optional checks stay collapsed: enter expected episode numbers or choose a local
-.torrent file. The <b>Screenshots</b> row checks image count and loaded sizes; expand it for each image's details.
+<p><b>Automatic checks</b> contains screenshot count/size details and season-pack checks, with optional expected episode numbers. <b>Other trackers</b> contains the local .torrent helper.
 <b>Other editions</b> starts collapsed. Details and copy actions stay available in the same panel.</p>
+<p><b>Hide ›</b> slides the drawer away to an edge tab; <b>Alt+I</b> brings it back. The <b>▾</b> beside the title folds it to the verdict line. <b>In page</b> places it below the release name, and <b>As drawer</b> returns it. Below 600px it stays in the page with larger controls. The colours follow the Nocturne blue-grey palette.</p>
 <div class="shots workflow-shots">
-<figure><img src="screenshots/easy-check.png?v=2.1.1" alt="Torrent Inspector with visible checks and a prominent Check this torrent button." loading="lazy" width="1100" height="689"><figcaption>Visible checks and the primary check action.</figcaption></figure>
-<figure><img src="screenshots/easy-mobile.png?v=2.1.1" alt="Torrent Inspector on a narrow screen with readable checks and the Check this torrent button." loading="lazy" width="350" height="1156"><figcaption>The default findings view on a phone-sized screen.</figcaption></figure>
-<figure><img src="screenshots/16-review-panel.png?v=2.1.1" alt="Detailed review panel with Findings, MediaInfo, Find releases, Source check, Season check and notes tabs." loading="lazy" width="980" height="846"><figcaption>Detailed review tools remain available.</figcaption></figure>
+<figure><img src="screenshots/easy-check.png?v=2.2.0" alt="Torrent Inspector as a drawer at the side of the page, with its verdict line and the Automatic checks and Needs you groups open." loading="lazy" width="1100" height="900"><figcaption>The panel as a drawer: a verdict line, then folded groups.</figcaption></figure>
+<figure><img src="screenshots/easy-mobile.png?v=2.2.0" alt="Torrent Inspector on a narrow screen, in the page, with a sticky header and large targets." loading="lazy" width="306" height="1033"><figcaption>On a phone the panel stays in the page.</figcaption></figure>
+<figure><img src="screenshots/16-review-panel.png?v=2.2.0" alt="Review dialog with its sections stacked as expanders: Findings open, then MediaInfo, Find releases, Source check, Season check and notes." loading="lazy" width="980" height="846"><figcaption>Review keeps every section, stacked as expanders.</figcaption></figure>
 </div>
 <p>On requests, <b>Search trackers</b> opens a compact box and starts the saved API search in one click, including the current tracker. Request lists use matching <b>Search trackers</b> and <b>Web links</b> buttons. One compact request-page toolbar holds search and header <b>Set up trackers</b>, with folded <b>Website searches</b>. Request results use at most two columns on wide screens and one on phones. <b>Matches request details</b> means an ID and listed requirements agree; title-only or incomplete results stay under <b>Check these releases</b>, and conflicts under <b>Other editions</b>. Open a result or copy its returned report and original BBCode directly. These are request-detail comparisons, not MediaInfo, hash or same-file matches. Searching never fills, claims or approves a request.</p>
 <p>For a queue, choose <b>Review loaded titles</b> on a listing, then open a torrent.
@@ -191,16 +190,16 @@ the tracker’s title is not changed. The review tools keep the original <b>Seas
 </div></section>
 <section id="connect"><div class="wrap"><h2>Use the trackers you already have</h2>
 <div class="grid"><div class="card"><h3>Prowlarr</h3><p>Enter the base server address (including its application prefix, without a settings-page path) and API key, then press <b>Connect</b> once. If your seedbox asks for a separate login, fill <b>Server login (optional)</b> first, using an HTTPS address. Supported direct keys are imported. Configured trackers such as TorrentLeech and FileList use search fallback automatically, without a second checklist.</p></div>
-<div class="card"><h3>Direct tracker keys</h3><p>Choose <b>Add a tracker manually</b>, select the tracker and press <b>Save &amp; test</b>. PeerGarden supports direct searches, MediaInfo, original BBCode and available torrent hashes.</p></div>
+<div class="card"><h3>Direct tracker keys</h3><p>In <b>Manual · One tracker key</b>, select the tracker, paste its API key and press <b>Save &amp; test</b>. PeerGarden supports direct searches, MediaInfo, original BBCode and available torrent hashes.</p></div>
 <div class="card"><h3>Your saved setup</h3><p><b>Test all connections</b> checks saved supported direct keys and Prowlarr discovery without changing selections. Updates retain settings and keys already saved in Tampermonkey; older page-only credentials need one-time re-entry. Blank key fields are intentional. Keys stay private and excluded from backups.</p></div></div>
 <p class="note" style="margin-top:18px">Use <b>Copy MediaInfo</b> or <b>Copy BDInfo</b> for the original report, and <b>Copy description</b> for its original BBCode. Fallback results may have no report or original description to copy. The script does not invent missing reports.</p>
 </div></section>
 <section id="shots"><div class="wrap"><h2>More detail when you need it</h2>
 <p class="sub">Expand a check or open the detailed review tools for reports, comparisons and private notes.</p>
 <div class="shots">
-<figure><img src="screenshots/17-detail-mediainfo.png?v=2.1.1" alt="Detailed MediaInfo view showing summary cards, codecs and track tables for the posted report." loading="lazy" width="980" height="846"><figcaption>Read the report with track details and naming evidence.</figcaption></figure>
-<figure><img src="screenshots/18-find-releases.png?v=2.1.1" alt="Find releases with an editable query, title modes and a grid of selected tracker searches." loading="lazy" width="980" height="1048"><figcaption>Find releases keeps the detailed search controls available.</figcaption></figure>
-<figure><img src="screenshots/19-season-check.png?v=2.1.1" alt="Season check comparing episode lists from remembered uploads and showing missing or different files." loading="lazy" width="980" height="990"><figcaption>Compare season packs episode by episode.</figcaption></figure>
+<figure><img src="screenshots/17-detail-mediainfo.png?v=2.2.0" alt="Detailed MediaInfo view showing summary cards, codecs and track tables for the posted report." loading="lazy" width="980" height="846"><figcaption>Read the report with track details and naming evidence.</figcaption></figure>
+<figure><img src="screenshots/18-find-releases.png?v=2.2.0" alt="Find releases with an editable query, title modes and a grid of selected tracker searches." loading="lazy" width="980" height="1048"><figcaption>Find releases keeps the detailed search controls available.</figcaption></figure>
+<figure><img src="screenshots/19-season-check.png?v=2.2.0" alt="Season check comparing episode lists from remembered uploads and showing missing or different files." loading="lazy" width="980" height="990"><figcaption>Compare season packs episode by episode.</figcaption></figure>
 </div><p>Detailed tools also include private notes, naming templates, captured-release comparisons
 and rules profiles. The <a href="rules.html">Rules builder</a> helps you create a profile for your tracker.</p>
 </div></section>
@@ -209,7 +208,7 @@ and rules profiles. The <a href="rules.html">Rules builder</a> helps you create 
 Ask DKOKTO on your tracker for the installation address. This public website carries the
 screenshots and Rules builder; it does not offer the userscript for download.</p>
 <ol class="steps"><li>Install Tampermonkey, then open the supplied installation link.</li>
-<li>Update the existing <b>Torrent Inspector</b> entry and reload your tracker tabs.</li>
+<li>Choose <b>Install</b> for first use or <b>Update</b> for your existing <b>Torrent Inspector</b> entry, then reload your tracker tabs.</li>
 </ol>
 <p>Settings and keys already saved in Tampermonkey are retained. Older page-only credentials need one-time re-entry.</p>
 </div></section>
@@ -217,10 +216,10 @@ screenshots and Rules builder; it does not offer the userscript for download.</p
 <dt>Does green mean the upload is approved?</dt><dd>No. It means the supported checks passed. The tool reads posted evidence, not the actual media, and never approves a torrent.</dd>
 <dt>Do I need to open every tracker?</dt><dd>Connected APIs can return evidence into the same box. Unsupported APIs and missing content may still need an explicit website visit.</dd>
 <dt>Where are my keys?</dt><dd>In Tampermonkey's private script storage. They are reused for later checks and excluded from backups. Optional server logins use the same private storage and go only to your saved Prowlarr server. Prowlarr cookies, passwords and RSS passkeys are not copied.</dd>
-<dt>Where are the detailed tools?</dt><dd>The single panel keeps Findings, MediaInfo, Find releases, Source check, Season check and notes available. There is no mode switch.</dd>
+<dt>Where are the detailed tools?</dt><dd>Review keeps Findings, MediaInfo, Find releases, Source check, Season check and notes as stacked expandable sections. The torrent-page drawer also offers In page placement.</dd>
 <dt>What does it send?</dt><dd>The API searches you request, using each destination's own key. Screenshot checks read loaded counts and dimensions. It sends no usage telemetry and never submits tracker changes. External lookup links open only when clicked.</dd>
 <dt>Does the local torrent check contact a tracker?</dt><dd>No. Choose a .torrent file up to 16 MiB and 10,000 files. Its metadata is read in this tab, never uploaded, announced or saved in settings. Hashes and byte counts cannot verify actual media files.</dd>
-<dt>What do screenshot checks compare?</dt><dd>The number of description images and their loaded sizes against the posted video. Unloaded sizes stay unknown. Expand the Screenshots row for details. Original-image and viewer links open only when clicked.</dd>
+<dt>What do screenshot checks compare?</dt><dd>The number of description images and their loaded sizes against the posted video. Unloaded sizes stay unknown. Open Automatic checks, then Screenshots for details. Original-image and viewer links open only when clicked.</dd>
 </dl></div></section>
-<footer><div class="wrap"><p><b>Torrent Inspector 2.1.1</b> · <a href="rules.html">Rules builder</a> · <a href="https://github.com/khamere/torrent_inspector" rel="noopener noreferrer">GitHub</a></p></div></footer>
+<footer><div class="wrap"><p><b>Torrent Inspector 2.2.0</b> · <a href="rules.html">Rules builder</a> · <a href="https://github.com/khamere/torrent_inspector" rel="noopener noreferrer">GitHub</a></p></div></footer>
 </body></html>
