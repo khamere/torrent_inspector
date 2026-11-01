@@ -100,7 +100,7 @@
 <header class="top">
   <div class="wrap">
     <nav class="site-nav" aria-label="Site navigation"><a href="/">Home</a><a href="/rules.html">Rules builder</a></nav>
-    <p class="eyebrow">Torrent Inspector 2.2.0</p>
+    <p class="eyebrow">Torrent Inspector 2.3.0</p>
     <h1>Tracker rules</h1>
     <p class="lede">
       Build a rules profile for a tracker, check one you already have, and run a release name
@@ -225,7 +225,7 @@
 <footer>
   <div class="wrap">
     <p><a href="index.html">← Torrent Inspector</a> · profile format documented in
-      <code>TRACKER-RULES.md</code> · built from the modules of 2.2.0</p>
+      <code>TRACKER-RULES.md</code> · built from the modules of 2.3.0</p>
   </div>
 </footer>
 
@@ -1423,13 +1423,17 @@ const DKOKTO_RULES = ((profiles) => {
 
     // What this site's rules can be checked for, from a title and (where present) the
     // MediaInfo report on the page.
-    function check(title='',{site=current(),profile='auto',file=null,officialTitle='',files,reports}={}) {
+    function check(title='',{site=current(),profile='auto',fullDisc=false,file=null,officialTitle='',files,reports}={}) {
         const issues=[],add=(severity,code,message)=>{if(!issues.some(i=>i.code===code))issues.push({severity,code,message});};
         // An added tracker is checked against the rules its profile carries.
         const added=profiles.get(site);
         if(added){
-            const checked=profiles.evaluate(added,title,profile);
+            // A page that says Full Disc is read against the profile's disc rules: a film or
+            // series category does not make a full disc an encode.
+            const category=fullDisc&&(profile==='movie'||profile==='tv')?'disc':profile;
+            const checked=profiles.evaluate(added,title,category);
             if(site==='ihd'&&profile==='music')checked.push(...infinityMusicEvidence({file,files,reports}));
+            if(site==='mns')return midnightModeration(checked,{title,profile:category,file,files});
             return checked;
         }
         if(site!=='zenith')return issues;
@@ -1478,6 +1482,16 @@ const DKOKTO_RULES = ((profiles) => {
         if(video||book||profile==='music')
             add('review','zenith-standing','Zenith rules this cannot check: whether it already exists there (rule 1), another tracker’s exclusivity (1.2), keeping the original group tag (1.4) and no archives (2.1).'+(video?' The three screenshots and the MediaInfo (3.2, 3.4) are checked on the torrent page.':''));
         return issues;
+    }
+    // MidnightScene's moderation guide (mns-moderation.js). Its group rule replaces the naming
+    // guide's softer group-tag question; the per-torrent confirmations need the torrent page.
+    function midnightModeration(checked,{title,profile,file,files}){
+        const moderation=typeof DKOKTO_MNS_MODERATION!=='undefined'?DKOKTO_MNS_MODERATION:require('./mns-moderation.js');
+        const found=moderation.evidence({title,profile,file,files})
+            .filter(issue=>file||files!==undefined||!/^mns-mod-confirm-/.test(issue.code))
+            .map(({severity,code,message})=>({severity,code,message}));
+        const grouped=found.some(issue=>issue.code==='mns-mod-group');
+        return [...checked.filter(issue=>!(grouped&&issue.code==='mns-group-tag')),...found];
     }
     // Section 10, supplied 16 Oct 2026. Positive evidence can establish a conflict;
     // missing fields, relative paths and one posted track cannot certify an album.
@@ -1608,8 +1622,9 @@ const DKOKTO_RULES = ((profiles) => {
     const baseline=()=>[...BUILTIN_BASELINE,...profiles.baseline()];
     // A profile may list the resolutions its tracker accepts; otherwise its base decides.
     const resolutions=site=>profiles.get(site)?.resolutions?.length?profiles.get(site).resolutions:null;
-    // Screenshots a rule set asks for in the description (Zenith 3.2: three source screenshots).
-    const SCREENSHOTS={zenith:3};
+    // Screenshots a rule set asks for in the description (Zenith 3.2: three source screenshots;
+    // MidnightScene's moderation guide: at least one real embedded image).
+    const SCREENSHOTS={zenith:3,mns:1};
     function screenshotsNeeded(site=current()){return SCREENSHOTS[site]||0;}
     return {screenshotsNeeded,list,labelOf,hostsOf,guideDate,guideSince,current,choose,forget,check,books,siteFor,baseOf,booksOf,musicOf,audiobooksOf,baseline,resolutions,added,hasRules,settled,BASELINE,KEY,HOSTS,
         bannedAuthors:()=>[...BANNED_AUTHORS],bannedWorks:()=>[...BANNED_WORKS],use(store){backing=store;migrated=false;}};
@@ -2315,7 +2330,7 @@ const DKOKTO_NAMING = ((inspector,services,groups,rules,source) => {
         return result(discFamily?'disc':profile);
         function result(templateKey=profile){
             // The tracker's own upload rules, on top of the shared naming guide.
-            for(const issue of rules.check(name,{profile,file,files:options.files,reports:options.musicReports,personalRelease:options.personalRelease,site:options.rules,officialTitle:options.officialTitle}))add(issue.severity,issue.code,issue.message);const errors=issues.filter(x=>x.severity==='error').length,reviews=issues.length-errors;return {profile,template:infinity&&profile==='music'?IHD_MUSIC_TEMPLATE:templates[templateKey]||'',issues,service:serviceLabel,status:errors?errors+' correction'+(errors===1?'':'s')+' needed':reviews?'No definite errors found · manual review remains':'No supported issues found'};}
+            for(const issue of rules.check(name,{profile,fullDisc:options.fullDisc===true,file,files:options.files,reports:options.musicReports,personalRelease:options.personalRelease,site:options.rules,officialTitle:options.officialTitle}))add(issue.severity,issue.code,issue.message);const errors=issues.filter(x=>x.severity==='error').length,reviews=issues.length-errors;return {profile,template:infinity&&profile==='music'?IHD_MUSIC_TEMPLATE:templates[templateKey]||'',issues,service:serviceLabel,status:errors?errors+' correction'+(errors===1?'':'s')+' needed':reviews?'No definite errors found · manual review remains':'No supported issues found'};}
     }
     function report(name,options,file){const r=check(name,options,file);
         const whose=(()=>{try{const key=options&&options.rules?options.rules:rules.current();
@@ -2732,6 +2747,9 @@ TORRENTGALAXY TSP TSPxL ViSION VXT WAF WKS x0r YAWNiX YIFY YTS PSA`.split(/\s+/)
             {code:'edition-name',severity:'error',profiles:['movie','tv'],
              forbid:'(?:^|[ .])(?:\\d+(?:th|st|nd|rd)[ .]Anniversary[ .]Edition|Anniversary[ .]Edition|4K[ .]Remaster|Remastered|Criterion[ .]Collection|Limited)(?=$|[ .-])',
              message:'The Edition is omitted from the name and put in the description. Only a disc may carry the distributor, e.g. Criterion Collection — if this is a disc, check the category first.'},
+            {code:'edition-name-disc',severity:'error',profiles:['disc'],
+             forbid:'(?:^|[ .])(?:\\d+(?:th|st|nd|rd)[ .]Anniversary[ .]Edition|Anniversary[ .]Edition|4K[ .]Remaster|Remastered|Limited)(?=$|[ .-])',
+             message:'On a disc too the Edition is omitted from the name and put in the description; only the distributor, e.g. Criterion Collection, may stay.'},
             {code:'dub-dual-audio',severity:'error',profiles:['movie','tv'],
              forbid:'(?:^|[ .])Dual[ .]Audio(?=$|[ .-])',
              message:'The Dub element is written Dual-Audio, hyphenated (the other value is Dubbed), and only for non-discs.'},
@@ -2873,7 +2891,7 @@ Sicario Silence SM737 STUTTERSHIT Tigole TSP TSPxL UTR ViSION WAF Will1869 x0r Y
             {code:'encode-source',severity:'error',profiles:['movie','tv'],
              forbid:'(?:^|[ .])(?:UHD[ .])?Blu-ray(?=$|[ .-])',
              message:'For encodes and remuxes the Source is BluRay or UHD BluRay, one word; Blu-ray with the hyphen is the full-disc spelling. If this is a full disc, check the category first.'},
-            {code:'edition-name',severity:'error',profiles:['movie','tv'],
+            {code:'edition-name',severity:'error',profiles:['movie','tv','disc'],
              forbid:'(?:^|[ .])(?:\\d+(?:th|st|nd|rd)[ .]Anniversary[ .]Edition|Anniversary[ .]Edition|4K[ .]Remaster|Remastered|Criterion(?:[ .]Collection)?|Limited)(?=$|[ .-])',
              message:'The Edition is omitted from the torrent title and put in the description.'},
             {code:'dub-dual-audio',severity:'error',profiles:['movie','tv'],
@@ -2900,6 +2918,8 @@ Sicario Silence SM737 STUTTERSHIT Tigole TSP TSPxL UTR ViSION WAF Will1869 x0r Y
              message:'Live or (LIVE) is only in the title when it is printed on the cover; otherwise the official title, or the date and venue where there is none.'}
         ],
         notes:[
+            {code:'moderation-doubt',profiles:['movie','tv','disc'],
+             message:'From the Torrent Moderation Guide: when in doubt, postpone with a clear message rather than approving something you are not sure about. Escalate to full mods if needed.'},
             {code:'naming-details',profiles:['movie','tv','disc'],
              message:'What the naming guide states that a title alone cannot settle: the Title is TMDB’s name; Geographics (AU, UK, US) only to tell apart content of the same name and year; a TV year only where two series share a name or TVDB carries it; the Language only when there is no English audio, ALL UPPER CASE (a pattern cannot tell case, so that is not checked); Cut assumed Theatrical; Hybrid only where the main stream comes from more than one source; Region only on a full disc; the Service abbreviation on web content; Channels of the default track.'},
             {code:'music-details',profiles:['music'],
